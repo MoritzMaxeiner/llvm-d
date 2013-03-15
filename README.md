@@ -40,7 +40,7 @@ in if **llvm-d** is set to compile for at least the LLVM version that is needed
 cycle and are thus only available from version 3.3 upwards).
 
 Also note that the example also shows how to load the LLVM dynamic library from a
-specific path (here a subfolde "lib" in the application directory).
+specific path (here a subfolder "lib" in the application directory).
 
 Furthermore you can use "LLVM.loaded" to check whether any errors happened
 in the library loading process and then access them via the "LLVM.errors" property
