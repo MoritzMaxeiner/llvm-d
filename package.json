@@ -1,0 +1,17 @@
+{
+	"name": "llvm-d",
+	"description": "D bindings for LLVM",
+	"copyright": "Copyright © 2013, Moritz Maxeiner",
+	"authors": [
+		"Moritz Maxeiner"
+	],
+	"targetType": "sourceLibrary",
+	"importPaths": ["."],
+	"sourcePaths": [
+		"llvm",
+		"llvm/util",
+		"llvm/c"
+	],
+
+	"lflags-posix": ["-ldl"],
+}
