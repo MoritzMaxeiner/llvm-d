@@ -25,10 +25,6 @@ public
 	}
 	else
 	{
-		import llvm.c.types;
-		import llvm.c.constants;
-		import llvm.c.functions;
-
-		import llvm.c.versions;
+		import llvm.c.all;
 	}
 }

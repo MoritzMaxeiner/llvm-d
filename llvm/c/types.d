@@ -14,24 +14,24 @@ alias uint LLVMVerifierFailureAction;
 
 /++ Pass manager builder ++/
 
-struct LLVMOpaquePassManagerBuilder; alias LLVMOpaquePassManagerBuilder* LLVMPassManagerBuilderRef;
+struct LLVMOpaquePassManagerBuilder {}; alias LLVMOpaquePassManagerBuilder* LLVMPassManagerBuilderRef;
 
 /+ Core +/
 
 /++ Types and Enumerations ++/
 
 alias int LLVMBool;
-struct LLVMOpaqueContext; alias LLVMOpaqueContext* LLVMContextRef;
-struct LLVMOpaqueModule; alias LLVMOpaqueModule* LLVMModuleRef;
-struct LLVMOpaqueType; alias LLVMOpaqueType* LLVMTypeRef;
-struct LLVMOpaqueValue; alias LLVMOpaqueValue* LLVMValueRef;
-struct LLVMOpaqueBasicBlock; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
-struct LLVMOpaqueBuilder; alias LLVMOpaqueBuilder* LLVMBuilderRef;
-struct LLVMOpaqueModuleProvider; alias LLVMOpaqueModuleProvider* LLVMModuleProviderRef;
-struct LLVMOpaqueMemoryBuffer; alias LLVMOpaqueMemoryBuffer* LLVMMemoryBufferRef;
-struct LLVMOpaquePassManager; alias LLVMOpaquePassManager* LLVMPassManagerRef;
-struct LLVMOpaquePassRegistry; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
-struct LLVMOpaqueUse; alias LLVMOpaqueUse* LLVMUseRef;
+struct LLVMOpaqueContext {}; alias LLVMOpaqueContext* LLVMContextRef;
+struct LLVMOpaqueModule {}; alias LLVMOpaqueModule* LLVMModuleRef;
+struct LLVMOpaqueType {}; alias LLVMOpaqueType* LLVMTypeRef;
+struct LLVMOpaqueValue {}; alias LLVMOpaqueValue* LLVMValueRef;
+struct LLVMOpaqueBasicBlock {}; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
+struct LLVMOpaqueBuilder {}; alias LLVMOpaqueBuilder* LLVMBuilderRef;
+struct LLVMOpaqueModuleProvider {}; alias LLVMOpaqueModuleProvider* LLVMModuleProviderRef;
+struct LLVMOpaqueMemoryBuffer {}; alias LLVMOpaqueMemoryBuffer* LLVMMemoryBufferRef;
+struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef;
+struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
+struct LLVMOpaqueUse {}; alias LLVMOpaqueUse* LLVMUseRef;
 
 alias ulong LLVMAttribute;
 alias uint LLVMOpcode;
@@ -85,8 +85,8 @@ static if(LLVM_Version < 3.3)
 
 /+ Execution Engine +/
 
-struct LLVMOpaqueGenericValue; alias LLVMOpaqueGenericValue* LLVMGenericValueRef;
-struct LLVMOpaqueExecutionEngine; alias LLVMOpaqueExecutionEngine* LLVMExecutionEngineRef;
+struct LLVMOpaqueGenericValue {}; alias LLVMOpaqueGenericValue* LLVMGenericValueRef;
+struct LLVMOpaqueExecutionEngine {}; alias LLVMOpaqueExecutionEngine* LLVMExecutionEngineRef;
 
 static if(LLVM_Version >= 3.2)
 {
@@ -105,8 +105,8 @@ alias uint llvm_lto_status;
 
 /+ LTO +/
 
-struct LTOModule; alias LTOModule* lto_module_t;
-struct LTOCodeGenerator; alias LTOCodeGenerator* lto_code_gen_t;
+struct LTOModule {}; alias LTOModule* lto_module_t;
+struct LTOCodeGenerator {}; alias LTOCodeGenerator* lto_code_gen_t;
 
 alias uint lto_symbol_attributes;
 alias uint lto_debug_model;
@@ -114,23 +114,23 @@ alias uint lto_codegen_model;
 
 /+ Object file reading and writing +/
 
-struct LLVMOpaqueObjectFile; alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
-struct LLVMOpaqueSectionIterator; alias LLVMOpaqueSectionIterator* LLVMSectionIteratorRef;
-struct LLVMOpaqueSymbolIterator; alias LLVMOpaqueSymbolIterator* LLVMSymbolIteratorRef;
-struct LLVMOpaqueRelocationIterator; alias LLVMOpaqueRelocationIterator* LLVMRelocationIteratorRef;
+struct LLVMOpaqueObjectFile {}; alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
+struct LLVMOpaqueSectionIterator {}; alias LLVMOpaqueSectionIterator* LLVMSectionIteratorRef;
+struct LLVMOpaqueSymbolIterator {}; alias LLVMOpaqueSymbolIterator* LLVMSymbolIteratorRef;
+struct LLVMOpaqueRelocationIterator {}; alias LLVMOpaqueRelocationIterator* LLVMRelocationIteratorRef;
 
 /+ Target information +/
 
-struct LLVMOpaqueTargetData; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
-struct LLVMOpaqueTargetLibraryInfotData; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
-struct LLVMStructLayout; alias LLVMStructLayout* LLVMStructLayoutRef;
+struct LLVMOpaqueTargetData {}; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
+struct LLVMOpaqueTargetLibraryInfotData {}; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
+struct LLVMStructLayout {}; alias LLVMStructLayout* LLVMStructLayoutRef;
 
 alias uint LLVMByteOrdering;
 
 /+ Target machine +/
 
-struct LLVMTargetMachine; alias LLVMTargetMachine* LLVMTargetMachineRef;
-struct LLVMTarget; alias LLVMTarget* LLVMTargetRef;
+struct LLVMTargetMachine {}; alias LLVMTargetMachine* LLVMTargetMachineRef;
+struct LLVMTarget {}; alias LLVMTarget* LLVMTargetRef;
 
 alias uint LLVMCodeGenOptLevel;
 alias uint LLVMRelocMode;
