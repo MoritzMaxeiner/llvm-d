@@ -78,12 +78,12 @@ class Type
 			return (cast(VectorType) this).getElementType().isSized();
 		}
 		
-		if(!is(this : StructType))
+		if(is(this : StructType))
 		{
-			return false;
+			return (cast(StructType) this).isSized();
 		}
 		
-		return (cast(StructType) this).isSized();
+		return false;
 	}
 	
 	// void print(raw_ostream &O)

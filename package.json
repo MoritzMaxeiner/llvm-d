@@ -12,4 +12,5 @@
 		"llvm/util",
 		"llvm/c"
 	],
+	"lflags-posix" : ["-ldl"]
 }
