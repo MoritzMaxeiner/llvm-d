@@ -13,16 +13,13 @@ To use **llvm-d** you just need to import it and then you can use
 the functions defined by LLVM's C API. For example:
 
 ```d
+module samples.multithreaded;
+
 import llvm.all;
 import std.stdio;
 
 void main(string[] args)
 {
-    if(!LLVM.loaded)
-	{
-		LLVM.loadFromPath("lib");
-	}
-
 	static if(LLVM_Version >= 3.3)
 	{
 		writefln("LLVM multithreading on? %s", cast(bool) LLVMIsMultithreaded());
@@ -39,14 +36,136 @@ in if **llvm-d** is set to compile for at least the LLVM version that is needed
 (the multithreaded functions where added to LLVM's C API in the 3.3 development
 cycle and are thus only available from version 3.3 upwards).
 
-Also note that the example also shows how to load the LLVM dynamic library from a
-specific path (here a subfolder "lib" in the application directory).
+A more complex example showing how to calculate the fibonacci series:
 
-Furthermore you can use "LLVM.loaded" to check whether any errors happened
-in the library loading process and then access them via the "LLVM.errors" property
-(access to that property clears the stored errors); or you can compile in debug mode
-(dmd flag "-debug"), which will cause **llvm-d** to print success to stdout and errors to stderr
-(in which case the errors will not be stored for later access via the "LLVM.errors" property).
+```d
+module samples.fibonacci;
+
+import std.conv : to;
+import std.stdio : writefln, writeln;
+
+import llvm.all;
+import llvm.util.memory;
+
+int main(string[] args)
+{
+	char* error;
+
+	LLVMInitializeNativeTarget();
+	auto _module = LLVMModuleCreateWithName("fibonacci".toCString());
+	auto f_args = [ LLVMInt32Type() ];
+	auto f = LLVMAddFunction(
+		_module,
+		"fib",
+		LLVMFunctionType(LLVMInt32Type(), f_args.ptr, 1, cast(LLVMBool) false));
+	LLVMSetFunctionCallConv(f, LLVMCCallConv);
+	
+	auto n = LLVMGetParam(f, 0);
+	
+	auto entry = LLVMAppendBasicBlock(f, "entry".toCString());
+	auto case_base0 = LLVMAppendBasicBlock(f, "case_base0".toCString());
+	auto case_base1 = LLVMAppendBasicBlock(f, "case_base1".toCString());
+	auto case_default = LLVMAppendBasicBlock(f, "case_default".toCString());
+	auto end = LLVMAppendBasicBlock(f, "end".toCString());
+	auto builder = LLVMCreateBuilder();
+	
+	/+ Entry basic block +/
+	LLVMPositionBuilderAtEnd(builder, entry);
+	auto Switch = LLVMBuildSwitch(
+		builder,
+		n,
+		case_default,
+		2);
+	LLVMAddCase(Switch, LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false), case_base0);
+	LLVMAddCase(Switch, LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false), case_base1);
+
+	/+ Basic block for n = 0: fib(n) = 0 +/
+	LLVMPositionBuilderAtEnd(builder, case_base0);
+	auto res_base0 = LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false);
+	LLVMBuildBr(builder, end);
+	
+	/+ Basic block for n = 1: fib(n) = 1 +/
+	LLVMPositionBuilderAtEnd(builder, case_base1);
+	auto res_base1 = LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false);
+	LLVMBuildBr(builder, end);
+	
+	/+ Basic block for n > 1: fib(n) = fib(n - 1) + fib(n - 2) +/
+	LLVMPositionBuilderAtEnd(builder, case_default);
+
+	auto n_minus_1 = LLVMBuildSub(
+		builder,
+		n,
+		LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false),
+		"n - 1".toCString());
+	auto call_f_1_args = [ n_minus_1 ];
+	auto call_f_1 = LLVMBuildCall(builder, f, call_f_1_args.ptr, 1, "fib(n - 1)".toCString());
+	
+	auto n_minus_2 = LLVMBuildSub(
+		builder,
+		n,
+		LLVMConstInt(LLVMInt32Type(), 2, cast(LLVMBool) false),
+		"n - 2".toCString());
+	auto call_f_2_args = [ n_minus_2 ];
+	auto call_f_2 = LLVMBuildCall(builder, f, call_f_2_args.ptr, 1, "fib(n - 2)".toCString());
+	
+	auto res_default = LLVMBuildAdd(builder, call_f_1, call_f_2, "fib(n - 1) + fib(n - 2)".toCString());
+	LLVMBuildBr(builder, end);
+	
+	/+ Basic block for collecting the result +/
+	LLVMPositionBuilderAtEnd(builder, end);
+	auto res = LLVMBuildPhi(builder, LLVMInt32Type(), "result".toCString());
+	auto phi_vals = [ res_base0, res_base1, res_default ];
+	auto phi_blocks = [ case_base0, case_base1, case_default ];
+	LLVMAddIncoming(res, phi_vals.ptr, phi_blocks.ptr, 3);
+	LLVMBuildRet(builder, res);
+	
+	LLVMVerifyModule(_module, LLVMAbortProcessAction, &error);
+	LLVMDisposeMessage(error);
+	
+	LLVMExecutionEngineRef engine;
+	error = null;
+	if(cast(bool) LLVMCreateJITCompilerForModule(&engine, _module, 2, &error))
+	{
+		writefln("%s", error.fromCString());
+		LLVMDisposeMessage(error);
+		return 1;
+	}
+	
+	auto pass = LLVMCreatePassManager();
+	LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
+	LLVMAddConstantPropagationPass(pass);
+	LLVMAddInstructionCombiningPass(pass);
+	LLVMAddPromoteMemoryToRegisterPass(pass);
+	LLVMAddGVNPass(pass);
+	LLVMAddCFGSimplificationPass(pass);
+	LLVMRunPassManager(pass, _module);
+	
+	writefln("The following module has been generated for the fibonacci series:\n");
+	LLVMDumpModule(_module);
+	
+	writeln();
+	
+	int n_exec= 10;
+	if(args.length > 1)
+	{
+		n_exec = to!int(args[1]);
+	}
+	else
+	{
+		writefln("; Argument for fib missing on command line, using default:  \"%d\"", n_exec);
+	}
+	
+	auto exec_args = [ LLVMCreateGenericValueOfInt(LLVMInt32Type(), n_exec, cast(LLVMBool) 0) ];
+	writefln("; Running (jit-compiled) fib(%d)...", n_exec);
+	auto exec_res = LLVMRunFunction(engine, f, 1, exec_args.ptr);
+	writefln("; fib(%d) = %d", n_exec, LLVMGenericValueToInt(exec_res, 0));
+	
+	LLVMDisposePassManager(pass);
+	LLVMDisposeBuilder(builder);
+	LLVMDisposeExecutionEngine(engine);
+	return 0;	
+}
+```
 
 LLVM versions
 -------------
