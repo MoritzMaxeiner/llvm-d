@@ -6,9 +6,7 @@ private
 	
 	import llvm.util.memory;
 
-	import llvm.c.types;
-	import llvm.c.constants;
-	import llvm.c.functions;
+	import llvm.d.llvm_c;
 	
 	import llvm.d.ir.llvmcontext;
 	import llvm.d.ir.type;

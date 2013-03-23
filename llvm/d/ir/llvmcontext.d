@@ -6,9 +6,7 @@ private
 	import core.sync.mutex;
 	import std.conv : to;
 
-	import llvm.c.types;
-	import llvm.c.constants;
-	import llvm.c.functions;
+	import llvm.d.llvm_c;
 
 	import llvm.util.memory;
 }

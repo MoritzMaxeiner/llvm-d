@@ -3,5 +3,5 @@ module llvm.all;
 
 public
 {
-	import llvm.c.all;
+	import llvm.d.llvm_c;
 }

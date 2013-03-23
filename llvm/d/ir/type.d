@@ -3,9 +3,7 @@ module llvm.d.ir.type;
 
 private
 {
-	import llvm.c.types;
-	import llvm.c.constants;
-	import llvm.c.functions;
+	import llvm.d.llvm_c;
 
 	import llvm.d.ir.llvmcontext;
 	import llvm.d.ir.derivedtypes;
