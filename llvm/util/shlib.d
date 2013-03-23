@@ -22,6 +22,8 @@ version(Posix)
 		string libPrefix = "lib";
 		string libSuffix = "so";
 	}
+
+	pragma(lib, "dl");
 }
 else version(Windows)
 {

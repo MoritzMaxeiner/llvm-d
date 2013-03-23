@@ -29,8 +29,7 @@ private void loadSymbols(SharedLib library)
 					      ~ symbol ~ ")(\"" ~ symbol ~ "\");\n";
 			      }
 			      return null;
-		      }
-		      ));
+		      }));
 }
 
 public struct LLVM
@@ -90,9 +89,7 @@ public struct LLVM
 
 shared static this()
 {
-	LLVM.load(libPrefix ~ "LLVM-" ~
-	     to!string(LLVM_Version) ~ (LLVM_Version == LLVM_Trunk ? "svn" : "")
-	     ~ "." ~ libSuffix);
+	LLVM.load(null);
 }
 
 shared static ~this()

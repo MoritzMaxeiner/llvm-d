@@ -77,10 +77,10 @@ License
 **llvm-d** is released under the MIT license, see LICENSE.txt
 or [here](http://opensource.org/licenses/MIT) for more details.
 
-**llvm-d** uses code fragments from LLVM's C API headers to
-provide its bindings to LLVM. The above paragraph does not
-apply to these code fragments as they are a redistribution of
-LLVM source code.
+**llvm-d** uses source code from LLVM that has been ported to D
+both for accessing LLVM's C API as well as in recreating
+LLVM's class hierarchy in D. The above paragraph does not apply
+to that source code - it is a redistribution of LLVM source code.
 
 **LLVM is Copyright (c) 2003-2013 University of Illinois at Urbana-Champaign.
 All rights reserved.**
