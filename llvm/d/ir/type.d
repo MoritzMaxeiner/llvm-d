@@ -340,10 +340,8 @@ class Type
 			case X86_FP80TyID: return 64;
 			case FP128TyID: return 113;
 			case PPC_FP128TyID: return -1;
-			default: assert(false, "unkown fp type");
+			default: assert(false, "unknown fp type");
 		}
-		
-		return 0;
 	}
 
 	public Type getScalarType()
