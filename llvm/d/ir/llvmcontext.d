@@ -11,51 +11,35 @@ private
 	import llvm.util.memory;
 }
 
-private __gshared immutable(char)*[] global_c_strings = null;
-private __gshared Mutex global_c_strings_mutex = null;
+private __gshared LLVMContext GlobalContext = null;
 
-shared static this()
+version(DEIMOS_LLVM) shared static this()
 {
-	global_c_strings_mutex = new Mutex();
+	GlobalContext = new LLVMContext(LLVMGetGlobalContext());
 }
-
-shared static ~this()
-{
-	foreach(c_string; global_c_strings)
-	{
-		destruct(c_string);
-	}
-}
-
-/+ List of how the LLVM C API functions are
- + being wrapped in the D API:
- + LLVMContextCreate -> new LLVMContext
- + LLVMContextDispose -> delete LLVMContext (if not global context)
- + LLVMGetMDKindIDInContext -> getMDKindID
- + LLVMGetGlobalContext -> getGlobalContext
- + LLVMGetMDKindID -> None, use getGlobalContext().getMDKindID +/
 
 class LLVMContext
 {
 	private LLVMContextRef _cref = null;
-
-	private immutable(char)*[] c_strings = null;
-	private Mutex c_strings_mutex = null;
+	
+	// Data that the real context this instance
+	// represents must see as immutable during
+	// its lifetime (i.e. data that was creating
+	// by copying D garbage collected data and for which
+	// either knowing if or when LLVM releases it is impossible
+	// or it is known that it will never do so).
+	private immutable(void)*[] ImmutableData = null;
 
 	@property
 	public LLVMContextRef cref() { return this._cref; }
-	
-	void destructOnCollection(immutable(char)* c_string)
-	{
-		try { this.c_strings_mutex.lock(); }
-		catch(SyncException e) {}
-		this.c_strings ~= c_string;
-		try { this.c_strings_mutex.unlock(); }
-		catch(SyncException e) {}
-	}
 
-	@property
-	public bool isGlobal() { return LLVMGetGlobalContext() == this._cref; }
+	public void treatAsImmutable(T)(T* data)
+	{
+		synchronized(this)
+		{
+			this.ImmutableData ~= cast(immutable(void*)) data;
+		}
+	}
 
 	override bool opEquals(Object obj)
 	{
@@ -66,45 +50,26 @@ class LLVMContext
 	package this(LLVMContextRef _cref)
 	{
 		this._cref = _cref;
-		this.c_strings_mutex = new Mutex();
 	}
 
 	public this()
 	{
 		this._cref = LLVMContextCreate();
-		this.c_strings_mutex = new Mutex();
 	}
 
 
 	~this()
 	{
-		if(!this.isGlobal)
+		// Do not attempt to dispose LLVM's
+		// global context.
+		if(LLVMGetGlobalContext() != this._cref)
 		{
 			LLVMContextDispose(this._cref);
-			/+ After the LLVMContext is gone
-			 + we can free the memory of all
-			 + the strings it needed to see
-			 + as immutable. +/
-			foreach(c_string; this.c_strings)
-			{
-				destruct(c_string);
-			}
 		}
-		else
+		
+		foreach(data; this.ImmutableData)
 		{
-			/+ If the LLVMContext is LLVM's
-			 + global context the c_strings
-			 + should be freed when that global context
-			 + gets deleted. Since there is no way
-			 + to know when that will happen we have to
-			 + keep them around until program termination,
-			 + potentially leaking memory.
-			 + Avoidable by not using LLVM's global context. +/
-			try { global_c_strings_mutex.lock(); }
-			catch(SyncException e) {}
-			global_c_strings ~= this.c_strings;
-			try { global_c_strings_mutex.unlock(); }
-			catch(SyncException e) {}
+			destruct(data);
 		}
 	}
 	
@@ -115,7 +80,7 @@ class LLVMContext
 		 + so we habe to keep it around as long as this
 		 + context exists. +/
 		auto c_name = name.toCString();
-		this.destructOnCollection(c_name);
+		this.treatAsImmutable(c_name);
 		return LLVMGetMDKindIDInContext(
 			this._cref,
 			c_name,
@@ -126,5 +91,19 @@ class LLVMContext
 
 LLVMContext getGlobalContext()
 {
-	return new LLVMContext(LLVMGetGlobalContext());
+	version(DEIMOS_LLVM) {} else
+	{
+		if(GlobalContext is null)
+		{
+			synchronized
+			{
+				if(GlobalContext is null)
+				{
+					GlobalContext = new LLVMContext(LLVMGetGlobalContext());
+				}
+			}
+		}
+	}
+
+	return GlobalContext;
 }

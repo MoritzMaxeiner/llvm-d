@@ -14,14 +14,14 @@ private
 
 class IntegerType : Type
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	package this(LLVMContext C, uint NumBits)
 	{
-		super(LLVMIntTypeInContext(C.cref, NumBits));
+		super(C, LLVMIntTypeInContext(C.cref, NumBits));
 	}
 
 	public uint getBitWidth()
@@ -42,9 +42,9 @@ class IntegerType : Type
 
 class CompositeType : Type
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	package this(LLVMContext C, TypeID tid)
@@ -53,40 +53,40 @@ class CompositeType : Type
 	}
 }
 
-private Type LLVMTypeRef_to_Type(LLVMTypeRef type)
+package Type LLVMTypeRef_to_Type(LLVMContext C, LLVMTypeRef type)
 {
 	auto typeID = LLVMGetTypeKind(type);
 	
 	switch(typeID)
 	{
-		case VoidTyID: return new Type(type);
-		case HalfTyID: return new Type(type);
-		case FloatTyID: return new Type(type);
-		case DoubleTyID: return new Type(type);
-		case X86_FP80TyID: return new Type(type);
-		case FP128TyID: return new Type(type);
-		case PPC_FP128TyID: return new Type(type);
-		case LabelTyID: return new Type(type);
-		case MetadataTyID: return new Type(type);
-		case X86_MMXTyID: return new Type(type); // new VectorType ???
-		case IntegerTyID: return new IntegerType(type);
-		case FunctionTyID: return new FunctionType(type);
-		case StructTyID: return new StructType(type);
-		case ArrayTyID: return new ArrayType(type);
-		case PointerTyID: return new PointerType(type);
-		case VectorTyID: return new VectorType(type);
+		case VoidTyID: return new Type(C, type);
+		case HalfTyID: return new Type(C, type);
+		case FloatTyID: return new Type(C, type);
+		case DoubleTyID: return new Type(C, type);
+		case X86_FP80TyID: return new Type(C, type);
+		case FP128TyID: return new Type(C, type);
+		case PPC_FP128TyID: return new Type(C, type);
+		case LabelTyID: return new Type(C, type);
+		case MetadataTyID: return new Type(C, type);
+		case X86_MMXTyID: return new Type(C, type); // new VectorType ???
+		case IntegerTyID: return new IntegerType(C, type);
+		case FunctionTyID: return new FunctionType(C, type);
+		case StructTyID: return new StructType(C, type);
+		case ArrayTyID: return new ArrayType(C, type);
+		case PointerTyID: return new PointerType(C, type);
+		case VectorTyID: return new VectorType(C, type);
 		default: return null;
 	}
 }
 
 class SequentialType : CompositeType
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
-	package this(TypeID TID, Type ElType)
+	package this(LLVMContext C, TypeID TID, Type ElType)
 	{
 		super(ElType.getContext(), TID);
 	}
@@ -94,15 +94,15 @@ class SequentialType : CompositeType
 	public Type getElementType()
 	{
 		auto type = LLVMGetElementType(this._cref);
-		return LLVMTypeRef_to_Type(type);
+		return LLVMTypeRef_to_Type(this.context, type);
 	}
 }
 
 class VectorType : SequentialType
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	public uint getNumElements()
@@ -115,7 +115,7 @@ class VectorType : SequentialType
 	
 	public static VectorType get(Type ElementType, uint NumElements)
 	{
-		return new VectorType(LLVMVectorType(ElementType.cref, NumElements));
+		return new VectorType(ElementType.context, LLVMVectorType(ElementType.cref, NumElements));
 	}
 	
 	public static VectorType getInteger(VectorType VTy)
@@ -165,9 +165,9 @@ enum : AddressSpace
 
 class PointerType : SequentialType
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	public uint getAddressSpace()
@@ -175,7 +175,7 @@ class PointerType : SequentialType
 	
 	public static PointerType get(Type ElementType, uint AddrSpace)
 	{
-		return new PointerType(LLVMPointerType(ElementType.cref, AddrSpace));
+		return new PointerType(ElementType.context, LLVMPointerType(ElementType.cref, AddrSpace));
 	}
 	
 	public static PointerType getUnqual(Type ElementType)
@@ -191,9 +191,9 @@ class PointerType : SequentialType
 
 class ArrayType : SequentialType
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	public uint getNumElements()
@@ -201,7 +201,7 @@ class ArrayType : SequentialType
 	
 	public static ArrayType get(Type ElementType, uint NumElements)
 	{
-		return new ArrayType(LLVMArrayType(ElementType.cref, NumElements));
+		return new ArrayType(ElementType.context, LLVMArrayType(ElementType.cref, NumElements));
 	}
 	
 	public static bool isValidElementType(Type ElemTy)
@@ -213,9 +213,9 @@ class ArrayType : SequentialType
 
 class StructType : CompositeType
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	public bool isPacked()
@@ -311,14 +311,14 @@ class StructType : CompositeType
 		auto element = elements[N];
 		destruct(elements);
 		
-		return LLVMTypeRef_to_Type(element);
+		return LLVMTypeRef_to_Type(this.context, element);
 	}
 	
 	public static StructType create(LLVMContext Context, string Name)
 	{
 		auto c_name = Name.toCString();
-		Context.destructOnCollection(c_name);
-		return new StructType(LLVMStructCreateNamed(Context.cref, c_name));
+		Context.treatAsImmutable(c_name);
+		return new StructType(Context, LLVMStructCreateNamed(Context.cref, c_name));
 	}
 	
 	public static StructType create(LLVMContext Context)
@@ -373,7 +373,7 @@ class StructType : CompositeType
 			destruct(elements);
 		}
 
-		return new StructType(type);
+		return new StructType(Context, type);
 	}
 	
 	public static StructType get(LLVMContext Context, bool isPacked = false)
@@ -401,9 +401,9 @@ class StructType : CompositeType
 
 class FunctionType : Type
 {
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
-		super(_cref);
+		super(C, _cref);
 	}
 	
 	public bool isVarArg()
@@ -414,7 +414,7 @@ class FunctionType : Type
 	public Type getReturnType()
 	{
 		auto type = LLVMGetReturnType(this._cref);
-		return LLVMTypeRef_to_Type(type);
+		return LLVMTypeRef_to_Type(this.context, type);
 	}
 	
 	// param_iterator param_begin ()
@@ -427,7 +427,7 @@ class FunctionType : Type
 		auto param = params[i];
 		destruct(params);
 		
-		return LLVMTypeRef_to_Type(param);
+		return LLVMTypeRef_to_Type(this.context, param);
 	}
 	
 	public uint getNumParams()
@@ -446,7 +446,7 @@ class FunctionType : Type
 		{
 			destruct(params);
 		}
-		return new FunctionType(type);
+		return new FunctionType(Result.context, type);
 	}
 	
 	public static FunctionType get(Type Result, bool isVarArg)

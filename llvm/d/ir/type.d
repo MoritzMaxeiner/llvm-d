@@ -40,6 +40,7 @@ enum : TypeID
 class Type
 {
 	protected LLVMTypeRef _cref = null;
+	package LLVMContext context = null;
 
 	@property
 	LLVMTypeRef cref() { return this._cref; }
@@ -50,13 +51,15 @@ class Type
 			((cast(Type) obj)._cref == this._cref);
 	}
 
-	package this(LLVMTypeRef _cref)
+	package this(LLVMContext C, LLVMTypeRef _cref)
 	{
+		this.context = C;
 		this._cref = _cref;
 	}
 	
 	package this(LLVMContext C, TypeID tid)
 	{
+		this.context = C;
 		auto type = getPrimitiveType(C, tid);
 		this._cref = type._cref;
 	}
@@ -90,7 +93,7 @@ class Type
 	// void dump()
 
 	public LLVMContext getContext()
-	{ return new LLVMContext(LLVMGetTypeContext(this._cref)); }
+	{ return this.context; }
 
 	public TypeID getTypeID()
 	{ return LLVMGetTypeKind(this._cref); }
@@ -526,91 +529,91 @@ class Type
 	}
 
 	static Type getVoidTy(LLVMContext C)
-	{ return new Type(LLVMVoidTypeInContext(C.cref)); }
+	{ return new Type(C, LLVMVoidTypeInContext(C.cref)); }
 
 	static Type getLabelTy(LLVMContext C)
-	{ return new Type(LLVMLabelTypeInContext(C.cref)); }
+	{ return new Type(C, LLVMLabelTypeInContext(C.cref)); }
 
 	static Type getHalfTy(LLVMContext C)
-	{ return new Type(LLVMHalfTypeInContext(C.cref)); }
+	{ return new Type(C, LLVMHalfTypeInContext(C.cref)); }
 
 	static Type getFloatTy(LLVMContext C)
-	{ return new Type(LLVMFloatTypeInContext(C.cref)); }
+	{ return new Type(C, LLVMFloatTypeInContext(C.cref)); }
 
 	static Type getDoubleTy(LLVMContext C)
-	{ return new Type(LLVMDoubleTypeInContext(C.cref)); }
+	{ return new Type(C, LLVMDoubleTypeInContext(C.cref)); }
 	
 	/+static Type getMetadataTy(LLVMContext C)
-	{ return new Type(LLVMMetadataTypeInContext(C.cref)); }+/
+	{ return new Type(C, LLVMMetadataTypeInContext(C.cref)); }+/
 
 	static Type getX86_FP80Ty(LLVMContext C)
-	{ return new Type(LLVMX86FP80TypeInContext(C.cref)); }
+	{ return new Type(C, LLVMX86FP80TypeInContext(C.cref)); }
 
 	static Type getFP128Ty(LLVMContext C)
-	{ return new Type(LLVMFP128TypeInContext(C.cref)); }
+	{ return new Type(C, LLVMFP128TypeInContext(C.cref)); }
 
 	static Type getPPC_FP128Ty(LLVMContext C)
-	{ return new Type(LLVMPPCFP128TypeInContext(C.cref)); }
+	{ return new Type(C, LLVMPPCFP128TypeInContext(C.cref)); }
 
 	static Type getX86_MMXTy(LLVMContext C)
-	{ return new Type(LLVMX86MMXTypeInContext(C.cref)); }
+	{ return new Type(C, LLVMX86MMXTypeInContext(C.cref)); }
 
 	static Type getIntNTy(LLVMContext C, uint N)
-	{ return new IntegerType(LLVMIntTypeInContext(C.cref, N)); }
+	{ return new IntegerType(C, LLVMIntTypeInContext(C.cref, N)); }
 
 	static Type getInt1Ty(LLVMContext C)
-	{ return new IntegerType(LLVMInt1TypeInContext(C.cref)); }
+	{ return new IntegerType(C, LLVMInt1TypeInContext(C.cref)); }
 
 	static Type getInt8Ty(LLVMContext C)
-	{ return new IntegerType(LLVMInt8TypeInContext(C.cref)); }
+	{ return new IntegerType(C, LLVMInt8TypeInContext(C.cref)); }
 
 	static Type getInt16Ty(LLVMContext C)
-	{ return new IntegerType(LLVMInt16TypeInContext(C.cref)); }
+	{ return new IntegerType(C, LLVMInt16TypeInContext(C.cref)); }
 
 	static Type getInt32Ty(LLVMContext C)
-	{ return new IntegerType(LLVMInt32TypeInContext(C.cref)); }
+	{ return new IntegerType(C, LLVMInt32TypeInContext(C.cref)); }
 
 	static Type getInt64Ty(LLVMContext C)
-	{ return new IntegerType(LLVMInt64TypeInContext(C.cref)); }
+	{ return new IntegerType(C, LLVMInt64TypeInContext(C.cref)); }
 
 	static Type getHalfPtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMHalfTypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMHalfTypeInContext(C.cref), AS)); }
 
 	static Type getFloatPtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMFloatTypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMFloatTypeInContext(C.cref), AS)); }
 
 	static Type getDoublePtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMDoubleTypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMDoubleTypeInContext(C.cref), AS)); }
 
 	static Type getX86_FP80PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMX86FP80TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMX86FP80TypeInContext(C.cref), AS)); }
 
 	static Type getFP128PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMFP128TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMFP128TypeInContext(C.cref), AS)); }
 
 	static Type getPPC_FP128PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMPPCFP128TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMPPCFP128TypeInContext(C.cref), AS)); }
 
 	static Type getX86_MMXPtrTy (LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMX86MMXTypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMX86MMXTypeInContext(C.cref), AS)); }
 
 	static Type getIntNPtrTy(LLVMContext C, uint N, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMIntTypeInContext(C.cref, N), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMIntTypeInContext(C.cref, N), AS)); }
 
 	static Type getInt1PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMInt1TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMInt1TypeInContext(C.cref), AS)); }
 
 	static Type getInt8PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMInt8TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMInt8TypeInContext(C.cref), AS)); }
 
 	static Type getInt16PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMInt16TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMInt16TypeInContext(C.cref), AS)); }
 
 	static Type getInt32PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMInt32TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMInt32TypeInContext(C.cref), AS)); }
 
 	static Type getInt64PtrTy(LLVMContext C, uint AS = 0)
-	{ return new Type(LLVMPointerType(LLVMInt64TypeInContext(C.cref), AS)); }
+	{ return new Type(C, LLVMPointerType(LLVMInt64TypeInContext(C.cref), AS)); }
 }
 
 
