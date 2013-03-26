@@ -9,9 +9,11 @@ private
 
 	import llvm.d.llvm_c;
 
-	import llvm.d.ir.llvmcontext;
+	import llvm.d.ir.llvmcontext : LLVMContext;
 	import llvm.d.ir.type : Type;
 	import llvm.d.ir.derivedtypes : LLVMTypeRef_to_Type;
+	
+	import llvm.d.ir.user : User;
 }
 
 class Value
@@ -481,7 +483,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 		}
 		else
 		{
-			//return new User(type, value);
+			return new User(type, value);
 		}
 	}
 	
