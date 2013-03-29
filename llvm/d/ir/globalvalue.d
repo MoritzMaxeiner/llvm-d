@@ -69,7 +69,7 @@ class GlobalValue : Constant
 		LLVMSetAlignment(this._cref, Align);
 	}
 
-	// bool hasUnnamedAddr () const
+	// bool hasUnnamedAddr ()
 	// void setUnnamedAddr (bool Val)
 
 	public VisibilityTypes getVisibility()
@@ -105,39 +105,118 @@ class GlobalValue : Constant
 	public override PointerType getType()
 	{ return cast(PointerType) this.type; }
 
-	// bool hasExternalLinkage () const
-	// bool hasAvailableExternallyLinkage () const
-	// bool hasLinkOnceLinkage () const
-	// bool hasLinkOnceODRAutoHideLinkage () const
-	// bool hasWeakLinkage () const
-	// bool hasAppendingLinkage () const
-	// bool hasInternalLinkage () const
-	// bool hasPrivateLinkage () const
-	// bool hasLinkerPrivateLinkage () const
-	// bool hasLinkerPrivateWeakLinkage () const
-	// bool hasLocalLinkage () const
-	// bool hasDLLImportLinkage () const
-	// bool hasDLLExportLinkage () const
-	// bool hasExternalWeakLinkage () const
-	// bool hasCommonLinkage () const
-	// void setLinkage (LinkageTypes LT)
-	// LinkageTypes 	getLinkage () const
-	// bool isDiscardableIfUnused () const
-	// bool mayBeOverridden () const
-	// bool isWeakForLinker () const
+	public bool hasExternalLinkage()
+	{ return this.isExternalLinkage(this.getLinkage()); }
+
+	public bool hasAvailableExternallyLinkage()
+	{ return this.isAvailableExternallyLinkage(this.getLinkage()); }
+	
+	public bool hasLinkOnceLinkage ()
+	{ return this.isLinkOnceLinkage(this.getLinkage()); }
+
+	static if(LLVM_Version >= 3.2)
+	public bool hasLinkOnceODRAutoHideLinkage ()
+	{ return this.isLinkOnceODRAutoHideLinkage(this.getLinkage()); }
+	
+	public bool hasWeakLinkage ()
+	{ return this.isWeakLinkage(this.getLinkage()); }
+	
+	public bool hasAppendingLinkage ()
+	{ return this.isAppendingLinkage(this.getLinkage()); }
+	
+	public bool hasInternalLinkage ()
+	{ return this.isInternalLinkage(this.getLinkage()); }
+	
+	public bool hasPrivateLinkage ()
+	{ return this.isPrivateLinkage(this.getLinkage()); }
+	
+	public bool hasLinkerPrivateLinkage ()
+	{ return this.isLinkerPrivateLinkage(this.getLinkage()); }
+	
+	public bool hasLinkerPrivateWeakLinkage ()
+	{ return this.isLinkerPrivateWeakLinkage(this.getLinkage()); }
+	
+	static if(LLVM_Version < 3.2)
+	public bool hasLinkerPrivateWeakDefAutoLinkage(LinkageTypes Linkage)
+	{ return this.isLinkerPrivateWeakDefAutoLinkage(this.getLinkage()); }
+
+	public bool hasLocalLinkage ()
+	{ return this.isLocalLinkage(this.getLinkage()); }
+	
+	public bool hasDLLImportLinkage ()
+	{ return this.isDLLImportLinkage(this.getLinkage()); }
+	
+	public bool hasDLLExportLinkage ()
+	{ return this.isDLLExportLinkage(this.getLinkage()); }
+	
+	public bool hasExternalWeakLinkage ()
+	{ return this.isExternalWeakLinkage(this.getLinkage()); }
+	
+	public bool hasCommonLinkage ()
+	{ return this.isCommonLinkage(this.getLinkage()); }
+
+	public void setLinkage(LinkageTypes LT)
+	{ LLVMSetLinkage(this._cref, LT); }
+
+	public LinkageTypes getLinkage()
+	{ return cast(LinkageTypes) LLVMGetLinkage(this._cref); }
+
+	public bool isDiscardableIfUnused()
+	{ return GlobalValue.isDiscardableIfUnused(this.getLinkage()); }
+
+	public bool mayBeOverridden()
+	{ return GlobalValue.mayBeOverridden(this.getLinkage()); }
+
+	public bool isWeakForLinker()
+	{ return GlobalValue.isWeakForLinker(this.getLinkage()); }
+
 	// virtual void 	copyAttributesFrom (const GlobalValue *Src)
 	// virtual void 	destroyConstant ()
-	// bool isDeclaration () const
+
+	// TODO: Uncomment once GlobalVariable, GlobalAlias and Function are implemented
+	/+public bool isDeclaration()
+	{
+		// Globals are definitions if they have an initializer.
+		if(is(this : GlobalVariable))
+		{
+			return (cast(GlobalVariable) this).getNumOperands() == 0;
+		}
+		
+		// Functions are definitions if they have a body.
+		if(is(this : Function))
+		{
+			return (cast(Function) this).empty();
+		}
+		
+		// Aliases are always definitions.
+		if(is(this : GlobalAlias))
+		{
+			return false;
+		}
+		
+		/+ Should not be possible, as GlobalValue only has the
+		 + above mentioned three subclasses and it itself doesn't
+		 + get instantiated. +/
+		 throw new Exception("Unknown subclass of GlobalValue");
+	}+/
+
 	// virtual void 	removeFromParent ()=0
 	// virtual void 	eraseFromParent ()=0
-	// Module * 	getParent ()
-	// const Module * 	getParent () const
-	// bool isMaterializable () const
-	// bool isDematerializable () const
+
+	// TODO: Uncomment once Module is implemented
+	/+public Module getParent()
+	{ return new Module(this.getContext(), LLVMGetGlobalParent(this._cref)); }+/
+
+	// bool isMaterializable ()
+	// bool isDematerializable ()
 	// bool Materialize (std::string *ErrInfo=0)
 	// void Dematerialize ()
-	// static LinkageTypes 	getLinkOnceLinkage (bool ODR)
-	// static LinkageTypes 	getWeakLinkage (bool ODR)
+
+	public static LinkageTypes getLinkOnceLinkage(bool ODR)
+	{ return ODR ? LinkageTypes.LinkOnceODR : LinkageTypes.LinkOnceAny; }
+
+	public static LinkageTypes getWeakLinkage(bool ODR)
+	{ return ODR ? LinkageTypes.WeakODR : LinkageTypes.WeakAny; }
 
 	public static bool isExternalLinkage(LinkageTypes Linkage)
 	{ return Linkage == LinkageTypes.External; }
@@ -186,10 +265,17 @@ class GlobalValue : Constant
 	
 	public static bool isLocalLinkage(LinkageTypes Linkage)
 	{
+		static if(LLVM_Version >= 3.2)
 		return (Linkage == LinkageTypes.Internal) ||
 		       (Linkage == LinkageTypes.Private) ||
 		       (Linkage == LinkageTypes.LinkerPrivate) ||
 		       (Linkage == LinkageTypes.LinkerPrivateWeak);
+		else
+		return (Linkage == LinkageTypes.Internal) ||
+		       (Linkage == LinkageTypes.Private) ||
+		       (Linkage == LinkageTypes.LinkerPrivate) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeakDefAuto);
 	}
 	
 	public static bool isDLLImportLinkage(LinkageTypes Linkage)
@@ -204,7 +290,48 @@ class GlobalValue : Constant
 	public static bool isCommonLinkage(LinkageTypes Linkage)
 	{ return Linkage == LinkageTypes.Common; }
 	
-	// static bool isDiscardableIfUnused(LinkageTypes Linkage)
-	// static bool mayBeOverridden(LinkageTypes Linkage)
-	// static bool isWeakForLinker(LinkageTypes Linkage)
+	public static bool isDiscardableIfUnused(LinkageTypes Linkage)
+	{ return isLinkOnceLinkage(Linkage) || isLocalLinkage(Linkage); }
+
+	public static bool mayBeOverridden(LinkageTypes Linkage)
+	{
+		static if(LLVM_Version >= 3.2)
+		return (Linkage == LinkageTypes.WeakAny) ||
+		       (Linkage == LinkageTypes.LinkOnceAny) ||
+		       (Linkage == LinkageTypes.Common) ||
+		       (Linkage == LinkageTypes.ExternalWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeak);
+		else
+		return (Linkage == LinkageTypes.WeakAnyLinkage) ||
+		       (Linkage == LinkageTypes.LinkOnceAny) ||
+		       (Linkage == LinkageTypes.Common) ||
+		       (Linkage == LinkageTypes.ExternalWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeakDefAuto);
+	}
+
+	public static bool isWeakForLinker(LinkageTypes Linkage)
+	{
+		static if(LLVM_Version >= 3.2)
+		return (Linkage == LinkageTypes.AvailableExternally) ||
+		       (Linkage == LinkageTypes.WeakAny) ||
+		       (Linkage == LinkageTypes.WeakODR) ||
+		       (Linkage == LinkageTypes.LinkOnceAny) ||
+		       (Linkage == LinkageTypes.LinkOnceODR) ||
+		       (Linkage == LinkageTypes.LinkOnceODRAutoHide) ||
+		       (Linkage == LinkageTypes.Common) ||
+		       (Linkage == LinkageTypes.ExternalWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeak);
+		else
+		return (Linkage == LinkageTypes.AvailableExternally) ||
+		       (Linkage == LinkageTypes.WeakAny) ||
+		       (Linkage == LinkageTypes.WeakODR) ||
+		       (Linkage == LinkageTypes.LinkOnceAny) ||
+		       (Linkage == LinkageTypes.LinkOnceODR) ||
+		       (Linkage == LinkageTypes.LinkOnceODRAutoHide) ||
+		       (Linkage == LinkageTypes.Common) ||
+		       (Linkage == LinkageTypes.ExternalWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeak) ||
+		       (Linkage == LinkageTypes.LinkerPrivateWeakDefAuto);
+	}
 }
