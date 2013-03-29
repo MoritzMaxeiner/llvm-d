@@ -14,6 +14,10 @@ private
 	import llvm.d.ir.derivedtypes : LLVMTypeRef_to_Type;
 	
 	import llvm.d.ir.user : User;
+	import llvm.d.ir.constant : Constant;
+	import llvm.d.ir.constants : UndefValue;
+	import llvm.d.ir.globalvalue : GlobalValue;
+	import llvm.d.ir.globalalias : GlobalAlias;
 }
 
 class Value
@@ -242,7 +246,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 				}
 				else if(LLVMIsAGlobalAlias(value) !is null)
 				{
-					//return new GlobalAlias(type, value);
+					return new GlobalAlias(type, value);
 				}
 				else if(LLVMIsAGlobalVariable(value) !is null)
 				{
@@ -250,16 +254,16 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 				}
 				else
 				{
-					//return new GlobalValue(type, value);
+					return new GlobalValue(type, value);
 				}
 			}
 			else if(LLVMIsAUndefValue(value) !is null)
 			{
-				//return new UndefValue(type, value);
+				return new UndefValue(type, value);
 			}
 			else
 			{
-				//return new Constant(type, value);
+				return new Constant(type, value);
 			}
 		}
 		else if(LLVMIsAInstruction(value) !is null)
@@ -507,9 +511,9 @@ User -- implemented
 		ConstantPointerNull
 		ConstantStruct
 		ConstantVector
-		GlobalValue -- wip
+		GlobalValue -- implemented
 			Function
-			GlobalAlias
+			GlobalAlias -- implemented
 			GlobalVariable
 		UndefValue -- implemented
 	Instruction
