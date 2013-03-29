@@ -9,32 +9,31 @@ private
 	import llvm.d.ir.derivedtypes;
 }
 
-alias LLVMTypeKind TypeID;
-enum : TypeID
+enum TypeID : LLVMTypeKind
 {
-	VoidTyID = LLVMVoidTypeKind,
-	HalfTyID = LLVMHalfTypeKind,
-	FloatTyID = LLVMFloatTypeKind,
-	DoubleTyID = LLVMDoubleTypeKind,
-	X86_FP80TyID = LLVMX86_FP80TypeKind,
-	FP128TyID = LLVMFP128TypeKind,
-	PPC_FP128TyID = LLVMPPC_FP128TypeKind,
-	LabelTyID = LLVMLabelTypeKind,
-	MetadataTyID = LLVMMetadataTypeKind,
-	X86_MMXTyID = LLVMX86_MMXTypeKind,
-	IntegerTyID = LLVMIntegerTypeKind,
-	FunctionTyID = LLVMFunctionTypeKind,
-	StructTyID = LLVMStructTypeKind,
-	ArrayTyID = LLVMArrayTypeKind,
-	PointerTyID = LLVMPointerTypeKind,
-	VectorTyID = LLVMVectorTypeKind,
+	Void = LLVMVoidTypeKind,
+	Half = LLVMHalfTypeKind,
+	Float = LLVMFloatTypeKind,
+	Double = LLVMDoubleTypeKind,
+	X86_FP80T = LLVMX86_FP80TypeKind,
+	FP128 = LLVMFP128TypeKind,
+	PPC_FP128 = LLVMPPC_FP128TypeKind,
+	Label = LLVMLabelTypeKind,
+	Metadata = LLVMMetadataTypeKind,
+	X86_MMX = LLVMX86_MMXTypeKind,
+	Integer = LLVMIntegerTypeKind,
+	Function = LLVMFunctionTypeKind,
+	Struct = LLVMStructTypeKind,
+	Array = LLVMArrayTypeKind,
+	Pointer = LLVMPointerTypeKind,
+	Vector = LLVMVectorTypeKind,
 	
 	NumTypeIDs/+,
 	Doesn't work, because the items
 	of LLVMTypeKind are not properly ordered
 	the way the original items of TypeID are.
-	LastPrimitiveTyID = X86_MMXTyID,
-	FirstDerivedTyID = IntegerTyID+/
+	LastPrimitive = X86_MMX,
+	FirstDerived = Integer+/
 }
 
 class Type
@@ -96,56 +95,56 @@ class Type
 	{ return this.context; }
 
 	public TypeID getTypeID()
-	{ return LLVMGetTypeKind(this._cref); }
+	{ return cast(TypeID) LLVMGetTypeKind(this._cref); }
 
 	public bool isVoidTy()
-	{ return this.getTypeID() == VoidTyID; }
+	{ return this.getTypeID() == TypeID.Void; }
 
 	public bool isHalfTy()
-	{ return this.getTypeID() == HalfTyID; }
+	{ return this.getTypeID() == TypeID.Half; }
 
 	public bool isFloatTy()
-	{ return this.getTypeID() == FloatTyID; }
+	{ return this.getTypeID() == TypeID.Float; }
 
 	public bool isDoubleTy()
-	{ return this.getTypeID() == DoubleTyID; }
+	{ return this.getTypeID() == TypeID.Double; }
 
 	public bool isX86_FP80Ty()
-	{ return this.getTypeID() == X86_MMXTyID; }
+	{ return this.getTypeID() == TypeID.X86_MMX; }
 
 	public bool isFP128Ty()
-	{ return this.getTypeID() == FP128TyID; }
+	{ return this.getTypeID() == TypeID.FP128; }
 
 	public bool isPPC_FP128Ty()
-	{ return this.getTypeID() == PPC_FP128TyID; }
+	{ return this.getTypeID() == TypeID.PPC_FP128; }
 
 	public bool isFloatingPointTy()
 	{
 		auto typeID = this.getTypeID();
-		return (typeID == HalfTyID) ||
-		       (typeID == FloatTyID) ||
-		       (typeID == DoubleTyID) ||
-		       (typeID == X86_FP80TyID) ||
-		       (typeID == FP128TyID) ||
-		       (typeID == PPC_FP128TyID);
+		return (typeID == TypeID.Half) ||
+		       (typeID == TypeID.Float) ||
+		       (typeID == TypeID.Double) ||
+		       (typeID == TypeID.X86_FP80T) ||
+		       (typeID == TypeID.FP128) ||
+		       (typeID == TypeID.PPC_FP128);
 	}
 	
 	// const fltSemantics& getFltSemantics()
 
 	public bool isX86_MMXTy()
-	{ return this.getTypeID() == X86_MMXTyID; }
+	{ return this.getTypeID() == TypeID.X86_MMX; }
 	
 	public bool isFPOrFPVectorTy()
 	{ return this.getScalarType().isFloatingPointTy(); }
 
 	public bool isLabelTy()
-	{ return this.getTypeID() == LabelTyID; }
+	{ return this.getTypeID() == TypeID.Label; }
 
 	public bool isMetadataTy()
-	{ return this.getTypeID() == MetadataTyID; }
+	{ return this.getTypeID() == TypeID.Metadata; }
 
 	public bool isIntegerTy()
-	{ return this.getTypeID() == IntegerTyID; }
+	{ return this.getTypeID() == TypeID.Integer; }
 
 	public bool isIntegerTy(uint Bitwidth)
 	{ return is(this : IntegerType) && (cast(IntegerType) this).getBitWidth() == Bitwidth; }
@@ -154,22 +153,22 @@ class Type
 	{ return this.getScalarType().isIntegerTy(); }
 
 	public bool isFunctionTy()
-	{ return this.getTypeID() == FunctionTyID; }
+	{ return this.getTypeID() == TypeID.Function; }
 	
 	public bool isStructTy()
-	{ return this.getTypeID() == StructTyID; }
+	{ return this.getTypeID() == TypeID.Struct; }
 	
 	public bool isArrayTy()
-	{ return this.getTypeID() == ArrayTyID; }
+	{ return this.getTypeID() == TypeID.Array; }
 	
 	public bool isPointerTy()
-	{ return this.getTypeID() == PointerTyID; }
+	{ return this.getTypeID() == TypeID.Pointer; }
 	
 	public bool isPtrOrPtrVectorTy()
 	{ return this.getScalarType().isPointerTy(); }
 	
 	public bool isVectorTy()
-	{ return this.getTypeID() == VectorTyID; }
+	{ return this.getTypeID() == TypeID.Vector; }
 	
 	public bool canLosslesslyBitCastTo(Type Ty)
 	{
@@ -194,13 +193,13 @@ class Type
 			{
 				return (cast(VectorType) this).getBitWidth() == (cast(VectorType) Ty).getBitWidth();
 			}
-			else if((Ty.getTypeID() == X86_MMXTyID) && ((cast(VectorType) this).getBitWidth() == 64))
+			else if((Ty.getTypeID() == TypeID.X86_MMX) && ((cast(VectorType) this).getBitWidth() == 64))
 			{
 				return true;
 			}
 		}
 		
-		if((this.getTypeID() == X86_MMXTyID) &&
+		if((this.getTypeID() == TypeID.X86_MMX) &&
 		   is(Ty : VectorType) &&
 		   ((cast(VectorType) Ty).getBitWidth() == 64))
 		{
@@ -247,16 +246,16 @@ class Type
 	public bool isPrimitiveType()
 	{
 		auto type = this.getTypeID();
-		return (type == VoidTyID) ||
-		       (type == HalfTyID) ||
-		       (type == FloatTyID) ||
-		       (type == DoubleTyID) ||
-		       (type == X86_FP80TyID) ||
-		       (type == FP128TyID) ||
-		       (type == PPC_FP128TyID) ||
-		       (type == LabelTyID) ||
-		       (type == MetadataTyID) ||
-		       (type == X86_MMXTyID);
+		return (type == TypeID.Void) ||
+		       (type == TypeID.Half) ||
+		       (type == TypeID.Float) ||
+		       (type == TypeID.Double) ||
+		       (type == TypeID.X86_FP80T) ||
+		       (type == TypeID.FP128) ||
+		       (type == TypeID.PPC_FP128) ||
+		       (type == TypeID.Label) ||
+		       (type == TypeID.Metadata) ||
+		       (type == TypeID.X86_MMX);
 	}
 	
 	public bool isDerivedType()
@@ -265,38 +264,38 @@ class Type
 	public bool isFirstClassType()
 	{
 		auto typeID = this.getTypeID();
-		return (typeID != FunctionTyID) && (typeID != VoidTyID);
+		return (typeID != TypeID.Function) && (typeID != TypeID.Void);
 	}
 	
 	public bool isSingleValueType()
 	{
 		auto typeID = this.getTypeID();
-		return ((typeID != VoidTyID) && this.isPrimitiveType()) ||
-		       (typeID == IntegerTyID) || (typeID == PointerTyID) ||
-		       (typeID == VectorTyID);
+		return ((typeID != TypeID.Void) && this.isPrimitiveType()) ||
+		       (typeID == TypeID.Integer) || (typeID == TypeID.Pointer) ||
+		       (typeID == TypeID.Vector);
 	}
 	
 	public bool isAggregateType()
 	{
 		auto typeID = this.getTypeID();
-		return (typeID == StructTyID) || (typeID == ArrayTyID);
+		return (typeID == TypeID.Struct) || (typeID == TypeID.Array);
 	}
 
 	public bool isSized()
 	{
 		auto typeID = this.getTypeID();
 		// If it's a primitive, it is always sized.
-		if((typeID == IntegerTyID) || isFloatingPointTy() ||
-		   (typeID == PointerTyID) ||
-		   (typeID == X86_MMXTyID))
+		if((typeID == TypeID.Integer) || isFloatingPointTy() ||
+		   (typeID == TypeID.Pointer) ||
+		   (typeID == TypeID.X86_MMX))
 		{
 			return true;
 		}
 		
 		// If it is not something that can have a size (e.g. a function or label),
 		// it doesn't have a size.
-		if((typeID != StructTyID) && (typeID != ArrayTyID) &&
-		   (typeID != VectorTyID))
+		if((typeID != TypeID.Struct) && (typeID != TypeID.Array) &&
+		   (typeID != TypeID.Vector))
 		{
 			return false;
 		}
@@ -309,15 +308,15 @@ class Type
 	{
 		switch(this.getTypeID())
 		{
-			case HalfTyID: return 16;
-			case FloatTyID: return 32;
-			case DoubleTyID: return 64;
-			case X86_FP80TyID: return 80;
-			case FP128TyID: return 128;
-			case PPC_FP128TyID: return 128;
-			case X86_MMXTyID: return 64;
-			case IntegerTyID: return (cast(IntegerType) this).getBitWidth();
-			case VectorTyID: return (cast(VectorType) this).getBitWidth();
+			case TypeID.Half: return 16;
+			case TypeID.Float: return 32;
+			case TypeID.Double: return 64;
+			case TypeID.X86_FP80T: return 80;
+			case TypeID.FP128: return 128;
+			case TypeID.PPC_FP128: return 128;
+			case TypeID.X86_MMX: return 64;
+			case TypeID.Integer: return (cast(IntegerType) this).getBitWidth();
+			case TypeID.Vector: return (cast(VectorType) this).getBitWidth();
 			default: return 0;
 		}
 	}
@@ -337,12 +336,12 @@ class Type
 		auto typeID = this.getTypeID();
 		switch(typeID)
 		{
-			case HalfTyID: return 11;
-			case FloatTyID: return 24;
-			case DoubleTyID: return 53;
-			case X86_FP80TyID: return 64;
-			case FP128TyID: return 113;
-			case PPC_FP128TyID: return -1;
+			case TypeID.Half: return 11;
+			case TypeID.Float: return 24;
+			case TypeID.Double: return 53;
+			case TypeID.X86_FP80T: return 64;
+			case TypeID.FP128: return 113;
+			case TypeID.PPC_FP128: return -1;
 			default: assert(false, "unknown fp type");
 		}
 	}
@@ -429,7 +428,7 @@ class Type
 		return (cast(StructType) this).getElementType(N);
 	}
 	
-	public Type getSequentialElementType(uint N)
+	public Type getSequentialElementType()
 	in
 	{
 		assert(is(this : SequentialType), "Not sequential type");
@@ -513,17 +512,17 @@ class Type
 	{
 		switch(IDNumber)
 		{
-			case VoidTyID: return getVoidTy(C);
-			case HalfTyID: return getHalfTy(C);
-			case FloatTyID: return getFloatTy(C);
-			case DoubleTyID: return getDoubleTy(C);
-			case X86_FP80TyID: return getX86_FP80Ty(C);
-			case FP128TyID: return getFP128Ty(C);
-			case PPC_FP128TyID: return getPPC_FP128Ty(C);
-			case LabelTyID: return getLabelTy(C);
+			case TypeID.Void: return getVoidTy(C);
+			case TypeID.Half: return getHalfTy(C);
+			case TypeID.Float: return getFloatTy(C);
+			case TypeID.Double: return getDoubleTy(C);
+			case TypeID.X86_FP80T: return getX86_FP80Ty(C);
+			case TypeID.FP128: return getFP128Ty(C);
+			case TypeID.PPC_FP128: return getPPC_FP128Ty(C);
+			case TypeID.Label: return getLabelTy(C);
 			// "getMetadataTy" not implemented, LLVM C API function missing
-			/+case MetadataTyID: return getMetadataTy(C);+/
-			case X86_MMXTyID: return getX86_MMXTy(C);
+			/+case Metadata: return getMetadataTy(C);+/
+			case TypeID.X86_MMX: return getX86_MMXTy(C);
 			default: return null;
 		}
 	}

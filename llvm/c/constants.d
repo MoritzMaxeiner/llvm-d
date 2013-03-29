@@ -135,9 +135,8 @@ enum : LLVMTypeKind
 }
 
 mixin(MixinMap_VersionedEnum!(
-	      "LLVMLinkage", LLVM_VersionString,
+	      null, "LLVMLinkage", LLVM_VersionString,
 	      ["LLVMExternalLinkage" : null,
-	       "LLVMExternalLinkage" : null,
 	       "LLVMAvailableExternallyLinkage" : null,
 	       "LLVMLinkOnceAnyLinkage" : null,
 	       "LLVMLinkOnceODRLinkage" : null,
@@ -154,8 +153,7 @@ mixin(MixinMap_VersionedEnum!(
 	       "LLVMCommonLinkage" : null,
 	       "LLVMLinkerPrivateLinkage" : null,
 	       "LLVMLinkerPrivateWeakLinkage" : null,
-	       "LLVMLinkerPrivateWeakDefAutoLinkage" : ["-", "3.2"]
-		      ]));
+	       "LLVMLinkerPrivateWeakDefAutoLinkage" : ["-", "3.2"]]));
 
 enum : LLVMVisibility
 {

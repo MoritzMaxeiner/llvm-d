@@ -496,8 +496,8 @@ BasicBlock
 InlineAsm
 MDNode
 MDString
-User
-	Constant
+User -- implemented
+	Constant -- implemented
 		BlockAddress
 		ConstantAggregateZero
 		ConstantArray
@@ -507,11 +507,11 @@ User
 		ConstantPointerNull
 		ConstantStruct
 		ConstantVector
-		GlobalValue
+		GlobalValue -- wip
 			Function
 			GlobalAlias
 			GlobalVariable
-		UndefValue
+		UndefValue -- implemented
 	Instruction
 		BinaryOperator
 		CallInst

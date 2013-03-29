@@ -59,22 +59,22 @@ package Type LLVMTypeRef_to_Type(LLVMContext C, LLVMTypeRef type)
 	
 	switch(typeID)
 	{
-		case VoidTyID: return new Type(C, type);
-		case HalfTyID: return new Type(C, type);
-		case FloatTyID: return new Type(C, type);
-		case DoubleTyID: return new Type(C, type);
-		case X86_FP80TyID: return new Type(C, type);
-		case FP128TyID: return new Type(C, type);
-		case PPC_FP128TyID: return new Type(C, type);
-		case LabelTyID: return new Type(C, type);
-		case MetadataTyID: return new Type(C, type);
-		case X86_MMXTyID: return new Type(C, type); // new VectorType ???
-		case IntegerTyID: return new IntegerType(C, type);
-		case FunctionTyID: return new FunctionType(C, type);
-		case StructTyID: return new StructType(C, type);
-		case ArrayTyID: return new ArrayType(C, type);
-		case PointerTyID: return new PointerType(C, type);
-		case VectorTyID: return new VectorType(C, type);
+		case TypeID.Void: return new Type(C, type);
+		case TypeID.Half: return new Type(C, type);
+		case TypeID.Float: return new Type(C, type);
+		case TypeID.Double: return new Type(C, type);
+		case TypeID.X86_FP80T: return new Type(C, type);
+		case TypeID.FP128: return new Type(C, type);
+		case TypeID.PPC_FP128: return new Type(C, type);
+		case TypeID.Label: return new Type(C, type);
+		case TypeID.Metadata: return new Type(C, type);
+		case TypeID.X86_MMX: return new Type(C, type); // new VectorType ???
+		case TypeID.Integer: return new IntegerType(C, type);
+		case TypeID.Function: return new FunctionType(C, type);
+		case TypeID.Struct: return new StructType(C, type);
+		case TypeID.Array: return new ArrayType(C, type);
+		case TypeID.Pointer: return new PointerType(C, type);
+		case TypeID.Vector: return new VectorType(C, type);
 		default: return null;
 	}
 }
@@ -149,18 +149,17 @@ class VectorType : SequentialType
 	}
 }
 
-alias uint AddressSpace;
-enum : AddressSpace
+enum AddressSpace : uint
 {
-	ADDRESS_SPACE_GENERIC = 0,
-	ADDRESS_SPACE_GLOBAL = 1,
-	ADDRESS_SPACE_CONST_NOT_GEN = 2, // Not part of generic space
-	ADDRESS_SPACE_SHARED = 3,
-	ADDRESS_SPACE_CONST = 4,
-	ADDRESS_SPACE_LOCAL = 5,
+	Generic = 0,
+	Global = 1,
+	ConstNotGen = 2, // Not part of generic space
+	Shared = 3,
+	Const = 4,
+	Local = 5,
 	
 	// NVVM Internal
-	ADDRESS_SPACE_PARAM = 101
+	Param = 101
 }
 
 class PointerType : SequentialType
@@ -170,17 +169,17 @@ class PointerType : SequentialType
 		super(C, _cref);
 	}
 	
-	public uint getAddressSpace()
-	{ return LLVMGetPointerAddressSpace(this._cref); }
+	public AddressSpace getAddressSpace()
+	{ return cast(AddressSpace) LLVMGetPointerAddressSpace(this._cref); }
 	
-	public static PointerType get(Type ElementType, uint AddrSpace)
+	public static PointerType get(Type ElementType, AddressSpace AddrSpace)
 	{
 		return new PointerType(ElementType.context, LLVMPointerType(ElementType.cref, AddrSpace));
 	}
 	
 	public static PointerType getUnqual(Type ElementType)
 	{
-		return PointerType.get(ElementType, 0);
+		return PointerType.get(ElementType, AddressSpace.Generic);
 	}
 	
 	public static bool isValidElementType(Type ElemTy)

@@ -47,6 +47,7 @@ public template MixinMap(alias list, alias f)
 }
 
 public template MixinMap_VersionedEnum(
+	string enumName,
 	string enumType,
 	string enumVersion,
 	alias enumList)
@@ -55,7 +56,10 @@ public template MixinMap_VersionedEnum(
 
 	char[] ctfe_worker()
 	{
-		return "enum" ~ (enumType !is null ? (" : " ~ enumType) : "") ~ " { "
+		return "enum"
+			~ (enumName !is null ? (" " ~ enumName) : "")
+			~ (enumType !is null ? (" : " ~ enumType) : "")
+			~ " { "
 			~ MixinMap!(
 				enumList,
 				function const(char)[] (string item, string[] change)
