@@ -8,6 +8,7 @@ private
 	import llvm.d.ir.type : Type;
 	import llvm.d.ir.value : Value, LLVMValueRef_to_Value;
 	import llvm.d.ir.user : User;
+	import llvm.d.ir.use : Use;
 }
 
 class Constant : User
@@ -32,7 +33,8 @@ class Constant : User
 	// Constant * 	getSplatValue ()
 	// const APInt & 	getUniqueInteger ()
 	// virtual void 	destroyConstant ()
-	// virtual void 	replaceUsesOfWithOnConstant (Value *, Value *, Use *)
+	
+	public void replaceUsesOfWithOnConstant(Value From, Value To, Use U);
 	// void 	removeDeadConstantUsers ()
 	
 	public static Constant getNullValue(Type Ty)

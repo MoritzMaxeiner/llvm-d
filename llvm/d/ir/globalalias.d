@@ -26,31 +26,18 @@ class GlobalAlias : GlobalValue
 	{
 		super(type, _cref);
 	}
-	
-	// void * 	operator new (size_t s)
+
 	// TODO: Uncomment once Module is implemented
-	/+public this(Type Ty, string Name, Constant Aliasee = null, Module Parent = null)
+	/+public this(Type Ty, LinkageTypes Linkage, string Name, Constant Aliasee = null, Module Parent = null)
 	{
 		auto c_Name = Name.toCString();
 		Ty.getContext().treatAsImmutable(c_Name);
-		LLVMAddAlias(Parent is null ? null : Parent.cref,
-		             Ty.cref,
-		             Aliasee is null ? null : Aliasee.cref,
-		             c_Name);
-	}+/
-	
-	// TODO: Create new function LLVMAddAliasWithLinkage and send to llvm-commits.
-	//       Uncomment after Module is implemented and the new C API function is in LLVM
-	/+static if(LLVM_Version >= 3.3)
-	public this(Type Ty, LinkageTypes Linkage, string Name, Constant Aliasee = null, Module Parent = null)
-	{
-		auto c_Name = Name.toCString();
-		Ty.getContext().treatAsImmutable(c_Name);
-		LLVMAddAliasWithLinkage(Parent is null ? null : Parent.cref,
-		             Ty.cref,
-		             Aliasee is null ? null : Aliasee.cref,
-		             c_Name,
-		             Linkage);
+		auto __cref = LLVMAddAlias(Parent is null ? null : Parent.cref,
+		                          Ty.cref,
+		                          Aliasee is null ? null : Aliasee.cref,
+		                          c_Name);
+		super(Ty, __cref);
+		this.setLinkage(Linkage);
 	}+/
 
 	// virtual void 	removeFromParent ()

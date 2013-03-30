@@ -18,6 +18,7 @@ private
 	import llvm.d.ir.constants : UndefValue;
 	import llvm.d.ir.globalvalue : GlobalValue;
 	import llvm.d.ir.globalalias : GlobalAlias;
+	import llvm.d.ir.globalvariable : GlobalVariable;
 }
 
 class Value
@@ -250,7 +251,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 				}
 				else if(LLVMIsAGlobalVariable(value) !is null)
 				{
-					//return new GlobalVariable(type, value);
+					return new GlobalVariable(type, value);
 				}
 				else
 				{

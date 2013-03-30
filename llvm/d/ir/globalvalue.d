@@ -201,7 +201,7 @@ class GlobalValue : Constant
 	}+/
 
 	// virtual void 	removeFromParent ()=0
-	// virtual void 	eraseFromParent ()=0
+	public void eraseFromParent();
 
 	// TODO: Uncomment once Module is implemented
 	/+public Module getParent()
