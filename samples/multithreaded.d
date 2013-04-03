@@ -2,7 +2,8 @@ module samples.multithreaded;
 
 import std.stdio;
 
-import llvm.all;
+version(DEIMOS_LLVM) import deimos.llvm.all;
+else import llvm.all;
 
 void main(string[] args)
 {

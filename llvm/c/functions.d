@@ -108,6 +108,7 @@ __gshared
 	}
 }
 
+// TODO: Add backwards compatibility to old CellSPU target
 private enum string[][string] LLVMC_TargetCapabilities = [
 	"AArch64" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
 	"ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
