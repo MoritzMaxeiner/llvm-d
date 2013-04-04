@@ -8,7 +8,7 @@ private
 
 /+ Analysis +/
 
-alias uint LLVMVerifierFailureAction;
+alias int LLVMVerifierFailureAction;
 
 /+ Transforms +/
 
@@ -33,15 +33,15 @@ struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef
 struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
 struct LLVMOpaqueUse {}; alias LLVMOpaqueUse* LLVMUseRef;
 
-alias ulong LLVMAttribute;
-alias uint LLVMOpcode;
-alias uint LLVMTypeKind;
-alias uint LLVMLinkage;
-alias uint LLVMVisibility;
-alias uint LLVMCallConv;
-alias uint LLVMIntPredicate;
-alias uint LLVMRealPredicate;
-alias uint LLVMLandingPadClauseTy;
+alias long LLVMAttribute;
+alias int LLVMOpcode;
+alias int LLVMTypeKind;
+alias int LLVMLinkage;
+alias int LLVMVisibility;
+alias int LLVMCallConv;
+alias int LLVMIntPredicate;
+alias int LLVMRealPredicate;
+alias int LLVMLandingPadClauseTy;
 
 /+ Disassembler +/
 
@@ -73,7 +73,7 @@ static if(LLVM_Version < 3.3)
 	alias void* EDTokenRef;
 	alias void* EDOperandRef;
 
-	alias uint EDAssemblySyntax_t;
+	alias int EDAssemblySyntax_t;
 
 	alias extern(C) int function(ubyte* Byte, ulong address, void* arg) EDByteReaderCallback;
 	alias extern(C) int function(ulong* value, uint regID, void* arg) EDRegisterReaderCallback;
@@ -92,7 +92,7 @@ static if(LLVM_Version >= 3.2)
 {
 	/+ Linker +/
 
-	alias uint LLVMLinkerMode;
+	alias int LLVMLinkerMode;
 }
 
 /+ Link Time Optimization +/
@@ -101,16 +101,16 @@ alias void* llvm_lto_t;
 alias llvm_lto_status llvm_lto_status_t;
 
 
-alias uint llvm_lto_status;
+alias int llvm_lto_status;
 
 /+ LTO +/
 
 struct LTOModule {}; alias LTOModule* lto_module_t;
 struct LTOCodeGenerator {}; alias LTOCodeGenerator* lto_code_gen_t;
 
-alias uint lto_symbol_attributes;
-alias uint lto_debug_model;
-alias uint lto_codegen_model;
+alias int lto_symbol_attributes;
+alias int lto_debug_model;
+alias int lto_codegen_model;
 
 /+ Object file reading and writing +/
 
@@ -125,14 +125,14 @@ struct LLVMOpaqueTargetData {}; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
 struct LLVMOpaqueTargetLibraryInfotData {}; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
 struct LLVMStructLayout {}; alias LLVMStructLayout* LLVMStructLayoutRef;
 
-alias uint LLVMByteOrdering;
+alias int LLVMByteOrdering;
 
 /+ Target machine +/
 
 struct LLVMTargetMachine {}; alias LLVMTargetMachine* LLVMTargetMachineRef;
 struct LLVMTarget {}; alias LLVMTarget* LLVMTargetRef;
 
-alias uint LLVMCodeGenOptLevel;
-alias uint LLVMRelocMode;
-alias uint LLVMCodeModel;
-alias uint LLVMCodeGenFileType;
+alias int LLVMCodeGenOptLevel;
+alias int LLVMRelocMode;
+alias int LLVMCodeModel;
+alias int LLVMCodeGenFileType;

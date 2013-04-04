@@ -3,8 +3,7 @@ module samples.fibonacci;
 import std.conv : to;
 import std.stdio : writefln, writeln;
 
-version(DEIMOS_LLVM) import deimos.llvm.all;
-else import llvm.all;
+import llvm.d.llvm_c;
 
 import llvm.util.memory;
 

@@ -26,6 +26,63 @@ extern(System)
 		      ));
 }
 
+static if(LLVM_Version >= 3.3)
+{
+	private enum string[][string] LLVMC_TargetCapabilities =
+		[
+		 "AArch64" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "CppBackend" : ["TargetInfo", "Target", "TargetMC"],
+		 "Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "NVPTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
+		 ];
+}
+else static if(LLVM_Version >= 3.2)
+{
+	private enum string[][string] LLVMC_TargetCapabilities =
+		[
+		 "ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "CellSPU" : ["TargetInfo", "Target", "TargetMC"],
+		 "CppBackend" : ["TargetInfo", "Target", "TargetMC"],
+		 "Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "NVPTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "PTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
+		 ];
+	
+}
+else
+{
+	private enum string[][string] LLVMC_TargetCapabilities =
+		[
+		 "ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "CellSPU" : ["TargetInfo", "Target", "TargetMC"],
+		 "CppBackend" : ["TargetInfo", "Target", "TargetMC"],
+		 "Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "PTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
+		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
+		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
+		 ];
+}
+
 __gshared
 {
 	mixin(MixinMap!(
@@ -107,22 +164,6 @@ __gshared
 		return 1;
 	}
 }
-
-// TODO: Add backwards compatibility to old CellSPU target
-private enum string[][string] LLVMC_TargetCapabilities = [
-	"AArch64" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-	"ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-	"CppBackend" : ["TargetInfo", "Target", "TargetMC"],
-	"Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-	"MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-	"Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-	"MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-	"NVPTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-	"PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-	"Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-	"X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-	"XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
-	];
 
 package enum string[][string] LLVMC_Functions = [
 
@@ -1070,6 +1111,10 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMInitializeARMAsmPrinter" : ["void function()"],
 	"LLVMInitializeARMAsmParser" : ["void function()"],
 	"LLVMInitializeARMDisassembler" : ["void function()"],
+	
+	"LLVMInitializeCellSPUTargetInfo" : ["void function()"],
+	"LLVMInitializeCellSPUTarget" : ["void function()"],
+	"LLVMInitializeCellSPUTargetMC" : ["void function()"],
 
 	"LLVMInitializeCppBackendTargetInfo" : ["void function()"],
 	"LLVMInitializeCppBackendTarget" : ["void function()"],
@@ -1103,6 +1148,11 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMInitializeNVPTXTarget" : ["void function()"],
 	"LLVMInitializeNVPTXTargetMC" : ["void function()"],
 	"LLVMInitializeNVPTXAsmPrinter" : ["void function()"],
+	
+	"LLVMInitializePTXTargetInfo" : ["void function()"],
+	"LLVMInitializePTXTarget" : ["void function()"],
+	"LLVMInitializePTXTargetMC" : ["void function()"],
+	"LLVMInitializePTXAsmPrinter" : ["void function()"],
 
 	"LLVMInitializePowerPCTargetInfo" : ["void function()"],
 	"LLVMInitializePowerPCTarget" : ["void function()"],
