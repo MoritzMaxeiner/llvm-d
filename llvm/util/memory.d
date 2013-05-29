@@ -1,4 +1,3 @@
-
 module llvm.util.memory;
 
 public
@@ -35,7 +34,7 @@ T* construct(T)(size_t length) if(!is(T == class))
 		static T init;
 		foreach(i; 0 .. length)
 		{
-			memcpy(obj[i*size .. (i+1)*size], &init, size);
+			memcpy(obj[i*size .. (i+1)*size].ptr, &init, size);
 		}
 	
 		return cast(T*) obj;
