@@ -11,19 +11,15 @@ private
 
 extern(System)
 {
-	mixin(MixinMap!(
-		      LLVMC_Functions,
-		      function const(char)[] (string symbol, string[] signature)
-		      {
-			      if((signature.length == 1) ||
-			         ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
-			         ((signature[1] == "-") && (to!float(signature[2]) > LLVM_Version)))
-			      {
-				      return "alias nothrow " ~ signature[0] ~ " da_" ~ symbol ~ ";";
-			      }
-			      return null;
-		      }
-		      ));
+	mixin(MixinMap(LLVMC_Functions, delegate string(string symbol, string[] signature) {
+		if((signature.length == 1) ||
+		   ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
+		   ((signature[1] == "-") && (to!float(signature[2]) > LLVM_Version)))
+		{
+			return "alias nothrow " ~ signature[0] ~ " da_" ~ symbol ~ ";";
+		}
+		return "";
+	}));
 }
 
 static if(LLVM_Version >= 3.3)
@@ -85,9 +81,9 @@ else
 
 __gshared
 {
-	mixin(MixinMap!(
+	mixin(MixinMap(
 		      LLVMC_Functions,
-		      function const(char)[] (string symbol, string[] signature)
+		      delegate string(string symbol, string[] signature)
 		      {
 			      if((signature.length == 1) ||
 			         ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
@@ -95,23 +91,23 @@ __gshared
 			      {
 				      return "da_" ~ symbol ~ " " ~ symbol ~ ";";
 			      }
-			      return null;
+			      return "";
 		      }
 		      ));
 
-	mixin(MixinMap!([
+	mixin(MixinMap([
 		                "TargetInfo",
 		                "Target",
 		                "TargetMC",
 		                "AsmPrinter",
 		                "AsmParser",
 		                "Disassembler"],
-	                function const(char)[](size_t i, string capability)
+	                delegate string(size_t i, string capability)
 	                {
-		                char[] genOnlyTargetsWithCapability()
+		                string genOnlyTargetsWithCapability()
 		                {
 			                auto capabilities = LLVMC_TargetCapabilities;
-			                char[] code = null;
+			                string code = "";
 
 			                foreach(string target; capabilities.keys)
 			                {
@@ -139,7 +135,7 @@ __gshared
 
 	nothrow LLVMBool LLVMInitializeNativeTarget()
 	{
-		mixin(MixinMap!(["ARM64" : "AArch64",
+		mixin(MixinMap(["ARM64" : "AArch64",
 		                 "ARM" : "ARM",
 		                 "X86" : "X86",
 		                 "X86_64" : "X86",
@@ -148,7 +144,7 @@ __gshared
 		                 "PPC64" : "PowerPC",
 		                 "SPARC" : "Sparc",
 		                 "SPARC64" : "SPARC64"],
-		                function const(char)[](string arch, string target)
+		                delegate string(string arch, string target)
 		                {
 			                return "version(" ~ arch ~ ") {"
 				                ~ " if((LLVMInitialize" ~ target ~ "TargetInfo !is null)"

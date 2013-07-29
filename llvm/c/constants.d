@@ -134,8 +134,8 @@ enum : LLVMTypeKind
 	LLVMX86_MMXTypeKind
 }
 
-mixin(MixinMap_VersionedEnum!(
-	      null, "LLVMLinkage", LLVM_VersionString,
+mixin(MixinMap_VersionedEnum(
+	      "", "LLVMLinkage", LLVM_Version,
 	      ["LLVMExternalLinkage" : null,
 	       "LLVMAvailableExternallyLinkage" : null,
 	       "LLVMLinkOnceAnyLinkage" : null,

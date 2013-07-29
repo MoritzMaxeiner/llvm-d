@@ -17,9 +17,9 @@ public
 
 private void loadSymbols(SharedLib library)
 {
-	mixin(MixinMap!(
+	mixin(MixinMap(
 		      LLVMC_Functions,
-		      function const(char)[] (string symbol, string[] signature)
+		      delegate string(string symbol, string[] signature)
 		      {
 			      if((signature.length == 1) ||
 			         ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
@@ -28,7 +28,7 @@ private void loadSymbols(SharedLib library)
 				      return symbol ~ " = " ~ "library.loadSymbol!(da_"
 					      ~ symbol ~ ")(\"" ~ symbol ~ "\");\n";
 			      }
-			      return null;
+			      return "";
 		      }));
 }
 

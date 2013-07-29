@@ -24,8 +24,8 @@ class GlobalValue : Constant
 		super(type, _cref);
 	}
 
-	mixin("public " ~ MixinMap_VersionedEnum!(
-		      "LinkageTypes", null, LLVM_VersionString,
+	mixin("public " ~ MixinMap_VersionedEnum(
+		      "LinkageTypes", "", LLVM_Version,
 		      ["External = LLVMExternalLinkage" : null,
 			   "AvailableExternally = LLVMAvailableExternallyLinkage" : null,
 			   "LinkOnceAny = LLVMLinkOnceAnyLinkage" : null,
