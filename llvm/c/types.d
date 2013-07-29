@@ -42,6 +42,12 @@ alias int LLVMCallConv;
 alias int LLVMIntPredicate;
 alias int LLVMRealPredicate;
 alias int LLVMLandingPadClauseTy;
+static if(LLVM_Version >= 3.3)
+{
+	alias int LLVMThreadLocalMode;
+	alias int LLVMAtomicOrdering;
+	alias int LLVMAtomicRMWBinOp;
+}
 
 /+ Disassembler +/
 
@@ -88,6 +94,17 @@ static if(LLVM_Version < 3.3)
 struct LLVMOpaqueGenericValue {}; alias LLVMOpaqueGenericValue* LLVMGenericValueRef;
 struct LLVMOpaqueExecutionEngine {}; alias LLVMOpaqueExecutionEngine* LLVMExecutionEngineRef;
 
+static if(LLVM_Version >= 3.3)
+{
+	struct LLVMMCJITCompilerOptions
+	{
+		uint OptLevel;
+		LLVMCodeModel CodeModel;
+		LLVMBool NoFramePointerElim;
+		LLVMBool EnableFastISel;
+	}
+}
+
 static if(LLVM_Version >= 3.2)
 {
 	/+ Linker +/
@@ -129,7 +146,7 @@ alias int LLVMByteOrdering;
 
 /+ Target machine +/
 
-struct LLVMTargetMachine {}; alias LLVMTargetMachine* LLVMTargetMachineRef;
+struct LLVMOpaqueTargetMachine {}; alias LLVMOpaqueTargetMachine* LLVMTargetMachineRef;
 struct LLVMTarget {}; alias LLVMTarget* LLVMTargetRef;
 
 alias int LLVMCodeGenOptLevel;

@@ -592,6 +592,14 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMSetThreadLocal" : ["void function(LLVMValueRef GlobalVar, LLVMBool IsThreadLocal)"],
 	"LLVMIsGlobalConstant" : ["LLVMBool function(LLVMValueRef GlobalVar)"],
 	"LLVMSetGlobalConstant" : ["void function(LLVMValueRef GlobalVar, LLVMBool IsConstant)"],
+	"LLVMGetThreadLocalMode" : ["LLVMThreadLocalMode function(LLVMValueRef GlobalVar)",
+	                                  "+", "3.3"],
+	"LLVMSetThreadLocalMode" : ["void function(LLVMValueRef GlobalVar, LLVMThreadLocalMode Mode)",
+	                            "+", "3.3"],
+	"LLVMIsExternallyInitialized" : ["LLVMBool function(LLVMValueRef GlobalVar)",
+	                                 "+", "3.3"],
+	"LLVMSetExternallyInitialized" : ["void function(LLVMValueRef GlobalVar, LLVMBool IsExtInit)",
+	                                  "+", "3.3"],
 
 	/+++++ Global Aliases +++++/
 
@@ -606,6 +614,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMGetGC" : ["const(char)* function(LLVMValueRef Fn)"],
 	"LLVMSetGC" : ["void function(LLVMValueRef Fn, const char *Name)"],
 	"LLVMAddFunctionAttr" : ["void function(LLVMValueRef Fn, LLVMAttribute PA)"],
+	"LLVMAddTargetDependentFunctionAttr" : ["void function(LLVMValueRef Fn, const char* A, const char* V)",
+	                                        "+", "3.3"],
 	"LLVMGetFunctionAttr" : ["LLVMAttribute function(LLVMValueRef Fn)"],
 	"LLVMRemoveFunctionAttr" : ["void function(LLVMValueRef Fn, LLVMAttribute PA)"],
 
@@ -799,6 +809,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMBuildIsNull" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, const char* Name)"],
 	"LLVMBuildIsNotNull" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, const char* Name)"],
 	"LLVMBuildPtrDiff" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const char* Name)"],
+	"LLVMBuildAtomicRMW" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMAtomicRMWBinOp op, LLVMValueRef PTR, LLVMValueRef Val, LLVMAtomicOrdering ordering, LLVMBool singleThread)",
+	                        "+", "3.3"],
 
 	/++ Module Providers ++/
 
@@ -813,6 +825,10 @@ package enum string[][string] LLVMC_Functions = [
 	                                           "+", "3.3"],
 	"LLVMCreateMemoryBufferWithMemoryRangeCopy" : ["LLVMMemoryBufferRef function(const char* InputData, size_t InputDataLength, const char* BufferName)",
 	                                               "+", "3.3"],
+	"LLVMGetBufferStart" : ["const(char)* function(LLVMMemoryBufferRef MemBuf)",
+	                        "+", "3.3"],
+	"LLVMGetBufferSize" : ["size_t function(LLVMMemoryBufferRef MemBuf)",
+	                       "+", "3.3"],
 	"LLVMDisposeMemoryBuffer" : ["void function(LLVMMemoryBufferRef MemBuf)"],
 
 	/++ Pass Registry ++/
@@ -939,6 +955,10 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMCreateExecutionEngineForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutEE, LLVMModuleRef M, char** OutError)"],
 	"LLVMCreateInterpreterForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutInterp, LLVMModuleRef M, char** OutError)"],
 	"LLVMCreateJITCompilerForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutJIT, LLVMModuleRef M, uint OptLevel, char** OutError)"],
+	"LLVMInitializeMCJITCompilerOptions" : ["void function(LLVMMCJITCompilerOptions* Options, size_t SizeOfOptions)",
+	                                        "+", "3.3"],
+	"LLVMCreateMCJITCompilerForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutJIT, LLVMModuleRef M, LLVMMCJITCompilerOptions* Options, size_t SizeOfOptions, char** OutError)",
+	                                      "+", "3.3"],
 	"LLVMCreateExecutionEngine" : ["LLVMBool function(LLVMExecutionEngineRef* OutEE, LLVMModuleProviderRef MP, char** OutError)"],
 	"LLVMCreateInterpreter" : ["LLVMBool function(LLVMExecutionEngineRef* OutInterp, LLVMModuleProviderRef MP, char** OutError)"],
 	"LLVMCreateJITCompiler" : ["LLVMBool function(LLVMExecutionEngineRef* OutJIT, LLVMModuleProviderRef MP, uint OptLevel, char** OutError)"],
@@ -1144,7 +1164,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMInitializeNVPTXTarget" : ["void function()"],
 	"LLVMInitializeNVPTXTargetMC" : ["void function()"],
 	"LLVMInitializeNVPTXAsmPrinter" : ["void function()"],
-	
+
 	"LLVMInitializePTXTargetInfo" : ["void function()"],
 	"LLVMInitializePTXTarget" : ["void function()"],
 	"LLVMInitializePTXTargetMC" : ["void function()"],
@@ -1211,5 +1231,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMGetTargetMachineCPU" : ["char* function(LLVMTargetMachineRef T)"],
 	"LLVMGetTargetMachineFeatureString" : ["char* function(LLVMTargetMachineRef T)"],
 	"LLVMGetTargetMachineData" : ["LLVMTargetDataRef function(LLVMTargetMachineRef T)"],
-	"LLVMTargetMachineEmitToFile" : ["LLVMBool function(LLVMTargetMachineRef T, LLVMModuleRef M,  char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage)"]
+	"LLVMTargetMachineEmitToFile" : ["LLVMBool function(LLVMTargetMachineRef T, LLVMModuleRef M,  char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage)"],
+	"LLVMTargetMachineEmitToMemoryBuffer" : ["LLVMBool function(LLVMTargetMachineRef T, LLVMModuleRef M, LLVMCodeGenFileType codegen, char** ErrorMessage, LLVMMemoryBufferRef* OutMemBuf)",
+	                                        "+", "3.3"]
 	];

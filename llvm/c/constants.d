@@ -211,6 +211,44 @@ enum : LLVMLandingPadClauseTy
 	LLVMLandingPadFilter
 }
 
+static if(LLVM_Version >= 3.3)
+{
+	enum : LLVMThreadLocalMode
+	{
+		LLVMNotThreadLocal = 0,
+		LLVMGeneralDynamicTLSModel,
+		LLVMLocalDynamicTLSModel,
+		LLVMInitialExecTLSModel,
+		LLVMLocalExecTLSModel
+	}
+
+	enum : LLVMAtomicOrdering
+	{
+		LLVMAtomicOrderingNotAtomic = 0,
+		LLVMAtomicOrderingUnordered = 1,
+		LLVMAtomicOrderingMonotonic = 2,
+		LLVMAtomicOrderingAcquire = 4,
+		LLVMAtomicOrderingRelease = 5,
+		LLVMAtomicOrderingAcquireRelease = 6,
+		LLVMAtomicOrderingSequentiallyConsistent = 7
+	}
+
+	enum : LLVMAtomicRMWBinOp
+	{
+		LLVMAtomicRMWBinOpXchg,
+		LLVMAtomicRMWBinOpAdd,
+		LLVMAtomicRMWBinOpSub,
+		LLVMAtomicRMWBinOpAnd,
+		LLVMAtomicRMWBinOpNand,
+		LLVMAtomicRMWBinOpOr,
+		LLVMAtomicRMWBinOpXor,
+		LLVMAtomicRMWBinOpMax,
+		LLVMAtomicRMWBinOpMin,
+		LLVMAtomicRMWBinOpUMax,
+		LLVMAtomicRMWBinOpUMin
+	}
+}
+
 /+ Disassembler +/
 
 const
