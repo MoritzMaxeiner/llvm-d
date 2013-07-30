@@ -4,17 +4,17 @@ private
 {
 	import core.stdc.string : strlen;
 
-	import llvm.util.templates : MixinMap_VersionedEnum;
-	import llvm.util.memory : fromCString, toCString;
+	import llvm.util.templates;
+	import llvm.util.memory;
 
 	import llvm.d.llvm_c;
 
-	import llvm.d.ir.llvmcontext : LLVMContext;
-	import llvm.d.ir.type : Type;
-	import llvm.d.ir.derivedtypes : PointerType;
-	import llvm.d.ir.value : Value, LLVMValueRef_to_Value;
-	import llvm.d.ir.user : User;
-	import llvm.d.ir.constant : Constant;
+	import llvm.d.ir.llvmcontext;
+	import llvm.d.ir.type;
+	import llvm.d.ir.derivedtypes;
+	import llvm.d.ir.value;
+	import llvm.d.ir.user;
+	import llvm.d.ir.constant;
 }
 
 class GlobalValue : Constant
@@ -201,7 +201,7 @@ class GlobalValue : Constant
 	}+/
 
 	// virtual void 	removeFromParent ()=0
-	public void eraseFromParent();
+	public void eraseFromParent() {}
 
 	// TODO: Uncomment once Module is implemented
 	/+public Module getParent()

@@ -6,19 +6,19 @@ private
 	
 	import std.algorithm : find;
 	
-	import llvm.util.templates : MixinMap_VersionedEnum;
-	import llvm.util.memory : fromCString, toCString;
+	import llvm.util.templates;
+	import llvm.util.memory;
 	
 	import llvm.d.llvm_c;
 	
-	import llvm.d.ir.llvmcontext : LLVMContext;
-	import llvm.d.ir.type : Type;
-	import llvm.d.ir.derivedtypes : PointerType, AddressSpace;
-	import llvm.d.ir.value : Value, LLVMValueRef_to_Value;
-	import llvm.d.ir.user : User;
-	import llvm.d.ir.use : Use;
-	import llvm.d.ir.constant : Constant;
-	import llvm.d.ir.globalvalue : GlobalValue;
+	import llvm.d.ir.llvmcontext;
+	import llvm.d.ir.type;
+	import llvm.d.ir.derivedtypes;
+	import llvm.d.ir.value;
+	import llvm.d.ir.user;
+	import llvm.d.ir.use;
+	import llvm.d.ir.constant;
+	import llvm.d.ir.globalvalue;
 }
 
 class GlobalVariable : GlobalValue

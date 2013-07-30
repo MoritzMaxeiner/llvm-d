@@ -5,20 +5,20 @@ private
 {
 	import core.stdc.string : strlen;
 
-	import llvm.util.memory : fromCString, toCString;
+	import llvm.util.memory;
 
 	import llvm.d.llvm_c;
 
-	import llvm.d.ir.llvmcontext : LLVMContext;
-	import llvm.d.ir.type : Type;
-	import llvm.d.ir.derivedtypes : LLVMTypeRef_to_Type;
+	import llvm.d.ir.llvmcontext;
+	import llvm.d.ir.type;
+	import llvm.d.ir.derivedtypes;
 	
-	import llvm.d.ir.user : User;
-	import llvm.d.ir.constant : Constant;
-	import llvm.d.ir.constants : UndefValue;
-	import llvm.d.ir.globalvalue : GlobalValue;
-	import llvm.d.ir.globalalias : GlobalAlias;
-	import llvm.d.ir.globalvariable : GlobalVariable;
+	import llvm.d.ir.user;
+	import llvm.d.ir.constant;
+	import llvm.d.ir.constants;
+	import llvm.d.ir.globalvalue;
+	import llvm.d.ir.globalalias;
+	import llvm.d.ir.globalvariable;
 }
 
 class Value

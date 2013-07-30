@@ -4,11 +4,11 @@ private
 {
 	import llvm.d.llvm_c;
 	
-	import llvm.d.ir.llvmcontext : LLVMContext;
-	import llvm.d.ir.type : Type;
-	import llvm.d.ir.value : Value, LLVMValueRef_to_Value;
-	import llvm.d.ir.user : User;
-	import llvm.d.ir.constant : Constant;
+	import llvm.d.ir.llvmcontext;
+	import llvm.d.ir.type;
+	import llvm.d.ir.value;
+	import llvm.d.ir.user;
+	import llvm.d.ir.constant;
 }
 
 class UndefValue : Constant
