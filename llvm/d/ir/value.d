@@ -19,6 +19,7 @@ private
 	import llvm.d.ir.globalvalue;
 	import llvm.d.ir.globalalias;
 	import llvm.d.ir.globalvariable;
+	import llvm.d.ir.llvmfunction;
 }
 
 class Value
@@ -243,7 +244,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			{
 				if(LLVMIsAFunction(value) !is null)
 				{
-					//return new Function(type, value);
+					return new Function(type, value);
 				}
 				else if(LLVMIsAGlobalAlias(value) !is null)
 				{
@@ -513,9 +514,9 @@ User -- implemented
 		ConstantStruct
 		ConstantVector
 		GlobalValue -- implemented
-			Function
+			Function -- implemented
 			GlobalAlias -- implemented
-			GlobalVariable
+			GlobalVariable -- implemented
 		UndefValue -- implemented
 	Instruction
 		BinaryOperator

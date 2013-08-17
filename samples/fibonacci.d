@@ -84,7 +84,30 @@ int main(string[] args)
 	
 	LLVMExecutionEngineRef engine;
 	error = null;
-	if(cast(bool) LLVMCreateJITCompilerForModule(&engine, _module, 2, &error))
+	
+	version(Windows)
+	{
+		/+ On Windows, we can only use the old JIT for now +/
+		LLVMCreateJITCompilerForModule(&engine, _module, 2, &error);
+	}
+	else
+	{
+		static if(LLVM_Version >= 3.3)
+		{
+			/+ On other systems we should be able to use the newer
+			 + MCJIT instead - if we have a high enough LLVM version +/
+			LLVMMCJITCompilerOptions options;
+			LLVMInitializeMCJITCompilerOptions(&options, options.sizeof);
+
+			LLVMCreateMCJITCompilerForModule(&engine, _module, &options, options.sizeof, &error);
+		}
+		else
+		{
+			LLVMCreateJITCompilerForModule(&engine, _module, 2, &error);
+		}
+	}
+
+	if(error !is null)
 	{
 		writefln("%s", error.fromCString());
 		LLVMDisposeMessage(error);
