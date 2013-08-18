@@ -238,7 +238,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantVector(value) !is null)
 			{
-				//return new ConstantVector(type, value);
+				return new ConstantVector(type, value);
 			}
 			else if(LLVMIsAGlobalValue(value) !is null)
 			{
@@ -507,7 +507,20 @@ User -- implemented
 		BlockAddress
 		ConstantAggregateZero
 		ConstantArray
+		ConstantDataSequential
+			ConstantDataArray
+			ConstantDataVector
 		ConstantExpr
+			BinaryConstantExpr
+			CompareConstantExpr
+			ExtractElementConstantExpr
+			ExtractValueConstantExpr
+			GetElementPtrConstantExpr
+			InsertElementConstantExpr
+			InsertValueConstantExpr
+			SelectConstantExpr
+			ShuffleVectorConstantExpr
+			UnaryConstantExpr
 		ConstantFP
 		ConstantInt
 		ConstantPointerNull
@@ -519,6 +532,8 @@ User -- implemented
 			GlobalVariable -- implemented
 		UndefValue -- implemented
 	Instruction
+		AtomicCmpXchInst
+		AtomicRMWInst
 		BinaryOperator
 		CallInst
 			IntrinsicInst

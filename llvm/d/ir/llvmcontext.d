@@ -22,12 +22,11 @@ class LLVMContext
 {
 	private LLVMContextRef _cref = null;
 	
-	// Data that the real context this instance
-	// represents must see as immutable during
-	// its lifetime (i.e. data that was creating
-	// by copying D garbage collected data and for which
-	// either knowing if or when LLVM releases it is impossible
-	// or it is known that it will never do so).
+	/+ Data that the real context this instance represents
+	 + must see as immutable during its lifetime
+	 + (i.e. data for which either knowing if or when LLVM
+	 + releases it is impossible or it is known that
+	 + it will not do so in this context's lifetime). +/
 	private immutable(void)*[] ImmutableData = null;
 
 	@property
