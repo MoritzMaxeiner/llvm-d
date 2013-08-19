@@ -54,6 +54,29 @@ class UndefValue : Constant
 	{ return new UndefValue(T, LLVMGetUndef(T.cref)); }
 }
 
+class ConstantPointerNull : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// virtual void 	destroyConstant ()
+
+	public override PointerType getType()
+	{
+		return cast(PointerType) Value.getType();
+	}
+
+	public static ConstantPointerNull get(PointerType T)
+	{
+		auto _cref = LLVMConstPointerNull(T.cref);
+		auto type = LLVMTypeRef_to_Type(T.getContext(), LLVMTypeOf(_cref));
+
+		return new ConstantPointerNull(type, _cref);
+	}
+}
+
 class ConstantStruct : Constant
 {
 	package this(Type type, LLVMValueRef _cref)
@@ -61,7 +84,7 @@ class ConstantStruct : Constant
 		super(type, _cref);
 	}
 
-	override StructType getType()
+	public override StructType getType()
 	{
 		return cast(StructType) Value.getType();
 	}

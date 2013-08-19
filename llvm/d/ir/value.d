@@ -230,7 +230,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantPointerNull(value) !is null)
 			{
-				//return new ConstantPointerNull(type, value);
+				return new ConstantPointerNull(type, value);
 			}
 			else if(LLVMIsAConstantStruct(value) !is null)
 			{
@@ -523,7 +523,7 @@ User -- implemented
 			UnaryConstantExpr
 		ConstantFP
 		ConstantInt
-		ConstantPointerNull
+		ConstantPointerNull -- implemented
 		ConstantStruct -- implemented
 		ConstantVector -- implemented
 		GlobalValue -- implemented
