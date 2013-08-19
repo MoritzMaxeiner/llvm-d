@@ -20,6 +20,7 @@ private
 	import llvm.d.ir.globalalias;
 	import llvm.d.ir.globalvariable;
 	import llvm.d.ir.llvmfunction;
+	import llvm.d.ir.basicblock;
 }
 
 class Value
@@ -186,7 +187,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 	}
 	else if(LLVMIsABasicBlock(value) !is null)
 	{
-		//return new BasicBlock(type, value);
+		return new BasicBlock(type, value);
 	}
 	else if(LLVMIsAInlineAsm(value) !is null)
 	{
@@ -206,7 +207,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 		{
 			if(LLVMIsABlockAddress(value) !is null)
 			{
-				//return new BlockAddress(type, value);
+				return new BlockAddress(type, value);
 			}
 			else if(LLVMIsAConstantAggregateZero(value) !is null)
 			{
@@ -522,7 +523,7 @@ User -- implemented
 			ShuffleVectorConstantExpr
 			UnaryConstantExpr
 		ConstantFP
-		ConstantInt
+		ConstantInt -- implemented
 		ConstantPointerNull -- implemented
 		ConstantStruct -- implemented
 		ConstantVector -- implemented

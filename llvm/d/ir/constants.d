@@ -12,6 +12,8 @@ private
 	import llvm.d.ir.value;
 	import llvm.d.ir.user;
 	import llvm.d.ir.constant;
+	import llvm.d.ir.basicblock;
+	import llvm.d.ir.llvmfunction;
 }
 
 class UndefValue : Constant
@@ -52,6 +54,63 @@ class UndefValue : Constant
 	
 	public static UndefValue get(Type T)
 	{ return new UndefValue(T, LLVMGetUndef(T.cref)); }
+}
+
+class BlockAddress : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// Function * 	getFunction () const
+	// BasicBlock * 	getBasicBlock () const
+	// virtual void 	destroyConstant ()
+	// virtual void 	replaceUsesOfWithOnConstant (Value *From, Value *To, Use *U)
+
+	// static BlockAddress * 	get (Function *F, BasicBlock *BB)
+	public static BlockAddress get(Function F, BasicBlock BB)
+	{
+		auto _cref = LLVMBlockAddress(F.cref, LLVMValueAsBasicBlock(BB.cref));
+		auto type = LLVMTypeRef_to_Type(F.getContext(), LLVMTypeOf(_cref));
+
+		return new BlockAddress(type, _cref);
+	}
+
+	// static BlockAddress * 	get (BasicBlock *BB)
+}
+
+class ConstantFP : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// const APFloat & 	getValueAPF () const
+	// bool 	isZero () const
+	// bool 	isNegative () const
+	// bool 	isNaN () const
+	// bool 	isExactlyValue (const APFloat &V) const
+	// bool 	isExactlyValue (double V) const
+	// static Constant * 	getZeroValueForNegation (Type *Ty)
+
+	public static Constant get(Type Ty, double V)
+	{
+		return new ConstantFP(Ty, LLVMConstReal(Ty.cref, V));
+	}
+
+	public static Constant get(Type Ty, string Str)
+	{
+		auto c_Str = Str.toCString();
+		Ty.getContext().treatAsImmutable(c_Str);
+		return new ConstantFP(Ty, LLVMConstRealOfStringAndSize(Ty.cref, c_Str, to!uint(Str.length)));
+	}
+
+	// static ConstantFP * 	get (LLVMContext &Context, const APFloat &V)
+	// static ConstantFP * 	getNegativeZero (Type *Ty)
+	// static ConstantFP * 	getInfinity (Type *Ty, bool Negative=false)
+	// static bool 	isValueValidForType (Type *Ty, const APFloat &V)
 }
 
 class ConstantInt : Constant

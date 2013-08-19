@@ -28,7 +28,6 @@ class Function : GlobalValue
 		super(type, _cref);
 	}
 
-	// ~Function ()
 	// Type * 	getReturnType () const
 	// FunctionType * 	getFunctionType () const
 	// LLVMContext & 	getContext () const
@@ -138,7 +137,13 @@ class Function : GlobalValue
 	// const_iterator 	begin () const
 	// iterator 	end ()
 	// const_iterator 	end () const
-	// size_t 	size () const
+
+
+	public uint size()
+	{
+		return LLVMCountBasicBlocks(this.cref);
+	}
+
 	// bool 	empty () const
 	// const BasicBlock & 	front () const
 	// BasicBlock & 	front ()
