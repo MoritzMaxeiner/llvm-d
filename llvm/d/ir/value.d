@@ -234,7 +234,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantStruct(value) !is null)
 			{
-				//return new ConstantStruct(type, value);
+				return new ConstantStruct(type, value);
 			}
 			else if(LLVMIsAConstantVector(value) !is null)
 			{
@@ -524,8 +524,8 @@ User -- implemented
 		ConstantFP
 		ConstantInt
 		ConstantPointerNull
-		ConstantStruct
-		ConstantVector
+		ConstantStruct -- implemented
+		ConstantVector -- implemented
 		GlobalValue -- implemented
 			Function -- implemented
 			GlobalAlias -- implemented

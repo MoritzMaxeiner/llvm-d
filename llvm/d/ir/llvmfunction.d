@@ -34,37 +34,37 @@ class Function : GlobalValue
 	// LLVMContext & 	getContext () const
 	// bool 	isVarArg () const
 
-	uint getIntrinsicID()
+	public uint getIntrinsicID()
 	{
 		return LLVMGetIntrinsicID(this._cref);
 	}
 
 	// bool 	isIntrinsic () const
 
-	uint getCallingConv()
+	public uint getCallingConv()
 	{
 		return LLVMGetFunctionCallConv(this._cref);
 	}
 
-	void setCallingConv(uint CC)
+	public void setCallingConv(uint CC)
 	{
 		LLVMSetFunctionCallConv(this._cref, CC);
 	}
 
 	// AttributeSet 	getAttributes () const
-	Attribute getAttributes()
+	public Attribute getAttributes()
 	{
 		return cast(Attribute) (this._cref);
 	}
 
 	// void 	setAttributes (AttributeSet attrs)
 
-	void addFnAttr(Attribute N)
+	public void addFnAttr(Attribute N)
 	{
 		LLVMAddFunctionAttr(this._cref, N);
 	}
 
-	void removeFnAttr(Attribute N)
+	public void removeFnAttr(Attribute N)
 	{
 		LLVMRemoveFunctionAttr(this._cref, N);
 	}
@@ -77,12 +77,12 @@ class Function : GlobalValue
 	// Attribute 	getFnAttribute (StringRef Kind) const
 	// bool 	hasGC () const
 
-	string getGC()
+	public string getGC()
 	{
 		return LLVMGetGC(this._cref).fromCString();
 	}
 
-	void setGC(string Str)
+	public void setGC(string Str)
 	{
 		auto context = this.getContext();
 		auto c_Str = Str.toCString();
@@ -121,7 +121,7 @@ class Function : GlobalValue
 	// void 	deleteBody ()
 	// virtual void 	removeFromParent ()
 	
-	override void eraseFromParent()
+	public override void eraseFromParent()
 	{
 		LLVMDeleteFunction(this._cref);
 	}
