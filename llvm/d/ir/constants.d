@@ -54,6 +54,147 @@ class UndefValue : Constant
 	{ return new UndefValue(T, LLVMGetUndef(T.cref)); }
 }
 
+class ConstantInt : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// const APInt & 	getValue () const
+
+	public uint getBitWidth()
+	{
+		return this.type.getIntegerBitWidth();
+	}
+
+	public ulong getZExtValue()
+	in
+	{
+		assert(this.type.getIntegerBitWidth() <= 64, "Too many bits for ulong");
+	}
+	body
+	{
+		return LLVMConstIntGetZExtValue(this._cref);
+	}
+
+	public long getSExtValue()
+	in
+	{
+		assert(this.type.getIntegerBitWidth() <= 64, "Too many bits for long");
+	}
+	body
+	{
+		return LLVMConstIntGetSExtValue(this._cref);
+	}
+
+	public bool equalsInt(ulong V)
+	{
+		return V == getSExtValue();
+	}
+
+	public override IntegerType getType()
+	{
+		return cast(IntegerType) Value.getType();
+	}
+
+	// bool 	isNegative () const
+	// bool 	isZero () const
+	// bool 	isOne () const
+	// bool 	isMinusOne () const
+	// bool 	isMaxValue (bool isSigned) const
+	// bool 	isMinValue (bool isSigned) const
+	// bool 	uge (uint64_t Num) const
+	// uint64_t 	getLimitedValue (uint64_t Limit=~0ULL) const
+
+	public static ConstantInt getTrue(LLVMContext Context)
+	{
+		return ConstantInt.get(Type.getInt1Ty(Context), 1);
+	}
+
+	public static ConstantInt getFalse(LLVMContext Context)
+	{
+		return ConstantInt.get(Type.getInt1Ty(Context), 0);
+	}
+
+	// static Constant * 	getTrue (Type *Ty)
+	// static Constant * 	getFalse (Type *Ty)
+
+	// static Constant * 	get (Type *Ty, uint64_t V, bool isSigned=false)
+	/+public static Constant get(Type Ty, ulong V, bool isSigned = false)
+	{
+		Constant C = ConstantInt.get(cast(IntegerType) Ty.getScalarType(), V, isSigned);
+
+		// For vectors, broadcast the value.
+		if(is(Ty : VectorType))
+		{
+			VectorType VTy = cast(VectorType) Ty;
+			return ConstantVector.getSplat(VTy.getNumElements(), C);
+		}
+
+		return C;
+	}+/
+
+	public static ConstantInt get(IntegerType Ty, ulong V, bool isSigned = false)
+	{
+		return new ConstantInt(Ty, LLVMConstInt(Ty.cref, V, to!LLVMBool(isSigned)));
+	}
+
+	public static ConstantInt getSigned(IntegerType Ty, long V)
+	{
+		return ConstantInt.get(Ty, cast(ulong) V, true);
+	}
+
+	// static Constant * 	getSigned (Type *Ty, int64_t V)
+	// static ConstantInt * 	get (LLVMContext &Context, const APInt &V)
+
+	public static ConstantInt get(IntegerType Ty, string Str, ubyte radix)
+	{
+		auto c_Str = Str.toCString();
+		Ty.getContext().treatAsImmutable(c_Str);
+		return new ConstantInt(Ty, LLVMConstIntOfStringAndSize (Ty.cref, c_Str, to!uint(Str.length), radix));
+	}
+
+	// static Constant * 	get (Type *Ty, const APInt &V)
+
+	public static bool isValueValidForType(Type Ty, ulong Val)
+	{
+		uint NumBits = Ty.getIntegerBitWidth(); // assert okay
+		
+		if(Ty.isIntegerTy(1))
+		{
+		  return Val == 0 || Val == 1;
+		}
+
+		if(NumBits >= 64)
+		{
+		  return true; // always true, has to fit in largest type
+		}
+
+		ulong Max = (1L << NumBits) - 1;
+		return Val <= Max;
+	}
+
+	public static bool isValueValidForType(Type Ty, long Val)
+	{
+		uint NumBits = Ty.getIntegerBitWidth();
+
+		if(Ty.isIntegerTy(1))
+		{
+		  return Val == 0 || Val == 1 || Val == -1;
+		}
+
+		if (NumBits >= 64)
+		{
+		  return true; // always true, has to fit in largest type
+		}
+
+		long Min = -(1L << (NumBits-1));
+		long Max = (1L << (NumBits-1)) - 1;
+		return (Val >= Min && Val <= Max);
+	}
+}
+
 class ConstantPointerNull : Constant
 {
 	package this(Type type, LLVMValueRef _cref)

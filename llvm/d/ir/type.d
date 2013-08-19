@@ -557,22 +557,22 @@ class Type
 	static Type getX86_MMXTy(LLVMContext C)
 	{ return new Type(C, LLVMX86MMXTypeInContext(C.cref)); }
 
-	static Type getIntNTy(LLVMContext C, uint N)
+	static IntegerType getIntNTy(LLVMContext C, uint N)
 	{ return new IntegerType(C, LLVMIntTypeInContext(C.cref, N)); }
 
-	static Type getInt1Ty(LLVMContext C)
+	static IntegerType getInt1Ty(LLVMContext C)
 	{ return new IntegerType(C, LLVMInt1TypeInContext(C.cref)); }
 
-	static Type getInt8Ty(LLVMContext C)
+	static IntegerType getInt8Ty(LLVMContext C)
 	{ return new IntegerType(C, LLVMInt8TypeInContext(C.cref)); }
 
-	static Type getInt16Ty(LLVMContext C)
+	static IntegerType getInt16Ty(LLVMContext C)
 	{ return new IntegerType(C, LLVMInt16TypeInContext(C.cref)); }
 
-	static Type getInt32Ty(LLVMContext C)
+	static IntegerType getInt32Ty(LLVMContext C)
 	{ return new IntegerType(C, LLVMInt32TypeInContext(C.cref)); }
 
-	static Type getInt64Ty(LLVMContext C)
+	static IntegerType getInt64Ty(LLVMContext C)
 	{ return new IntegerType(C, LLVMInt64TypeInContext(C.cref)); }
 
 	static Type getHalfPtrTy(LLVMContext C, uint AS = 0)

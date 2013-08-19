@@ -226,7 +226,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantInt(value) !is null)
 			{
-				//return new ConstantInt(type, value);
+				return new ConstantInt(type, value);
 			}
 			else if(LLVMIsAConstantPointerNull(value) !is null)
 			{
