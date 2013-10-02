@@ -587,6 +587,7 @@ if errorlevel 1 goto reportError</postBuildCommand>
     </Folder>
     <Folder name="d">
      <Folder name="ir">
+      <File path="..\..\llvm\d\ir\argument.d" />
       <File path="..\..\llvm\d\ir\attributes.d" />
       <File path="..\..\llvm\d\ir\basicblock.d" />
       <File path="..\..\llvm\d\ir\constant.d" />

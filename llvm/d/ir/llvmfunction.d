@@ -51,11 +51,6 @@ class Function : GlobalValue
 	}
 
 	// AttributeSet 	getAttributes () const
-	public Attribute getAttributes()
-	{
-		return cast(Attribute) (this._cref);
-	}
-
 	// void 	setAttributes (AttributeSet attrs)
 
 	public void addFnAttr(Attribute N)

@@ -21,6 +21,7 @@ private
 	import llvm.d.ir.globalvariable;
 	import llvm.d.ir.llvmfunction;
 	import llvm.d.ir.basicblock;
+	import llvm.d.ir.argument;
 }
 
 class Value
@@ -180,10 +181,10 @@ class Value
 package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 {
 	auto type = LLVMTypeRef_to_Type(C, LLVMTypeOf(value));
-	
+
 	if(LLVMIsAArgument(value) !is null) 
 	{
-		//return new Argument(type, value);
+		return new Argument(type, value);
 	}
 	else if(LLVMIsABasicBlock(value) !is null)
 	{
@@ -223,7 +224,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantFP(value) !is null)
 			{
-				//return new ConstantFP(type, value);
+				return new ConstantFP(type, value);
 			}
 			else if(LLVMIsAConstantInt(value) !is null)
 			{
@@ -499,13 +500,13 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 
 /+ LLVM Value subclass hierarchy:
 Argument
-BasicBlock
+BasicBlock -- implemented
 InlineAsm
 MDNode
 MDString
 User -- implemented
 	Constant -- implemented
-		BlockAddress
+		BlockAddress -- implemented
 		ConstantAggregateZero
 		ConstantArray
 		ConstantDataSequential
@@ -522,7 +523,7 @@ User -- implemented
 			SelectConstantExpr
 			ShuffleVectorConstantExpr
 			UnaryConstantExpr
-		ConstantFP
+		ConstantFP -- implemented
 		ConstantInt -- implemented
 		ConstantPointerNull -- implemented
 		ConstantStruct -- implemented
