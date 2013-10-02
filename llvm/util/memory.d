@@ -73,7 +73,7 @@ immutable(char)* toCString(string s)
 
 string fromCString(const(char)* c_s)
 {
-	char[] s = new char[strlen(c_s) - 1];
+	char[] s = new char[strlen(c_s)];
 	memcpy(s.ptr, c_s, s.length);
 	return cast(immutable(char)[]) s;
 }

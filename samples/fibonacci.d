@@ -92,7 +92,8 @@ int main(string[] args)
 	}
 	else
 	{
-		static if(LLVM_Version >= 3.3)
+		// Ran into some issues under Arch, so comment the new MVJIT out for now
+		/+static if(LLVM_Version >= 3.3)
 		{
 			/+ On other systems we should be able to use the newer
 			 + MCJIT instead - if we have a high enough LLVM version +/
@@ -102,9 +103,9 @@ int main(string[] args)
 			LLVMCreateMCJITCompilerForModule(&engine, _module, &options, options.sizeof, &error);
 		}
 		else
-		{
+		{+/
 			LLVMCreateJITCompilerForModule(&engine, _module, 2, &error);
-		}
+		//}
 	}
 
 	if(error !is null)

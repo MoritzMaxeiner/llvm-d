@@ -74,7 +74,9 @@ public struct LLVM
 			}
 			else debug
 			{
+				import std.stdio;
 				import std.cstream;
+				writefln("LLVM shared library \"%s\" could not be loaded", path ~ file);
 				derr.writefln(to!string(library.error));
 			}
 		}
