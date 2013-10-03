@@ -34,7 +34,12 @@ class Constant : User
 	// const APInt & 	getUniqueInteger ()
 	// virtual void 	destroyConstant ()
 
-	public void replaceUsesOfWithOnConstant(Value From, Value To, Use U);
+	public void replaceUsesOfWithOnConstant(Value From, Value To, Use U)
+	in
+	{}
+	body
+	{}
+
 	// void 	removeDeadConstantUsers ()
 	
 	public static Constant getNullValue(Type Ty)
