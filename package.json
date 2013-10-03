@@ -5,7 +5,7 @@
 	"authors": [
 		"Moritz Maxeiner"
 	],
-	"targetType": "sourceLibrary",
+	"targetType": "staticLibrary",
 	"importPaths": ["."],
 	"sourcePaths": [
 		"llvm",
