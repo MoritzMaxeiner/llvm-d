@@ -64,7 +64,7 @@ class BasicBlock : Value
 	}
 
 	// void 	eraseFromParent ()
-	public void removeFromParent()
+	public void eraseFromParent()
 	{
 		LLVMDeleteBasicBlock(LLVMValueAsBasicBlock(this.cref));
 	}
