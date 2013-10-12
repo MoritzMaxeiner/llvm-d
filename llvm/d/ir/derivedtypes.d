@@ -272,7 +272,7 @@ class StructType : CompositeType
 		}
 		
 		if((this.isPacked() != Other.isPacked()) ||
-		   (this.getNumElements != Other.getNumElements()))
+		   (this.getNumElements() != Other.getNumElements()))
 		{
 			return false;
 		}

@@ -76,13 +76,13 @@ class GlobalValue : Constant
 	{ return cast(VisibilityTypes) LLVMGetVisibility(this._cref); }
 
 	public bool hasDefaultVisibility()
-	{ return this.getVisibility == VisibilityTypes.Default; }
+	{ return this.getVisibility() == VisibilityTypes.Default; }
 
 	public bool hasHiddenVisibility()
-	{ return this.getVisibility == VisibilityTypes.Hidden; }
+	{ return this.getVisibility() == VisibilityTypes.Hidden; }
 
 	public bool hasProtectedVisibility()
-	{ return this.getVisibility == VisibilityTypes.Protected; }
+	{ return this.getVisibility() == VisibilityTypes.Protected; }
 
 	public void setVisibility(VisibilityTypes V)
 	{ LLVMSetVisibility(this._cref, V); }
