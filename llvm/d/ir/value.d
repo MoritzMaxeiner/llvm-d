@@ -568,6 +568,7 @@ User -- implemented
 	UnaryInstruction
 		AllocaInst
 		CastInst
+			AddrSpaceCastInst
 			BitCastInst
 			FPExtInst
 			FPToSIInst

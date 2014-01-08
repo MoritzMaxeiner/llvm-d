@@ -52,67 +52,67 @@ enum : LLVMAttribute
 	LLVMNonLazyBind = 1<<31
 }
 
-enum : LLVMOpcode
-{
-	LLVMRet            = 1,
-	LLVMBr             = 2,
-	LLVMSwitch         = 3,
-	LLVMIndirectBr     = 4,
-	LLVMInvoke         = 5,
-	LLVMUnreachable    = 7,
-	LLVMAdd            = 8,
-	LLVMFAdd           = 9,
-	LLVMSub            = 10,
-	LLVMFSub           = 11,
-	LLVMMul            = 12,
-	LLVMFMul           = 13,
-	LLVMUDiv           = 14,
-	LLVMSDiv           = 15,
-	LLVMFDiv           = 16,
-	LLVMURem           = 17,
-	LLVMSRem           = 18,
-	LLVMFRem           = 19,
-	LLVMShl            = 20,
-	LLVMLShr           = 21,
-	LLVMAShr           = 22,
-	LLVMAnd            = 23,
-	LLVMOr             = 24,
-	LLVMXor            = 25,
-	LLVMAlloca         = 26,
-	LLVMLoad           = 27,
-	LLVMStore          = 28,
-	LLVMGetElementPtr  = 29,
-	LLVMTrunc          = 30,
-	LLVMZExt           = 31,
-	LLVMSExt           = 32,
-	LLVMFPToUI         = 33,
-	LLVMFPToSI         = 34,
-	LLVMUIToFP         = 35,
-	LLVMSIToFP         = 36,
-	LLVMFPTrunc        = 37,
-	LLVMFPExt          = 38,
-	LLVMPtrToInt       = 39,
-	LLVMIntToPtr       = 40,
-	LLVMBitCast        = 41,
-	LLVMICmp           = 42,
-	LLVMFCmp           = 43,
-	LLVMPHI            = 44,
-	LLVMCall           = 45,
-	LLVMSelect         = 46,
-	LLVMUserOp1        = 47,
-	LLVMUserOp2        = 48,
-	LLVMVAArg          = 49,
-	LLVMExtractElement = 50,
-	LLVMInsertElement  = 51,
-	LLVMShuffleVector  = 52,
-	LLVMExtractValue   = 53,
-	LLVMInsertValue    = 54,
-	LLVMFence          = 55,
-	LLVMAtomicCmpXchg  = 56,
-	LLVMAtomicRMW      = 57,
-	LLVMResume         = 58,
-	LLVMLandingPad     = 59
-}
+mixin(MixinMap_VersionedEnum(
+			  "", "LLVMOpcode", LLVM_Version,
+			  ["LLVMRet            = 1" : null,
+			   "LLVMBr             = 2" : null,
+			   "LLVMSwitch         = 3" : null,
+			   "LLVMIndirectBr     = 4" : null,
+			   "LLVMInvoke         = 5" : null,
+			   "LLVMUnreachable    = 7" : null,
+			   "LLVMAdd            = 8" : null,
+			   "LLVMFAdd           = 9" : null,
+			   "LLVMSub            = 10" : null,
+			   "LLVMFSub           = 11" : null,
+			   "LLVMMul            = 12" : null,
+			   "LLVMFMul           = 13" : null,
+			   "LLVMUDiv           = 14" : null,
+			   "LLVMSDiv           = 15" : null,
+			   "LLVMFDiv           = 16" : null,
+			   "LLVMURem           = 17" : null,
+			   "LLVMSRem           = 18" : null,
+			   "LLVMFRem           = 19" : null,
+			   "LLVMShl            = 20" : null,
+			   "LLVMLShr           = 21" : null,
+			   "LLVMAShr           = 22" : null,
+			   "LLVMAnd            = 23" : null,
+			   "LLVMOr             = 24" : null,
+			   "LLVMXor            = 25" : null,
+			   "LLVMAlloca         = 26" : null,
+			   "LLVMLoad           = 27" : null,
+			   "LLVMStore          = 28" : null,
+			   "LLVMGetElementPtr  = 29" : null,
+			   "LLVMTrunc          = 30" : null,
+			   "LLVMZExt           = 31" : null,
+			   "LLVMSExt           = 32" : null,
+			   "LLVMFPToUI         = 33" : null,
+			   "LLVMFPToSI         = 34" : null,
+			   "LLVMUIToFP         = 35" : null,
+			   "LLVMSIToFP         = 36" : null,
+			   "LLVMFPTrunc        = 37" : null,
+			   "LLVMFPExt          = 38" : null,
+			   "LLVMPtrToInt       = 39" : null,
+			   "LLVMIntToPtr       = 40" : null,
+			   "LLVMBitCast        = 41" : null,
+			   "LLVMAddrSpaceCast  = 60" : ["+", "3.4"],
+			   "LLVMICmp           = 42" : null,
+			   "LLVMFCmp           = 43" : null,
+			   "LLVMPHI            = 44" : null,
+			   "LLVMCall           = 45" : null,
+			   "LLVMSelect         = 46" : null,
+			   "LLVMUserOp1        = 47" : null,
+			   "LLVMUserOp2        = 48" : null,
+			   "LLVMVAArg          = 49" : null,
+			   "LLVMExtractElement = 50" : null,
+			   "LLVMInsertElement  = 51" : null,
+			   "LLVMShuffleVector  = 52" : null,
+			   "LLVMExtractValue   = 53" : null,
+			   "LLVMInsertValue    = 54" : null,
+			   "LLVMFence          = 55" : null,
+			   "LLVMAtomicCmpXchg  = 56" : null,
+			   "LLVMAtomicRMW      = 57" : null,
+			   "LLVMResume         = 58" : null,
+			   "LLVMLandingPad     = 59" : null]));
 
 enum : LLVMTypeKind
 {
@@ -162,14 +162,15 @@ enum : LLVMVisibility
 	LLVMProtectedVisibility
 }
 
-enum : LLVMCallConv
-{
-	LLVMCCallConv           = 0,
-	LLVMFastCallConv        = 8,
-	LLVMColdCallConv        = 9,
-	LLVMX86StdcallCallConv  = 64,
-	LLVMX86FastcallCallConv = 65
-}
+mixin(MixinMap_VersionedEnum(
+			  "", "LLVMCallConv", LLVM_Version,
+			  ["LLVMCCallConv           = 0" : null,
+			   "LLVMFastCallConv        = 8" : null,
+			   "LLVMColdCallConv        = 9" : null,
+			   "LLVMWebKitJSCallConv    = 12" : ["+", "3.4"],
+			   "LLVMAnyRegCallConv      = 13" : ["+", "3.4"],
+			   "LLVMX86StdcallCallConv  = 64" : null,
+			   "LLVMX86FastcallCallConv = 65" : null]));
 
 enum : LLVMIntPredicate
 {
@@ -271,6 +272,16 @@ const
 		uint LLVMDisassembler_Option_PrintImmHex = 2;
 		uint LLVMDisassembler_Option_AsmPrinterVariant = 4;
 	}
+	static if(LLVM_Version >= 3.4)
+	{
+			uint LLVMDisassembler_ReferenceType_Out_Objc_CFString_Ref = 4;
+			uint LLVMDisassembler_ReferenceType_Out_Objc_Message = 5;
+			uint LLVMDisassembler_ReferenceType_Out_Objc_Message_Ref = 6;
+			uint LLVMDisassembler_ReferenceType_Out_Objc_Selector_Ref = 7;
+			uint LLVMDisassembler_ReferenceType_Out_Objc_Class_Ref = 8;
+			uint LLVMDisassembler_Option_SetInstrComments = 8;
+			uint LLVMDisassembler_Option_PrintLatency = 16;
+	}
 }
 
 static if(LLVM_Version < 3.3)
@@ -314,9 +325,13 @@ enum : llvm_lto_status
 
 /+ LTO +/
 
-const
+static if(LLVM_Version >= 3.4)
 {
-	uint LTO_API_VERSION = 4;
+	const uint LTO_API_VERSION = 5;
+}
+else
+{
+	const uint LTO_API_VERSION = 4;
 }
 
 enum : lto_symbol_attributes

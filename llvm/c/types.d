@@ -3,6 +3,8 @@ module llvm.c.types;
 
 private
 {
+	import std.stdint : uintptr_t;
+
 	import llvm.c.versions;
 }
 
@@ -17,6 +19,11 @@ alias int LLVMVerifierFailureAction;
 struct LLVMOpaquePassManagerBuilder {}; alias LLVMOpaquePassManagerBuilder* LLVMPassManagerBuilderRef;
 
 /+ Core +/
+
+static if(LLVM_Version >= 3.4)
+{
+		alias extern(C) void function(const char* Reason) LLVMFatalErrorHandler;
+}
 
 /++ Types and Enumerations ++/
 
@@ -96,12 +103,33 @@ struct LLVMOpaqueExecutionEngine {}; alias LLVMOpaqueExecutionEngine* LLVMExecut
 
 static if(LLVM_Version >= 3.3)
 {
-	struct LLVMMCJITCompilerOptions
+	static if(LLVM_Version >= 3.4)
 	{
-		uint OptLevel;
-		LLVMCodeModel CodeModel;
-		LLVMBool NoFramePointerElim;
-		LLVMBool EnableFastISel;
+		struct LLVMOpaqueMCJITMemoryManager {}; alias LLVMOpaqueMCJITMemoryManager* LLVMMCJITMemoryManagerRef;
+
+		struct LLVMMCJITCompilerOptions
+		{
+			uint OptLevel;
+			LLVMCodeModel CodeModel;
+			LLVMBool NoFramePointerElim;
+			LLVMBool EnableFastISel;
+			LLVMMCJITMemoryManagerRef MCJMM;
+		}
+
+		alias extern(C) ubyte function(void* Opaque, uintptr_t Size, uint Alignment, uint SectionID, const char* SectionName) LLVMMemoryManagerAllocateCodeSectionCallback;
+		alias extern(C) ubyte function(void* Opaque, uintptr_t Size, uint Alignment, uint SectionID, const char* SectionName, LLVMBool IsReadOnly) LLVMMemoryManagerAllocateDataSectionCallback;
+		alias extern(C) LLVMBool function(void* Opaque, char** ErrMsg) LLVMMemoryManagerFinalizeMemoryCallback;
+		alias extern(C) void function(void* Opaque) LLVMMemoryManagerDestroyCallback;
+	}
+	else
+	{
+		struct LLVMMCJITCompilerOptions
+		{
+			uint OptLevel;
+			LLVMCodeModel CodeModel;
+			LLVMBool NoFramePointerElim;
+			LLVMBool EnableFastISel;
+		}
 	}
 }
 
@@ -140,8 +168,10 @@ struct LLVMOpaqueRelocationIterator {}; alias LLVMOpaqueRelocationIterator* LLVM
 
 struct LLVMOpaqueTargetData {}; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
 struct LLVMOpaqueTargetLibraryInfotData {}; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
-struct LLVMStructLayout {}; alias LLVMStructLayout* LLVMStructLayoutRef;
-
+static if(LLVM_Version < 3.4)
+{
+	struct LLVMStructLayout {}; alias LLVMStructLayout* LLVMStructLayoutRef;
+}
 alias int LLVMByteOrdering;
 
 /+ Target machine +/
