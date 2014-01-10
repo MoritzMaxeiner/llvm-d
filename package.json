@@ -1,30 +1,49 @@
 {
 	"name": "llvm-d",
 	"description": "D bindings for LLVM",
-	"copyright": "Copyright © 2013, Moritz Maxeiner",
+	"copyright": "Copyright © 2013-2014, Moritz Maxeiner",
 	"authors": [
 		"Moritz Maxeiner"
 	],
-	"targetType": "sourceLibrary",
+	"targetType": "library",
 	"importPaths": ["."],
-	"sourcePaths": [
-		"llvm",
-		"llvm/util",
-		"llvm/c"
-	],
-	"lflags-posix": ["-ldl"],
+	"dependencies": {
+		"llvm-d:c-api": "~experimental",
+		"llvm-d:d-api": "~experimental"
+	},
 	"subPackages": [
 		{
-			"name": "fibonacci",
-			"description": "fib",
-			"targetType": "executable",
+			"name": "c-api",
+			"description": "Dynamically loading D bindings for LLVM's C API",
+			"targetType": "sourceLibrary",
+			"importPaths": ["."],
 			"sourcePaths": [
-				"llvm",
-				"llvm/util",
-				"llvm/c"
+				"llvm/c/",
+				"llvm/util/"
 			],
-			"sourceFiles": ["samples/fibonacci.d"],
 			"lflags-posix": ["-ldl"],
+		},
+		{
+			"name": "d-api",
+			"description": "D OO-API using LLVM's C API",
+			"targetType": "sourceLibrary",
+			"importPaths": ["."],
+			"sourcePaths": [
+				"llvm/d/",
+				"llvm/util/",
+			],
+			"excludedSourceFiles": ["llvm/util/shlib.d"],
+		},
+		{
+			"name": "fibonacci",
+			"targetName": "fibonacci",
+			"description": "Shows howto create a function calculating the Fibonacci series, jit-compile it, and execute it in-memory with llvm-d:c-api",
+			"targetType": "executable",
+			"importPaths": ["."],
+			"sourceFiles": ["samples/fibonacci.d"],
+			"dependencies": {
+				"llvm-d:c-api": "~experimental"
+			},
 		}
 	]
 }

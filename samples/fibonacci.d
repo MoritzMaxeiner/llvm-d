@@ -3,7 +3,7 @@ module samples.fibonacci;
 import std.conv : to;
 import std.stdio : writefln, writeln;
 
-import llvm.d.llvm_c;
+import llvm.c.all;
 
 import llvm.util.memory;
 
