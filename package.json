@@ -12,5 +12,19 @@
 		"llvm/util",
 		"llvm/c"
 	],
-	"lflags-posix" : ["-ldl"]
+	"lflags-posix": ["-ldl"],
+	"subPackages": [
+		{
+			"name": "fibonacci",
+			"description": "fib",
+			"targetType": "executable",
+			"sourcePaths": [
+				"llvm",
+				"llvm/util",
+				"llvm/c"
+			],
+			"sourceFiles": ["samples/fibonacci.d"],
+			"lflags-posix": ["-ldl"],
+		}
+	]
 }
