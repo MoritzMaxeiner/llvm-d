@@ -489,3 +489,59 @@ class ConstantVector : Constant
 		return get(Elts);
 	}+/
 }
+
+class ConstantAggregateZero : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// virtual void 	destroyConstant ()
+
+	// Constant * 	getSequentialElement () const
+	public Constant getSequentialElement()
+	{
+		return Constant.getNullValue(this.getType().getSequentialElementType());
+	}
+
+	// Constant * 	getStructElement (unsigned Elt) const
+	public Constant getStructElement(uint Elt)
+	{
+		return Constant.getNullValue(this.getType().getStructElementType(Elt));
+	}
+
+	// Constant * 	getElementValue (Constant *C) const
+	/+ public const Constant getElementValue(Constant C)
+	{
+		if(is(this.getType() : SequentialType))
+		{
+			return this.getSequentialElement();
+		}
+
+		return this.getStructElement((cast(ConstantInt) C).getZExtValue());
+	}+/
+
+	// Constant * 	getElementValue (unsigned Idx) const
+	public Constant getElementValue(uint Idx)
+	{
+		if(is(this.type : SequentialType))
+		{
+			return this.getSequentialElement();
+		}
+
+		return this.getStructElement(Idx);
+	}
+
+	// static ConstantAggregateZero * 	get (Type *Ty)
+	public static ConstantAggregateZero get(Type Ty)
+	in
+	{
+		assert(Ty.isStructTy() || Ty.isArrayTy() || Ty.isVectorTy(),
+		       "Cannot create an aggregate zero of non-aggregate type!");
+	}
+	body
+	{
+		return cast(ConstantAggregateZero) Constant.getNullValue(Ty);
+	}
+}

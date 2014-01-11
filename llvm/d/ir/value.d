@@ -212,7 +212,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantAggregateZero(value) !is null)
 			{
-				//return new ConstantAggregateZero(type, value);
+				return new ConstantAggregateZero(type, value);
 			}
 			else if(LLVMIsAConstantArray(value) !is null)
 			{
@@ -406,87 +406,87 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 					//return new TerminatorInst(type, value);
 				}
 			}
-			else
+			else if(LLVMIsAUnaryInstruction(value) !is null)
 			{
-				//return new Instruction(type, value);
-			}
-		}
-		else if(LLVMIsAUnaryInstruction(value) !is null)
-		{
-			if(LLVMIsAAllocaInst(value) !is null)
-			{
-				//return new AllocaInst(type, value);
-			}
-			else if(LLVMIsACastInst(value) !is null)
-			{
-				if(LLVMIsABitCastInst(value) !is null)
+				if(LLVMIsAAllocaInst(value) !is null)
 				{
-					//return new BitCastInst(type, value);
+					//return new AllocaInst(type, value);
 				}
-				else if(LLVMIsAFPExtInst(value) !is null)
+				else if(LLVMIsACastInst(value) !is null)
 				{
-					//return new FPExtInst(type, value);
+					if(LLVMIsABitCastInst(value) !is null)
+					{
+						//return new BitCastInst(type, value);
+					}
+					else if(LLVMIsAFPExtInst(value) !is null)
+					{
+						//return new FPExtInst(type, value);
+					}
+					else if(LLVMIsAFPToSIInst(value) !is null)
+					{
+						//return new FPToSIInst(type, value);
+					}
+					else if(LLVMIsAFPToUIInst(value) !is null)
+					{
+						//return new FPToUIInst(type, value);
+					}
+					else if(LLVMIsAFPTruncInst(value) !is null)
+					{
+						//return new FPTruncInst(type, value);
+					}
+					else if(LLVMIsAIntToPtrInst(value) !is null)
+					{
+						//return new IntToPtrInst(type, value);
+					}
+					else if(LLVMIsAPtrToIntInst(value) !is null)
+					{
+						//return new PtrToIntInst(type, value);
+					}
+					else if(LLVMIsASExtInst(value) !is null)
+					{
+						//return new SExtInst(type, value);
+					}
+					else if(LLVMIsASIToFPInst(value) !is null)
+					{
+						//return new SIToFPInst(type, value);
+					}
+					else if(LLVMIsATruncInst(value) !is null)
+					{
+						//return new TruncInst(type, value);
+					}
+					else if(LLVMIsAUIToFPInst(value) !is null)
+					{
+						//return new UIToFPInst(type, value);
+					}
+					else if(LLVMIsAZExtInst(value) !is null)
+					{
+						//return new ZExtInst(type, value);
+					}
+					else
+					{
+						//return new CastInst(type, value);
+					}
 				}
-				else if(LLVMIsAFPToSIInst(value) !is null)
+				else if(LLVMIsAExtractValueInst(value) !is null)
 				{
-					//return new FPToSIInst(type, value);
+					//return new ExtractValueInst(type, value);
 				}
-				else if(LLVMIsAFPToUIInst(value) !is null)
+				else if(LLVMIsALoadInst(value) !is null)
 				{
-					//return new FPToUIInst(type, value);
+					//return new LoadInst(type, value);
 				}
-				else if(LLVMIsAFPTruncInst(value) !is null)
+				else if(LLVMIsAVAArgInst(value) !is null)
 				{
-					//return new FPTruncInst(type, value);
-				}
-				else if(LLVMIsAIntToPtrInst(value) !is null)
-				{
-					//return new IntToPtrInst(type, value);
-				}
-				else if(LLVMIsAPtrToIntInst(value) !is null)
-				{
-					//return new PtrToIntInst(type, value);
-				}
-				else if(LLVMIsASExtInst(value) !is null)
-				{
-					//return new SExtInst(type, value);
-				}
-				else if(LLVMIsASIToFPInst(value) !is null)
-				{
-					//return new SIToFPInst(type, value);
-				}
-				else if(LLVMIsATruncInst(value) !is null)
-				{
-					//return new TruncInst(type, value);
-				}
-				else if(LLVMIsAUIToFPInst(value) !is null)
-				{
-					//return new UIToFPInst(type, value);
-				}
-				else if(LLVMIsAZExtInst(value) !is null)
-				{
-					//return new ZExtInst(type, value);
+					//return new VAArgInst(type, value);
 				}
 				else
 				{
-					//return new CastInst(type, value);
+					//return new UnaryInstruction(type, value);
 				}
-			}
-			else if(LLVMIsAExtractValueInst(value) !is null)
-			{
-				//return new ExtractValueInst(type, value);
-			}
-			else if(LLVMIsALoadInst(value) !is null)
-			{
-				//return new LoadInst(type, value);
-			}
-			else if(LLVMIsAVAArgInst(value) !is null)
-			{
-				//return new VAArgInst(type, value);
 			}
 			else
 			{
-				//return new UnaryInstruction(type, value);
+				//return new Instruction(type, value);
 			}
 		}
 		else
@@ -552,7 +552,7 @@ User -- implemented
 		GetElementPtrInst
 		InsertElementInst
 		InsertValueInst
-		LandingPadInst
+		LandingPadInstOperator
 		PHINode
 		SelectInst
 		ShuffleVectorInst
@@ -565,23 +565,23 @@ User -- implemented
 			SwitchInst
 			UnreachableInst
 			ResumeInst
-	UnaryInstruction
-		AllocaInst
-		CastInst
-			AddrSpaceCastInst
-			BitCastInst
-			FPExtInst
-			FPToSIInst
-			FPToUIInst
-			FPTruncInst
-			IntToPtrInst
-			PtrToIntInst
-			SExtInst
-			SIToFPInst
-			TruncInst
-			UIToFPInst
-			ZExtInst
-		ExtractValueInst
-		LoadInst
-		VAArgInst
+		UnaryInstruction
+			AllocaInst
+			CastInst
+				AddrSpaceCastInst
+				BitCastInst
+				FPExtInst
+				FPToSIInst
+				FPToUIInst
+				FPTruncInst
+				IntToPtrInst
+				PtrToIntInst
+				SExtInst
+				SIToFPInst
+				TruncInst
+				UIToFPInst
+				ZExtInst
+			ExtractValueInst
+			LoadInst
+			VAArgInst
 +/

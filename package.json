@@ -18,8 +18,8 @@
 			"targetType": "sourceLibrary",
 			"importPaths": ["."],
 			"sourcePaths": [
-				"llvm/c/",
-				"llvm/util/"
+				"llvm/c",
+				"llvm/util"
 			],
 			"lflags-posix": ["-ldl"],
 		},
@@ -29,8 +29,8 @@
 			"targetType": "sourceLibrary",
 			"importPaths": ["."],
 			"sourcePaths": [
-				"llvm/d/",
-				"llvm/util/",
+				"llvm/d",
+				"llvm/util",
 			],
 			"excludedSourceFiles": ["llvm/util/shlib.d"],
 		},
