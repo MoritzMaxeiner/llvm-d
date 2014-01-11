@@ -507,8 +507,8 @@ MDString
 User -- implemented
 	Constant -- implemented
 		BlockAddress -- implemented
-		ConstantAggregateZero
-		ConstantArray
+		ConstantAggregateZero -- implemented
+		ConstantArray -- implemented
 		ConstantDataSequential
 			ConstantDataArray
 			ConstantDataVector

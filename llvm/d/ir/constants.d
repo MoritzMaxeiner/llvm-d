@@ -545,3 +545,40 @@ class ConstantAggregateZero : Constant
 		return cast(ConstantAggregateZero) Constant.getNullValue(Ty);
 	}
 }
+
+class ConstantArray : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// DECLARE_TRANSPARENT_OPERAND_ACCESSORS (Constant)
+
+	// ArrayType * 	getType () const
+	public override ArrayType getType()
+	{
+		return cast(ArrayType) Value.getType();
+	}
+
+	// virtual void 	destroyConstant ()
+	// virtual void 	replaceUsesOfWithOnConstant (Value *From, Value *To, Use *U)
+
+	// static Constant * 	get (ArrayType *T, ArrayRef< Constant * > V)
+	public static Constant get(ArrayType T, Constant[] V)
+	{
+		auto elements = construct!LLVMValueRef(V.length);
+		foreach(i; 0 .. V.length)
+		{
+			elements[i] = V[i].cref;
+		}
+
+		auto constant = LLVMConstArray(T.getElementType().cref, elements, cast(uint) V.length);
+		if(elements !is null)
+		{
+			destruct(elements);
+		}
+
+		return new ConstantArray(T,	constant);
+	}
+}
