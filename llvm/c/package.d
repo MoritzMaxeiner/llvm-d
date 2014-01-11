@@ -1,5 +1,5 @@
 
-module llvm.c.all;
+module llvm.c;
 
 private
 {

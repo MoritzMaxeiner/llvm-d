@@ -28,6 +28,6 @@ public
 	}
 	else
 	{
-		import llvm.c.all;
+		import llvm.c;
 	}
 }
