@@ -40,6 +40,14 @@ class LLVMContext
 		}
 	}
 
+	public void treatAsImmutable(T)(T[] array)
+	{
+		synchronized(this)
+		{
+			this.ImmutableData ~= cast(immutable(void*)) array;
+		}
+	}
+
 	override bool opEquals(Object obj)
 	{
 		return is(o : LLVMContext) &&

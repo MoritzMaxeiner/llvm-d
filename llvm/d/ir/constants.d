@@ -582,3 +582,527 @@ class ConstantArray : Constant
 		return new ConstantArray(T,	constant);
 	}
 }
+
+class ConstantExpr : Constant
+{
+	package this(Type type, LLVMValueRef _cref)
+	{
+		super(type, _cref);
+	}
+
+	// DECLARE_TRANSPARENT_OPERAND_ACCESSORS (Constant)
+
+	// bool 	isCast () const
+	// bool 	isCompare () const
+	// bool 	hasIndices () const
+	// bool 	isGEPWithNoNotionalOverIndexing () const
+	// unsigned 	getOpcode () const
+	// unsigned 	getPredicate () const
+	// ArrayRef< unsigned > 	getIndices () const
+	// const char * 	getOpcodeName () const
+	// Constant * 	getWithOperandReplaced (unsigned OpNo, Constant *Op) const
+	// Constant * 	getWithOperands (ArrayRef< Constant * > Ops) const
+	// Constant * 	getWithOperands (ArrayRef< Constant * > Ops, Type *Ty) const
+	// Instruction * 	getAsInstruction ()
+	// virtual void 	destroyConstant ()
+	// virtual void 	replaceUsesOfWithOnConstant (Value *From, Value *To, Use *U)
+
+	// static Constant * 	getAlignOf (Type *Ty)
+	public static Constant getAlignOf(Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(Ty.getContext(), LLVMAlignOf(Ty.cref));
+	}
+
+	// static Constant * 	getSizeOf (Type *Ty)
+	public static Constant getSizeOf(Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(Ty.getContext(), LLVMSizeOf(Ty.cref));
+	}
+
+	// static Constant * 	getOffsetOf (StructType *STy, unsigned FieldNo)
+	// static Constant * 	getOffsetOf (Type *Ty, Constant *FieldNo)
+
+	// static Constant * 	getNeg (Constant *C, bool HasNUW=false, bool HasNSW=false)
+	public static Constant getNeg(Constant C, bool HasNUW=false, bool HasNSW=false)
+	in
+	{
+		assert(!(HasNUW && HasNSW), "LLVM-C has no wrapper for both 'HasNUW' and 'HasNSW' being true");
+	}
+	body
+	{
+		if(HasNUW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstNUWNeg(C.cref));
+		}
+		else if(HasNSW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstNSWNeg(C.cref));
+		}
+
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstNeg(C.cref));
+	}
+
+	// static Constant * 	getFNeg (Constant *C)
+	public static Constant getFNeg(Constant C)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstFNeg(C.cref));
+	}
+
+	// static Constant * 	getNot (Constant *C)
+	public static Constant getNot(Constant C)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstNot(C.cref));
+	}
+
+	// static Constant * 	getAdd (Constant *C1, Constant *C2, bool HasNUW=false, bool HasNSW=false)
+	public static Constant getAdd(Constant C1, Constant C2, bool HasNUW=false, bool HasNSW=false)
+	in
+	{
+		assert(!(HasNUW && HasNSW), "LLVM-C has no wrapper for both 'HasNUW' and 'HasNSW' being true");
+	}
+	body
+	{
+		if(HasNUW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNUWAdd(C1.cref, C2.cref));
+		}
+		else if(HasNSW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNSWAdd(C1.cref, C2.cref));
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstAdd(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getFAdd (Constant *C1, Constant *C2)
+	public static Constant getFAdd(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstFAdd(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getSub (Constant *C1, Constant *C2, bool HasNUW=false, bool HasNSW=false)
+	public static Constant getSub(Constant C1, Constant C2, bool HasNUW=false, bool HasNSW=false)
+	in
+	{
+		assert(!(HasNUW && HasNSW), "LLVM-C has no wrapper for both 'HasNUW' and 'HasNSW' being true");
+	}
+	body
+	{
+		if(HasNUW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNUWSub(C1.cref, C2.cref));
+		}
+		else if(HasNSW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNSWSub(C1.cref, C2.cref));
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstSub(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getFSub (Constant *C1, Constant *C2)
+	public static Constant getFSub(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstFSub(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getMul (Constant *C1, Constant *C2, bool HasNUW=false, bool HasNSW=false)
+	public static Constant getMul(Constant C1, Constant C2, bool HasNUW=false, bool HasNSW=false)
+	in
+	{
+		assert(!(HasNUW && HasNSW), "LLVM-C has no wrapper for both 'HasNUW' and 'HasNSW' being true");
+	}
+	body
+	{
+		if(HasNUW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNUWMul(C1.cref, C2.cref));
+		}
+		else if(HasNSW)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNSWMul(C1.cref, C2.cref));
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstMul(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getFMul (Constant *C1, Constant *C2)
+	public static Constant getFMul(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstFMul(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getUDiv (Constant *C1, Constant *C2, bool isExact=false)
+	public static Constant getUDiv(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstUDiv(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getSDiv (Constant *C1, Constant *C2, bool isExact=false)
+	public static Constant getSDiv(Constant C1, Constant C2, bool isExact=false)
+	{
+		if(isExact)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstExactSDiv(C1.cref, C2.cref));
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstSDiv(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getFDiv (Constant *C1, Constant *C2)
+	public static Constant getFDiv(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstFDiv(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getURem (Constant *C1, Constant *C2)
+	public static Constant getURem(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstURem(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getSRem (Constant *C1, Constant *C2)
+	public static Constant getSRem(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstSRem(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getFRem (Constant *C1, Constant *C2)
+	public static Constant getFRem(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstFRem(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getAnd (Constant *C1, Constant *C2)
+	public static Constant getAnd(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstAnd(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getOr (Constant *C1, Constant *C2)
+	public static Constant getOr(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstOr(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getXor (Constant *C1, Constant *C2)
+	public static Constant getXor(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstXor(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getShl (Constant *C1, Constant *C2, bool HasNUW=false, bool HasNSW=false)
+	public static Constant getShl(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstShl(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getLShr (Constant *C1, Constant *C2, bool isExact=false)
+	public static Constant getLShr(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstLShr(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getAShr (Constant *C1, Constant *C2, bool isExact=false)
+	public static Constant getAShr(Constant C1, Constant C2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstAShr(C1.cref, C2.cref));
+	}
+
+	// static Constant * 	getTrunc (Constant *C, Type *Ty)
+	public static Constant getTrunc(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstTrunc(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getSExt (Constant *C, Type *Ty)
+	public static Constant getSExt(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstSExt(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getZExt (Constant *C, Type *Ty)
+	public static Constant getZExt(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstZExt(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getFPTrunc (Constant *C, Type *Ty)
+	public static Constant getFPTrunc(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstFPTrunc(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getFPExtend (Constant *C, Type *Ty)
+	public static Constant getFPExtend(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstFPExt(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getUIToFP (Constant *C, Type *Ty)
+	public static Constant getUIToFP(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstUIToFP(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getSIToFP (Constant *C, Type *Ty)
+	public static Constant getSIToFP(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstSIToFP(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getFPToUI (Constant *C, Type *Ty)
+	public static Constant getFPToUI(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstFPToUI(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getFPToSI (Constant *C, Type *Ty)
+	public static Constant getFPToSI(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstFPToSI(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getPtrToInt (Constant *C, Type *Ty)
+	public static Constant getPtrToInt(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstPtrToInt(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getIntToPtr (Constant *C, Type *Ty)
+	public static Constant getIntToPtr(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstIntToPtr(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getBitCast (Constant *C, Type *Ty)
+	public static Constant getBitCast(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstBitCast(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getNSWNeg (Constant *C)
+	public static Constant getNSWNeg(Constant C)
+	{
+		return ConstantExpr.getNeg(C, false, true);
+	}
+
+	// static Constant * 	getNUWNeg (Constant *C)
+	public static Constant getNUWNeg(Constant C)
+	{
+		return ConstantExpr.getNeg(C, true, false);
+	}
+
+	// static Constant * 	getNSWAdd (Constant *C1, Constant *C2)
+	public static Constant getNSWAdd(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getAdd(C1, C2, false, true);
+	}
+
+	// static Constant * 	getNUWAdd (Constant *C1, Constant *C2)
+	public static Constant getNUWAdd(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getAdd(C1, C2, true, false);
+	}
+
+	// static Constant * 	getNSWSub (Constant *C1, Constant *C2)
+	public static Constant getNSWSub(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getSub(C1, C2, false, true);
+	}
+
+	// static Constant * 	getNUWSub (Constant *C1, Constant *C2)
+	public static Constant getNUWSub(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getSub(C1, C2, true, false);
+	}
+
+	// static Constant * 	getNSWMul (Constant *C1, Constant *C2)
+	public static Constant getNSWMul(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getMul(C1, C2, false, true);
+	}
+
+	// static Constant * 	getNUWMul (Constant *C1, Constant *C2)
+	public static Constant getNUWMul(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getMul(C1, C2, true, false);
+	}
+
+	// static Constant * 	getNSWShl (Constant *C1, Constant *C2)
+	// static Constant * 	getNUWShl (Constant *C1, Constant *C2)
+
+	// static Constant * 	getExactSDiv (Constant *C1, Constant *C2)
+	public static Constant getExactSDiv(Constant C1, Constant C2)
+	{
+		return ConstantExpr.getSDiv(C1, C2, true);
+	}
+
+	// static Constant * 	getExactUDiv (Constant *C1, Constant *C2)
+	// static Constant * 	getExactAShr (Constant *C1, Constant *C2)
+	// static Constant * 	getExactLShr (Constant *C1, Constant *C2)
+	// static Constant * 	getBinOpIdentity (unsigned Opcode, Type *Ty)
+	// static Constant * 	getBinOpAbsorber (unsigned Opcode, Type *Ty)
+	// static Constant * 	getCast (unsigned ops, Constant *C, Type *Ty)
+
+	// static Constant * 	getZExtOrBitCast (Constant *C, Type *Ty)
+	public static Constant getZExtOrBitCast(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstZExtOrBitCast(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getSExtOrBitCast (Constant *C, Type *Ty)
+	public static Constant getSExtOrBitCast(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstSExtOrBitCast(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getTruncOrBitCast (Constant *C, Type *Ty)
+	public static Constant getTruncOrBitCast(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstTruncOrBitCast(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getPointerCast (Constant *C, Type *Ty)
+	public static Constant getPointerCast(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstPointerCast(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getIntegerCast (Constant *C, Type *Ty, bool isSigned)
+	public static Constant getIntegerCast(Constant C, Type Ty, bool isSigned)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstIntCast(C.cref, Ty.cref, cast(LLVMBool) isSigned));
+	}
+
+	// static Constant * 	getFPCast (Constant *C, Type *Ty)
+	public static Constant getFPCast(Constant C, Type Ty)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstFPCast(C.cref, Ty.cref));
+	}
+
+	// static Constant * 	getSelect (Constant *C, Constant *V1, Constant *V2)
+	public static Constant getSelect(Constant C, Constant V1, Constant V2)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstSelect(C.cref, V1.cref, V2.cref));
+	}
+
+	// static Constant * 	get (unsigned Opcode, Constant *C1, Constant *C2, unsigned Flags=0)
+	// static Constant * 	getCompare (unsigned short pred, Constant *C1, Constant *C2)
+
+	// static Constant * 	getICmp (unsigned short pred, Constant *LHS, Constant *RHS)
+	public static Constant getICmp(LLVMIntPredicate pred, Constant LHS, Constant RHS)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(LHS.getContext(), LLVMConstICmp(pred, LHS.cref, RHS.cref));
+	}
+
+	// static Constant * 	getFCmp (unsigned short pred, Constant *LHS, Constant *RHS)
+	public static Constant getFCmp(LLVMRealPredicate pred, Constant LHS, Constant RHS)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(LHS.getContext(), LLVMConstFCmp(pred, LHS.cref, RHS.cref));
+	}
+
+	// static Constant * 	getGetElementPtr (Constant *C, ArrayRef< Constant * > IdxList, bool InBounds=false)
+	// static Constant * 	getGetElementPtr (Constant *C, Constant *Idx, bool InBounds=false)
+	// static Constant * 	getGetElementPtr (Constant *C, ArrayRef< Value * > IdxList, bool InBounds=false)
+	public static Constant getGetElementPtr(Constant C, Constant[] IdxList, bool InBounds=false)
+	{
+		LLVMValueRef* IdxListVals = construct!LLVMValueRef(IdxList.length);
+		
+		foreach(i; 0 .. IdxList.length)
+		{
+			IdxListVals[i] = IdxList[i].cref;
+		}
+		
+		/+ LLVM may either copy the pointers contained in ConstantVals (in which case we
+		 + should deallocate it after the call to the C API), or remember ConstantVals itself
+		 + - by adding it to a map as a value - (in which case we could only deallocate it when
+		 + the current LLVMContext gets destroyed, as there is no way to know for sure when LLVM
+		 + loses its last reference to ConstantVals at an earlier time).
+		 + Because there is no way to know here which of the two possibilities will happen, we
+		 + have to assume the latter (remember it until the current LLVMContext dies).
+		 +/
+		LLVMContext context = C.getContext();
+		if(IdxListVals !is null)
+		{
+			context.treatAsImmutable!LLVMValueRef(IdxListVals);
+		}
+
+		if(InBounds)
+		{
+			return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstInBoundsGEP(C.cref, IdxListVals, cast(uint) IdxList.length));
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstGEP(C.cref, IdxListVals, cast(uint) IdxList.length));
+	}
+
+	// static Constant * 	getInBoundsGetElementPtr (Constant *C, ArrayRef< Constant * > IdxList)
+	// static Constant * 	getInBoundsGetElementPtr (Constant *C, Constant *Idx)
+	// static Constant * 	getInBoundsGetElementPtr (Constant *C, ArrayRef< Value * > IdxList)
+	public static Constant getInBoundsGetElementPtr(Constant C, Constant[] IdxList)
+	{
+		return ConstantExpr.getGetElementPtr(C, IdxList, true);
+	}
+
+	// static Constant * 	getExtractElement (Constant *Vec, Constant *Idx)
+	public static Constant getExtractElement(Constant Vec, Constant Idx)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(Vec.getContext(), LLVMConstExtractElement(Vec.cref, Idx.cref));
+	}
+
+	// static Constant * 	getInsertElement (Constant *Vec, Constant *Elt, Constant *Idx)
+	public static Constant getInsertElement(Constant Vec, Constant Elt, Constant Idx)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(Vec.getContext(), LLVMConstInsertElement(Vec.cref, Elt.cref, Idx.cref));
+	}
+
+	// static Constant * 	getShuffleVector (Constant *V1, Constant *V2, Constant *Mask)
+	public static Constant getInsertElement(Constant V1, Constant V2, Constant Mask)
+	{
+		return cast(Constant) LLVMValueRef_to_Value(V1.getContext(), LLVMConstShuffleVector(V1.cref, V2.cref, Mask.cref));
+	}
+
+	// static Constant * 	getExtractValue (Constant *Agg, ArrayRef< unsigned > Idxs)
+	public static Constant getExtractValue(Constant Agg, uint[] IdxList)
+	{
+		uint[] IdxListVals = IdxList.dup;
+		
+		/+ LLVM may either copy the integers contained in IdxList (in which case we
+		 + should deallocate it after the call to the C API), or remember IdxList itself
+		 + - by adding it to a map as a value - (in which case we could only deallocate it when
+		 + the current LLVMContext gets destroyed, as there is no way to know for sure when LLVM
+		 + loses its last reference to ConstantVals at an earlier time).
+		 + Because there is no way to know here which of the two possibilities will happen, we
+		 + have to assume the latter (remember it until the current LLVMContext dies).
+		 +/
+		LLVMContext context = Agg.getContext();
+		if(IdxListVals.length > 0)
+		{
+			context.treatAsImmutable!uint(IdxListVals);
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(Agg.getContext(), LLVMConstExtractValue(Agg.cref, IdxListVals.ptr, cast(uint) IdxList.length));
+	}
+
+	// static Constant * 	getInsertValue (Constant *Agg, Constant *Val, ArrayRef< unsigned > Idxs)
+	public static Constant getInsertValue(Constant Agg, Constant Val, uint[] IdxList)
+	{
+		uint[] IdxListVals = IdxList.dup;
+		
+		/+ LLVM may either copy the integers contained in IdxList (in which case we
+		 + should deallocate it after the call to the C API), or remember IdxList itself
+		 + - by adding it to a map as a value - (in which case we could only deallocate it when
+		 + the current LLVMContext gets destroyed, as there is no way to know for sure when LLVM
+		 + loses its last reference to ConstantVals at an earlier time).
+		 + Because there is no way to know here which of the two possibilities will happen, we
+		 + have to assume the latter (remember it until the current LLVMContext dies).
+		 +/
+		LLVMContext context = Agg.getContext();
+		if(IdxListVals.length > 0)
+		{
+			context.treatAsImmutable!uint(IdxListVals);
+		}
+		
+		return cast(Constant) LLVMValueRef_to_Value(Agg.getContext(), LLVMConstInsertValue(Agg.cref, Val.cref, IdxListVals.ptr, cast(uint) IdxList.length));
+	}
+}
