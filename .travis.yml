@@ -1,0 +1,16 @@
+language: d
+
+install:
+  - DMD_VERSION=2.064.2
+  - wget http://downloads.dlang.org/releases/2013/dmd.${DMD_VERSION}.zip
+  - unzip dmd.${DMD_VERSION}.zip
+  - DUB_VERSION=0.9.21-beta.3
+  - wget http://code.dlang.org/files/dub-${DUB_VERSION}-linux-x86_64.tar.gz
+  - tar -xzf dub-${DUB_VERSION}-linux-x86_64.tar.gz
+
+script:
+  - PATH=./dmd2/linux/bin64:$PATH ./dub build
+
+branches:
+  only:
+    - master
