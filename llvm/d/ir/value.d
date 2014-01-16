@@ -22,6 +22,8 @@ private
 	import llvm.d.ir.llvmfunction;
 	import llvm.d.ir.basicblock;
 	import llvm.d.ir.argument;
+	import llvm.d.ir.instruction;
+	import llvm.d.ir.instructions;
 }
 
 class Value
@@ -216,11 +218,11 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else if(LLVMIsAConstantArray(value) !is null)
 			{
-				//return new ConstantArray(type, value);
+				return new ConstantArray(type, value);
 			}
 			else if(LLVMIsAConstantExpr(value) !is null)
 			{
-				//return new ConstantExpr(type, value);
+				return new ConstantExpr(type, value);
 			}
 			else if(LLVMIsAConstantFP(value) !is null)
 			{
@@ -274,7 +276,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 		{
 			if(LLVMIsABinaryOperator(value) !is null)
 			{
-				//return new BinaryOperator(type, value);
+				return new BinaryOperator(type, value);
 			}
 			else if(LLVMIsACallInst(value) !is null)
 			{
@@ -486,7 +488,7 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 			}
 			else
 			{
-				//return new Instruction(type, value);
+				return new Instruction(type, value);
 			}
 		}
 		else
@@ -500,43 +502,43 @@ package Value LLVMValueRef_to_Value(LLVMContext C, LLVMValueRef value)
 
 /+ LLVM Value subclass hierarchy:
 Argument
-BasicBlock -- implemented
+BasicBlock -- added
 InlineAsm
 MDNode
 MDString
-User -- implemented
-	Constant -- implemented
-		BlockAddress -- implemented
-		ConstantAggregateZero -- implemented
-		ConstantArray -- implemented
+User -- added
+	Constant -- added
+		BlockAddress -- added
+		ConstantAggregateZero -- added
+		ConstantArray -- added
 		ConstantDataSequential
 			ConstantDataArray
 			ConstantDataVector
-		ConstantExpr
-			BinaryConstantExpr
-			CompareConstantExpr
-			ExtractElementConstantExpr
-			ExtractValueConstantExpr
-			GetElementPtrConstantExpr
-			InsertElementConstantExpr
-			InsertValueConstantExpr
-			SelectConstantExpr
-			ShuffleVectorConstantExpr
-			UnaryConstantExpr
-		ConstantFP -- implemented
-		ConstantInt -- implemented
-		ConstantPointerNull -- implemented
-		ConstantStruct -- implemented
-		ConstantVector -- implemented
-		GlobalValue -- implemented
-			Function -- implemented
-			GlobalAlias -- implemented
-			GlobalVariable -- implemented
-		UndefValue -- implemented
-	Instruction
-		AtomicCmpXchInst
-		AtomicRMWInst
-		BinaryOperator
+		ConstantExpr -- added
+			BinaryConstantExpr -- private
+			CompareConstantExpr -- private
+			ExtractElementConstantExpr -- private
+			ExtractValueConstantExpr -- private
+			GetElementPtrConstantExpr -- private
+			InsertElementConstantExpr -- private
+			InsertValueConstantExpr -- private
+			SelectConstantExpr -- private
+			ShuffleVectorConstantExpr -- private
+			UnaryConstantExpr -- private
+		ConstantFP -- added
+		ConstantInt -- added
+		ConstantPointerNull -- added
+		ConstantStruct -- added
+		ConstantVector -- added
+		GlobalValue -- added
+			Function -- added
+			GlobalAlias -- added
+			GlobalVariable -- added
+		UndefValue -- added
+	Instruction -- added
+		AtomicCmpXchInst -- missing LLVMIsA* check
+		AtomicRMWInst -- missing LLVMIsA* check
+		BinaryOperator -- added
 		CallInst
 			IntrinsicInst
 				DbgInfoIntrinsic

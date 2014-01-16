@@ -1057,7 +1057,7 @@ class ConstantExpr : Constant
 	}
 
 	// static Constant * 	getShuffleVector (Constant *V1, Constant *V2, Constant *Mask)
-	public static Constant getInsertElement(Constant V1, Constant V2, Constant Mask)
+	public static Constant getShuffleVector(Constant V1, Constant V2, Constant Mask)
 	{
 		return cast(Constant) LLVMValueRef_to_Value(V1.getContext(), LLVMConstShuffleVector(V1.cref, V2.cref, Mask.cref));
 	}
