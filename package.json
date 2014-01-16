@@ -8,8 +8,8 @@
 	"targetType": "library",
 	"importPaths": ["."],
 	"dependencies": {
-		"llvm-d:c-api": "~experimental",
-		"llvm-d:d-api": "~experimental"
+		"llvm-d:c-api": "~master",
+		"llvm-d:d-api": "~master"
 	},
 	"subPackages": [
 		{
@@ -42,7 +42,7 @@
 			"importPaths": ["."],
 			"sourceFiles": ["samples/fibonacci.d"],
 			"dependencies": {
-				"llvm-d:c-api": "~experimental"
+				"llvm-d:c-api": "~master"
 			},
 		}
 	]
