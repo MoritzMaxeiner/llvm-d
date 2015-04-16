@@ -3,7 +3,8 @@ module llvm.util.shlib;
 
 private
 {
-	import std.string : toStringz, to;
+	import std.string : toStringz;
+	import std.conv : to;
 }
 
 version(Posix)
