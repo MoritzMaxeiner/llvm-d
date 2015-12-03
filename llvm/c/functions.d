@@ -10,7 +10,7 @@ private
 }
 
 //qualifiers is in the form ["+", "3.3", "-", "3.5"]
-bool matchVersionQualifiers(string[] qualifiers)
+private bool matchVersionQualifiers(string[] qualifiers)
 {
 	while(qualifiers.length > 0)
 	{
