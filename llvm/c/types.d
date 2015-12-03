@@ -22,7 +22,13 @@ struct LLVMOpaquePassManagerBuilder {}; alias LLVMOpaquePassManagerBuilder* LLVM
 
 static if(LLVM_Version >= 3.4)
 {
-		alias extern(C) void function(const char* Reason) LLVMFatalErrorHandler;
+	alias extern(C) void function(const char* Reason) LLVMFatalErrorHandler;
+}
+
+static if(LLVM_Version >= 3.5)
+{
+	alias extern(C) void function(LLVMDiagnosticInfoRef, void*) LLVMDiagnosticHandler;
+	alias extern(C) void function(LLVMContextRef, void *) LLVMYieldCallback;
 }
 
 /++ Types and Enumerations ++/
@@ -35,6 +41,10 @@ struct LLVMOpaqueValue {}; alias LLVMOpaqueValue* LLVMValueRef;
 struct LLVMOpaqueBasicBlock {}; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
 struct LLVMOpaqueBuilder {}; alias LLVMOpaqueBuilder* LLVMBuilderRef;
 struct LLVMOpaqueModuleProvider {}; alias LLVMOpaqueModuleProvider* LLVMModuleProviderRef;
+static if(LLVM_Version >=  3.5)
+{
+	struct LLVMOpaqueDiagnosticInfo {}; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
+}
 struct LLVMOpaqueMemoryBuffer {}; alias LLVMOpaqueMemoryBuffer* LLVMMemoryBufferRef;
 struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef;
 struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
@@ -45,6 +55,7 @@ alias int LLVMOpcode;
 alias int LLVMTypeKind;
 alias int LLVMLinkage;
 alias int LLVMVisibility;
+alias int LLVMDLLStorageClass;
 alias int LLVMCallConv;
 alias int LLVMIntPredicate;
 alias int LLVMRealPredicate;
@@ -54,6 +65,10 @@ static if(LLVM_Version >= 3.3)
 	alias int LLVMThreadLocalMode;
 	alias int LLVMAtomicOrdering;
 	alias int LLVMAtomicRMWBinOp;
+}
+static if(LLVM_Version >= 3.5)
+{
+	alias int LLVMDiagnosticSeverity;
 }
 
 /+ Disassembler +/
@@ -150,12 +165,29 @@ alias int llvm_lto_status;
 
 /+ LTO +/
 
-struct LTOModule {}; alias LTOModule* lto_module_t;
-struct LTOCodeGenerator {}; alias LTOCodeGenerator* lto_code_gen_t;
+static if(LLVM_Version >= 3.5)
+{
+	struct LLVMOpaqueLTOModule {}; alias LLVMOpaqueLTOModule* lto_module_t;
+}
+else
+{
+	struct LTOModule {}; alias LTOModule* lto_module_t;
+}
+static if(LLVM_Version >= 3.5)
+{
+	struct LLVMOpaqueLTOCodeGenerator {}; alias LLVMOpaqueLTOCodeGenerator* lto_code_gen_t;
+}
+else
+{
+	struct LTOCodeGenerator {}; alias LTOCodeGenerator* lto_code_gen_t;
+}
 
 alias int lto_symbol_attributes;
 alias int lto_debug_model;
 alias int lto_codegen_model;
+alias int lto_codegen_diagnostic_severity_t;
+alias extern(C) void function(lto_codegen_diagnostic_severity_t severity,
+		const char *diag, void *ctxt) lto_diagnostic_handler_t;
 
 /+ Object file reading and writing +/
 

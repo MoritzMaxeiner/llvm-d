@@ -5,7 +5,7 @@ private
 	import llvm.d.llvm_c;
 
 	import llvm.util.memory;
-	
+
 	import llvm.d.ir.llvmcontext;
 	import llvm.d.ir.type;
 	import llvm.d.ir.derivedtypes;
@@ -36,22 +36,22 @@ class UndefValue : Constant
 		{
 			return this.getSequentialElement();
 		}
-		
+
 		return this.getStructElement((cast(ConstantInt) C).getZExtValue());
 	}+/
-	
+
 	public UndefValue getElementValue(uint Idx)
 	{
 		if(is(this.type : SequentialType))
 		{
 			return this.getSequentialElement();
 		}
-		
+
 		return this.getStructElement(Idx);
 	}
 
 	// virtual void 	destroyConstant ()
-	
+
 	public static UndefValue get(Type T)
 	{ return new UndefValue(T, LLVMGetUndef(T.cref)); }
 }
@@ -219,7 +219,7 @@ class ConstantInt : Constant
 	public static bool isValueValidForType(Type Ty, ulong Val)
 	{
 		uint NumBits = Ty.getIntegerBitWidth(); // assert okay
-		
+
 		if(Ty.isIntegerTy(1))
 		{
 		  return Val == 0 || Val == 1;
@@ -384,7 +384,7 @@ class ConstantStruct : Constant
 		return new ConstantStruct(type, _cref);
 	}
 
-	public static StructType getTypeForElements(Constant V[], bool Packed = false)
+	public static StructType getTypeForElements(Constant[] V, bool Packed = false)
 	in
 	{
 		assert(V.length > 0, "ConstantStruct.getTypeForElements cannot be called on empty list");
@@ -394,7 +394,7 @@ class ConstantStruct : Constant
 		return ConstantStruct.getTypeForElements(V[0].getContext(), V, Packed);
 	}
 
-	public static StructType getTypeForElements(LLVMContext Ctx, Constant V[], bool Packed = false)
+	public static StructType getTypeForElements(LLVMContext Ctx, Constant[] V, bool Packed = false)
 	{
 		Type[] EltTypes;
 		EltTypes.length = V.length;
@@ -478,7 +478,7 @@ class ConstantVector : Constant
 		if((is(V : ConstantFP) || is(V : ConstantInt)) &&
 		   ConstantDataSequential.isElementTypeCompatible(V.getType()))
 		  return ConstantDataVector.getSplat(NumElts, V);
-		
+
 		Constant[] Elts;
 		Elts.length = 32;
 		foreach(i; 0 .. Elts.length)
@@ -670,7 +670,7 @@ class ConstantExpr : Constant
 		{
 			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNSWAdd(C1.cref, C2.cref));
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstAdd(C1.cref, C2.cref));
 	}
 
@@ -696,7 +696,7 @@ class ConstantExpr : Constant
 		{
 			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNSWSub(C1.cref, C2.cref));
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstSub(C1.cref, C2.cref));
 	}
 
@@ -722,7 +722,7 @@ class ConstantExpr : Constant
 		{
 			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstNSWMul(C1.cref, C2.cref));
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstMul(C1.cref, C2.cref));
 	}
 
@@ -745,7 +745,7 @@ class ConstantExpr : Constant
 		{
 			return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstExactSDiv(C1.cref, C2.cref));
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(C1.getContext(), LLVMConstSDiv(C1.cref, C2.cref));
 	}
 
@@ -1008,12 +1008,12 @@ class ConstantExpr : Constant
 	public static Constant getGetElementPtr(Constant C, Constant[] IdxList, bool InBounds=false)
 	{
 		LLVMValueRef* IdxListVals = construct!LLVMValueRef(IdxList.length);
-		
+
 		foreach(i; 0 .. IdxList.length)
 		{
 			IdxListVals[i] = IdxList[i].cref;
 		}
-		
+
 		/+ LLVM may either copy the pointers contained in ConstantVals (in which case we
 		 + should deallocate it after the call to the C API), or remember ConstantVals itself
 		 + - by adding it to a map as a value - (in which case we could only deallocate it when
@@ -1032,7 +1032,7 @@ class ConstantExpr : Constant
 		{
 			return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstInBoundsGEP(C.cref, IdxListVals, cast(uint) IdxList.length));
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(C.getContext(), LLVMConstGEP(C.cref, IdxListVals, cast(uint) IdxList.length));
 	}
 
@@ -1066,7 +1066,7 @@ class ConstantExpr : Constant
 	public static Constant getExtractValue(Constant Agg, uint[] IdxList)
 	{
 		uint[] IdxListVals = IdxList.dup;
-		
+
 		/+ LLVM may either copy the integers contained in IdxList (in which case we
 		 + should deallocate it after the call to the C API), or remember IdxList itself
 		 + - by adding it to a map as a value - (in which case we could only deallocate it when
@@ -1080,7 +1080,7 @@ class ConstantExpr : Constant
 		{
 			context.treatAsImmutable!uint(IdxListVals);
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(Agg.getContext(), LLVMConstExtractValue(Agg.cref, IdxListVals.ptr, cast(uint) IdxList.length));
 	}
 
@@ -1088,7 +1088,7 @@ class ConstantExpr : Constant
 	public static Constant getInsertValue(Constant Agg, Constant Val, uint[] IdxList)
 	{
 		uint[] IdxListVals = IdxList.dup;
-		
+
 		/+ LLVM may either copy the integers contained in IdxList (in which case we
 		 + should deallocate it after the call to the C API), or remember IdxList itself
 		 + - by adding it to a map as a value - (in which case we could only deallocate it when
@@ -1102,7 +1102,7 @@ class ConstantExpr : Constant
 		{
 			context.treatAsImmutable!uint(IdxListVals);
 		}
-		
+
 		return cast(Constant) LLVMValueRef_to_Value(Agg.getContext(), LLVMConstInsertValue(Agg.cref, Val.cref, IdxListVals.ptr, cast(uint) IdxList.length));
 	}
 }
