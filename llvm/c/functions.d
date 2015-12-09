@@ -829,6 +829,10 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMInstructionEraseFromParent" : ["void function(LLVMValueRef Inst)"],
 	"LLVMGetInstructionOpcode" : ["LLVMOpcode function(LLVMValueRef Inst)"],
 	"LLVMGetICmpPredicate" : ["LLVMIntPredicate function(LLVMValueRef Inst)"],
+	"LLVMGetFCmpPredicate": ["LLVMRealPredicate function(LLVMValueRef Inst)",
+							 "+", "3.6"],
+	"LLVMInstructionClone": ["LLVMValueRef function(LLVMValueRef Inst)",
+							 "+", "3.6"],
 	"LLVMGetSwitchDefaultDest" : ["LLVMBasicBlockRef function(LLVMValueRef SwitchInstr)"],
 
 	/++++ Call Sites and Invocations ++++/
@@ -840,6 +844,18 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMSetInstrParamAlignment" : ["void function(LLVMValueRef Instr, uint index, uint Align)"],
 	"LLVMIsTailCall" : ["LLVMBool function(LLVMValueRef CallInst)"],
 	"LLVMSetTailCall" : ["void function(LLVMValueRef CallInst, LLVMBool IsTailCall)"],
+	"LLVMGetNumSuccessors": ["uint function(LLVMValueRef Term)",
+							 "+", "3.6"],
+	"LLVMGetSuccessor": ["LLVMBasicBlockRef function(LLVMValueRef Term, unsigned i)",
+						 "+", "3.6"],
+	"LLVMSetSuccessor": ["void function(LLVMValueRef Term, unsigned i, LLVMBasicBlockRef block)",
+						 "+", "3.6"],
+	"LLVMIsConditional": ["LLVMBool function(LLVMValueRef Branch)",
+						  "+", "3.6"],
+	"LLVMGetCondition": ["LLVMValueRef function(LLVMValueRef Branch)",
+						 "+", "3.6"],
+	"LLVMSetCondition": ["void function(LLVMValueRef Branch, LLVMValueRef Cond)",
+						 "+", "3.6"],
 
 	/++++ PHI Nodes ++++/
 
@@ -1011,6 +1027,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMCreateDisasm" : ["LLVMDisasmContextRef function(const(char)* TripleName, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)"],
 	"LLVMCreateDisasmCPU" : ["LLVMDisasmContextRef function(const(char)* Triple, const(char)* CPU, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)",
 	                         "+", "3.3"],
+	"LLVMCreateDisasmCPUFeatures": ["LLVMDisasmContextRef function(const char *Triple, const char *CPU, const char *Features, void *DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)",
+									"+", "3.6"],
 	"LLVMSetDisasmOptions" : ["int function(LLVMDisasmContextRef DC, ulong Options)",
 	                          "+", "3.2"],
 	"LLVMDisasmDispose" : ["void function(LLVMDisasmContextRef DC)"],
