@@ -39,6 +39,7 @@ extern(System)
 	}));
 }
 
+//TODO: make sure to update these!
 static if(LLVM_Version >= 3.3)
 {
 	private enum string[][string] LLVMC_TargetCapabilities =
@@ -471,6 +472,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMStructSetBody" : ["void function(LLVMTypeRef StructTy, LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed)"],
 	"LLVMCountStructElementTypes" : ["uint function(LLVMTypeRef StructTy)"],
 	"LLVMGetStructElementTypes" : ["void function(LLVMTypeRef StructTy, LLVMTypeRef* Dest)"],
+	"LLVMStructGetTypeAtIndex": ["LLVMTypeRef function(LLVMTypeRef StructTy, unsigned i)",
+								 "+", "3.7"],
 	"LLVMIsPackedStruct" : ["LLVMBool function(LLVMTypeRef StructTy)"],
 	"LLVMIsOpaqueStruct" : ["LLVMBool function(LLVMTypeRef StructTy)"],
 
@@ -761,6 +764,10 @@ package enum string[][string] LLVMC_Functions = [
 	/+++++ Function values +++++/
 
 	"LLVMDeleteFunction" : ["void function(LLVMValueRef Fn)"],
+	"LLVMGetPersonalityFn": ["LLVMValueRef function(LLVMValueRef Fn)",
+							 "+", "3.7"],
+	"LLVMSetPersonalityFn": ["void function(LLVMValueRef Fn, LLVMValueRef PersonalityFn)",
+							 "+", "3.7"],
 	"LLVMGetIntrinsicID" : ["uint function(LLVMValueRef Fn)"],
 	"LLVMGetFunctionCallConv" : ["uint function(LLVMValueRef Fn)"],
 	"LLVMSetFunctionCallConv" : ["void function(LLVMValueRef Fn, uint CC)"],
