@@ -185,11 +185,6 @@ Documentation
 
 The documentation for LLVM's C API can be found [here](http://llvm.org/doxygen/modules.html).
 
-Planned features
----------------
-
-Partially rebuild LLVM's OOP structure in D around the C API.
-
 License
 -------
 
@@ -201,7 +196,7 @@ both for accessing LLVM's C API as well as in recreating
 LLVM's class hierarchy in D. The above paragraph does not apply
 to that source code - it is a redistribution of LLVM source code.
 
-**LLVM is Copyright (c) 2003-2013 University of Illinois at Urbana-Champaign.
+**LLVM is Copyright (c) 2003-2015 University of Illinois at Urbana-Champaign.
 All rights reserved.**
 
 **LLVM is distributed under the University of Illinois Open Source
