@@ -10,7 +10,6 @@
 	"sourcePaths": ["llvm"],
 	"dependencies": {
 		"llvm-d:c-api": "~master",
-		"llvm-d:d-api": "~master"
 	},
 	"subPackages": [
 		{
@@ -23,17 +22,6 @@
 				"llvm/util"
 			],
 			"lflags-posix": ["-ldl"],
-		},
-		{
-			"name": "d-api",
-			"description": "D OO-API using LLVM's C API",
-			"targetType": "sourceLibrary",
-			"importPaths": ["."],
-			"sourcePaths": [
-				"llvm/d",
-				"llvm/util",
-			],
-			"excludedSourceFiles": ["llvm/util/shlib.d"],
 		},
 		{
 			"name": "fibonacci",
