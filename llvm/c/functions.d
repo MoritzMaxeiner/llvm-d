@@ -263,6 +263,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMWriteBitcodeToFile" : ["int function(LLVMModuleRef M, const(char)* Path)"],
 	"LLVMWriteBitcodeToFD" : ["int function(LLVMModuleRef M, int FD, int ShouldClose, int Unbuffered)"],
 	"LLVMWriteBitcodeToFileHandle" : ["int function(LLVMModuleRef M, int Handle)"],
+	"LLLVMWriteBitcodeToMemoryBuffer": ["LVMMemoryBufferRef function(LLVMModuleRef M)",
+							"+", "3.6"],
 
 	/+ Transforms +/
 
@@ -380,6 +382,8 @@ package enum string[][string] LLVMC_Functions = [
 
 	"LLVMModuleCreateWithName" : ["LLVMModuleRef function(const(char)* ModuleID)"],
 	"LLVMModuleCreateWithNameInContext" : ["LLVMModuleRef function(const(char)* ModuleID, LLVMContextRef C)"],
+	"LLLVMCloneModule": ["LVMModuleRef function(LLVMModuleRef M)",
+					 "+", "3.6"],
 	"LLVMDisposeModule" : ["void function(LLVMModuleRef M)"],
 	"LLVMGetDataLayout" : ["const(char)* function(LLVMModuleRef M)"],
 	"LLVMSetDataLayout" : ["void function(LLVMModuleRef M, const(char)* Triple)"],
@@ -587,6 +591,8 @@ package enum string[][string] LLVMC_Functions = [
 	/+++ User value +++/
 
 	"LLVMGetOperand" : ["LLVMValueRef function(LLVMValueRef Val, uint Index)"],
+	"LLVMGetOperandUse": ["LLVMUseRef function(LLVMValueRef Val, unsigned Index)",
+						  "+", "3.6"],
 	"LLVMSetOperand" : ["void function(LLVMValueRef User, uint Index, LLVMValueRef Val)"],
 	"LLVMGetNumOperands" : ["int function(LLVMValueRef Val)"],
 
@@ -609,15 +615,23 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMConstRealOfStringAndSize" : ["LLVMValueRef function(LLVMTypeRef RealTy, const(char)* Text, uint SLen)"],
 	"LLVMConstIntGetZExtValue" : ["ulong function(LLVMValueRef ConstantVal)"],
 	"LLVMConstIntGetSExtValue" : ["long function(LLVMValueRef ConstantVal)"],
+	"LLVMConstRealGetDouble": ["double function(LLVMValueRef ConstantVal, LLVMBool *losesInfo)",
+							   "+", "3.6"],
 
 	/++++ Composite Constants ++++/
 
 	"LLVMConstStringInContext" : ["LLVMValueRef function(LLVMContextRef C, const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
 	"LLVMConstString" : ["LLVMValueRef function(const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
+	"LLVMIsConstantString": ["LLVMBool function(LLVMValueRef c)",
+							 "+", "3.6"],
+	"LLVMGetAsString": ["const(char*) function(LLVMValueRef c, size_t* out)",
+						"+", "3.6"],
 	"LLVMConstStructInContext" : ["LLVMValueRef function(LLVMContextRef C, LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
 	"LLVMConstStruct" : ["LLVMValueRef function(LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
 	"LLVMConstArray" : ["LLVMValueRef function(LLVMTypeRef ElementTy, LLVMValueRef* ConstantVals, uint Length)"],
 	"LLVMConstNamedStruct" : ["LLVMValueRef function(LLVMTypeRef StructTy, LLVMValueRef* ConstantVals, uint Count)"],
+	"LLVMGetElementAsConstant": ["LLVMValueRef function(LLVMValueRef c, unsigned idx)",
+								 "+", "3.6"],
 	"LLVMConstVector" : ["LLVMValueRef function(LLVMValueRef* ScalarConstantVals, uint Size)"],
 
 	/++++ Constant Expressions ++++/
