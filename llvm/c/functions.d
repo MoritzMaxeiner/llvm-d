@@ -302,6 +302,8 @@ package enum string[][string] LLVMC_Functions = [
 	/++ Scalar transformations ++/
 
 	"LLVMAddAggressiveDCEPass" : ["void function(LLVMPassManagerRef PM)"],
+	"LLVMAddAlignmentFromAssumptionsPass": ["void function(LLVMPassManagerRef PM)",
+											"+", "3.6"],
 	"LLVMAddCFGSimplificationPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddDeadStoreEliminationPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddScalarizerPass": ["void function(LLVMPassManagerRef PM)",
@@ -323,6 +325,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMAddMemCpyOptPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddPartiallyInlineLibCallsPass" : ["void function(LLVMPassManagerRef PM)",
 											"+", "3.4"],
+	"LLVMAddLowerSwitchPass": ["void function(LLVMPassManagerRef PM)",
+							   "+", "3.6"],
 	"LLVMAddPromoteMemoryToRegisterPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddReassociatePass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddSCCPPass" : ["void function(LLVMPassManagerRef PM)"],
@@ -338,6 +342,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMAddEarlyCSEPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddLowerExpectIntrinsicPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddTypeBasedAliasAnalysisPass" : ["void function(LLVMPassManagerRef PM)"],
+	"LLVMAddScopedNoAliasAAPass": ["void function(LLVMPassManagerRef PM)",
+								   "+", "3.6"],
 	"LLVMAddBasicAliasAnalysisPass" : ["void function(LLVMPassManagerRef PM)"],
 
 	/++ Vectorization transformations ++/
@@ -1148,6 +1154,10 @@ package enum string[][string] LLVMC_Functions = [
 											"+", "3.5"],
 	"LLVMAddGlobalMapping" : ["void function(LLVMExecutionEngineRef EE, LLVMValueRef Global, void* Addr)"],
 	"LLVMGetPointerToGlobal" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Global)"],
+	"LLVMGetGlobalValueAddress": ["ulong function LLVMExecutionEngineRef EE, const char *Name)",
+								  "+", "3.6"],
+	"LLVMGetFunctionAddress": ["ulong function(LLVMExecutionEngineRef EE, const char *Name)",
+							   "+", "3.6"],
 	"LLVMCreateSimpleMCJITMemoryManager" : ["LLVMMCJITMemoryManagerRef function(void* Opaque, LLVMMemoryManagerAllocateCodeSectionCallback AllocateCodeSection, LLVMMemoryManagerAllocateDataSectionCallback AllocateDataSection, LLVMMemoryManagerFinalizeMemoryCallback FinalizeMemory, LLVMMemoryManagerDestroyCallback Destroy)",
 											"+", "3.4"],
 	"LLVMDisposeMCJITMemoryManager" : ["void function(LLVMMCJITMemoryManagerRef MM)",
@@ -1193,6 +1203,11 @@ package enum string[][string] LLVMC_Functions = [
 	"lto_module_create_from_memory" : ["lto_module_t function(const(void)* mem, size_t length)"],
 	"lto_module_create_from_memory_with_path": ["lto_module_t function(const void* mem, size_t length, const char *path)",
 												"+", "3.5"],
+
+	"lto_module_create_in_local_context": ["lto_module_t function(const void *mem, size_t length, const char *path)",
+										   "+", "3.6"],
+	"lto_module_create_in_codegen_context": ["lto_module_t function(const void *mem, size_t length, const char *path, lto_code_gen_t cg)",
+											 "+", "3.6"],
 	"lto_module_create_from_fd" : ["lto_module_t function(int fd, const(char)* path, size_t file_size)"],
 	/+ "offset" is originally of type "off_t", which is 64 bit on 64 bit machines,
 	 + but can be 32 bit or 64 bit on 32 bit machines depending on compilation.
@@ -1221,6 +1236,8 @@ package enum string[][string] LLVMC_Functions = [
 	"lto_codegen_set_diagnostic_handler": ["void function(lto_code_gen_t, lto_diagnostic_handler_t, void *)",
 										   "+", "3.5"],
 	"lto_codegen_create" : ["lto_code_gen_t function()"],
+	"lto_codegen_create_in_local_context": ["lto_code_gen_t function()",
+											"+", "3.6"],
 	"lto_codegen_dispose" : ["void function(lto_code_gen_t)"],
 	"lto_codegen_add_module" : ["bool function(lto_code_gen_t cg, lto_module_t mod)"],
 	"lto_codegen_set_debug_model" : ["bool function(lto_code_gen_t cg, lto_debug_model)"],
@@ -1446,6 +1463,8 @@ package enum string[][string] LLVMC_Functions = [
 	/+ Support +/
 	"LLVMLoadLibraryPermanently" : ["LLVMBool function(const(char)* Filename)",
 									"+", "3.4"],
+	"LLVMParseCommandLineOptions": ["void function(int argc, const char *const *argv, const char *Overview)",
+									"+", "3.6"],
 
 	/+ IRReader +/
 	"LLVMParseIRInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage)",

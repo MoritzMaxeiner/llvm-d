@@ -343,6 +343,7 @@ static if(LLVM_Version >= 3.2)
 	enum : LLVMLinkerMode
 	{
 		LLVMLinkerDestroySource = 0,
+		//TODO: remove this if LLVM doesn't make it work again?
 		LLVMLinkerPreserveSource = 1
 	}
 }
@@ -365,9 +366,12 @@ enum : llvm_lto_status
 
 /+ LTO +/
 
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= 3.6) {
+	const uinnt LTO_API_VERSION = 11;
+}
+else static if(LLVM_Version >= 3.5)
 {
-	const uint LTO_API_VERSION = 5;
+	const uint LTO_API_VERSION = 10;
 }
 else static if(LLVM_Version >= 3.4)
 {
