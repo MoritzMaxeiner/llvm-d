@@ -162,6 +162,15 @@ enum : LLVMVisibility
 	LLVMProtectedVisibility
 }
 
+static if(LLVM_Version >= 3.5)
+{
+	enum : LLVMDLLStorageClass {
+		LLVMDefaultStorageClass = 0,
+		LLVMDLLImportStorageClass = 1,
+		LLVMDLLExportStorageClass = 2
+	}
+}
+
 mixin(MixinMap_VersionedEnum(
 			  "", "LLVMCallConv", LLVM_Version,
 			  ["LLVMCCallConv           = 0" : null,
@@ -249,17 +258,44 @@ static if(LLVM_Version >= 3.3)
 		LLVMAtomicRMWBinOpUMin
 	}
 }
+static if(LLVM_Version > 3.5)
+{
+	enum : LLVMDiagnosticSeverity {
+		LLVMDSError,
+		LLVMDSWarning,
+		LLVMDSRemark,
+		LLVMDSNote
+	}
+}
 
 /+ Disassembler +/
 
+//TODO: replace const with enum?
 const
 {
 	uint LLVMDisassembler_VariantKind_None = 0;
 	uint LLVMDisassembler_VariantKind_ARM_HI16 = 1;
 	uint LLVMDisassembler_VariantKind_ARM_LO16 = 2;
+	static if(LLVM_Version >= 3.5)
+	{
+		uint LLVMDisassembler_VariantKind_ARM64_PAGE = 1;
+		uint LLVMDisassembler_VariantKind_ARM64_PAGEOFF = 2;
+		uint LLVMDisassembler_VariantKind_ARM64_GOTPAGE = 3;
+		uint LLVMDisassembler_VariantKind_ARM64_GOTPAGEOFF = 4;
+		uint LLVMDisassembler_VariantKind_ARM64_TLVP = 5;
+		uint LLVMDisassembler_VariantKind_ARM64_TLVOFF = 6;
+	}
 	uint LLVMDisassembler_ReferenceType_InOut_None = 0;
 	uint LLVMDisassembler_ReferenceType_In_Branch = 1;
 	uint LLVMDisassembler_ReferenceType_In_PCrel_Load = 2;
+	static if(LLVM_Version >= 3.5)
+	{
+		uint LLVMDisassembler_ReferenceType_In_ARM64_ADRP = 0x100000001;
+		uint LLVMDisassembler_ReferenceType_In_ARM64_ADDXri = 0x100000002;
+		uint LLVMDisassembler_ReferenceType_In_ARM64_LDRXui = 0x100000003;
+		uint LLVMDisassembler_ReferenceType_In_ARM64_LDRXl = 0x100000004;
+		uint LLVMDisassembler_ReferenceType_In_ARM64_ADR = 0x100000005;
+	}
 	uint LLVMDisassembler_ReferenceType_Out_SymbolStub = 1;
 	uint LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr = 2;
 	uint LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr = 3;
@@ -274,13 +310,17 @@ const
 	}
 	static if(LLVM_Version >= 3.4)
 	{
-			uint LLVMDisassembler_ReferenceType_Out_Objc_CFString_Ref = 4;
-			uint LLVMDisassembler_ReferenceType_Out_Objc_Message = 5;
-			uint LLVMDisassembler_ReferenceType_Out_Objc_Message_Ref = 6;
-			uint LLVMDisassembler_ReferenceType_Out_Objc_Selector_Ref = 7;
-			uint LLVMDisassembler_ReferenceType_Out_Objc_Class_Ref = 8;
-			uint LLVMDisassembler_Option_SetInstrComments = 8;
-			uint LLVMDisassembler_Option_PrintLatency = 16;
+		uint LLVMDisassembler_ReferenceType_Out_Objc_CFString_Ref = 4;
+		uint LLVMDisassembler_ReferenceType_Out_Objc_Message = 5;
+		uint LLVMDisassembler_ReferenceType_Out_Objc_Message_Ref = 6;
+		uint LLVMDisassembler_ReferenceType_Out_Objc_Selector_Ref = 7;
+		uint LLVMDisassembler_ReferenceType_Out_Objc_Class_Ref = 8;
+		uint LLVMDisassembler_Option_SetInstrComments = 8;
+		uint LLVMDisassembler_Option_PrintLatency = 16;
+	}
+	static if(LLVM_Version >= 3.5)
+	{
+		uint LLVMDisassembler_ReferenceType_DeMangled_Name = 9;
 	}
 }
 
@@ -303,6 +343,7 @@ static if(LLVM_Version >= 3.2)
 	enum : LLVMLinkerMode
 	{
 		LLVMLinkerDestroySource = 0,
+		//TODO: remove this if LLVM doesn't make it work again?
 		LLVMLinkerPreserveSource = 1
 	}
 }
@@ -325,7 +366,14 @@ enum : llvm_lto_status
 
 /+ LTO +/
 
-static if(LLVM_Version >= 3.4)
+static if(LLVM_Version >= 3.6) {
+	const uinnt LTO_API_VERSION = 11;
+}
+else static if(LLVM_Version >= 3.5)
+{
+	const uint LTO_API_VERSION = 10;
+}
+else static if(LLVM_Version >= 3.4)
 {
 	const uint LTO_API_VERSION = 5;
 }
@@ -365,7 +413,19 @@ enum : lto_codegen_model
 {
 	LTO_CODEGEN_PIC_MODEL_STATIC = 0,
 	LTO_CODEGEN_PIC_MODEL_DYNAMIC = 1,
-	LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC = 2
+	LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC = 2,
+	LTO_CODEGEN_PIC_MODEL_DEFAULT = 3
+}
+
+static if(LLVM_Version >= 3.5)
+{
+	enum : lto_codegen_diagnostic_severity_t
+	{
+		LTO_DS_ERROR = 0,
+		LTO_DS_WARNING = 1,
+	   	LTO_DS_REMARK = 3,
+		LTO_DS_NOTE = 2
+	}
 }
 
 /+ Target information +/

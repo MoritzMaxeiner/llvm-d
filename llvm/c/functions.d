@@ -9,12 +9,29 @@ private
 	import llvm.c.types;
 }
 
+//qualifiers is in the form ["+", "3.3", "-", "3.5"]
+private bool matchVersionQualifiers(string[] qualifiers)
+{
+	while(qualifiers.length > 0)
+	{
+		string op = qualifiers[0];
+		//TODO: use a proper semantic version type?
+		//(floats may exhibit rounding issues.)
+		float ver = to!float(qualifiers[1]);
+		if((op == "+" && LLVM_Version < ver) ||
+		   (op == "-" && LLVM_Version >= ver))
+		{
+			return false;
+		}
+		qualifiers = qualifiers[2 .. $];
+	}
+	return true;
+}
+
 extern(System)
 {
 	mixin(MixinMap(LLVMC_Functions, delegate string(string symbol, string[] signature) {
-		if((signature.length == 1) ||
-		   ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
-		   ((signature[1] == "-") && (to!float(signature[2]) > LLVM_Version)))
+		if(matchVersionQualifiers(signature[1 .. $]))
 		{
 			return "alias nothrow " ~ signature[0] ~ " da_" ~ symbol ~ ";";
 		}
@@ -58,7 +75,7 @@ else static if(LLVM_Version >= 3.2)
 		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
 		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
 		 ];
-	
+
 }
 else
 {
@@ -85,9 +102,7 @@ __gshared
 		      LLVMC_Functions,
 		      delegate string(string symbol, string[] signature)
 		      {
-			      if((signature.length == 1) ||
-			         ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
-			         ((signature[1] == "-") && (to!float(signature[2]) > LLVM_Version)))
+			      if(matchVersionQualifiers(signature[1 .. $]))
 			      {
 				      return "da_" ~ symbol ~ " " ~ symbol ~ ";";
 			      }
@@ -248,6 +263,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMWriteBitcodeToFile" : ["int function(LLVMModuleRef M, const(char)* Path)"],
 	"LLVMWriteBitcodeToFD" : ["int function(LLVMModuleRef M, int FD, int ShouldClose, int Unbuffered)"],
 	"LLVMWriteBitcodeToFileHandle" : ["int function(LLVMModuleRef M, int Handle)"],
+	"LLLVMWriteBitcodeToMemoryBuffer": ["LVMMemoryBufferRef function(LLVMModuleRef M)",
+							"+", "3.6"],
 
 	/+ Transforms +/
 
@@ -285,8 +302,14 @@ package enum string[][string] LLVMC_Functions = [
 	/++ Scalar transformations ++/
 
 	"LLVMAddAggressiveDCEPass" : ["void function(LLVMPassManagerRef PM)"],
+	"LLVMAddAlignmentFromAssumptionsPass": ["void function(LLVMPassManagerRef PM)",
+											"+", "3.6"],
 	"LLVMAddCFGSimplificationPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddDeadStoreEliminationPass" : ["void function(LLVMPassManagerRef PM)"],
+	"LLVMAddScalarizerPass": ["void function(LLVMPassManagerRef PM)",
+							  "+", "3.5"],
+	"LLVMAddMergedLoadStoreMotionPass": ["void function(LLVMPassManagerRef PM)",
+										 "+", "3.5"],
 	"LLVMAddGVNPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddIndVarSimplifyPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddInstructionCombiningPass" : ["void function(LLVMPassManagerRef PM)"],
@@ -302,6 +325,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMAddMemCpyOptPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddPartiallyInlineLibCallsPass" : ["void function(LLVMPassManagerRef PM)",
 											"+", "3.4"],
+	"LLVMAddLowerSwitchPass": ["void function(LLVMPassManagerRef PM)",
+							   "+", "3.6"],
 	"LLVMAddPromoteMemoryToRegisterPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddReassociatePass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddSCCPPass" : ["void function(LLVMPassManagerRef PM)"],
@@ -317,6 +342,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMAddEarlyCSEPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddLowerExpectIntrinsicPass" : ["void function(LLVMPassManagerRef PM)"],
 	"LLVMAddTypeBasedAliasAnalysisPass" : ["void function(LLVMPassManagerRef PM)"],
+	"LLVMAddScopedNoAliasAAPass": ["void function(LLVMPassManagerRef PM)",
+								   "+", "3.6"],
 	"LLVMAddBasicAliasAnalysisPass" : ["void function(LLVMPassManagerRef PM)"],
 
 	/++ Vectorization transformations ++/
@@ -346,11 +373,23 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMContextDispose" : ["void function(LLVMContextRef C)"],
 	"LLVMGetMDKindIDInContext" : ["uint function(LLVMContextRef C, const(char)* Name, uint SLen)"],
 	"LLVMGetMDKindID" : ["uint function(const(char)* Name, uint SLen)"],
+	"LLVMContextSetDiagnosticHandler" :  ["void function (LLVMContextRef C, LLVMDiagnosticHandler Handler, void *DiagnosticContext)",
+										  "+", "3.5"],
+
+	"LLVMGetDiagInfoDescription": ["char* function(LLVMDiagnosticInfoRef DI)",
+								   "+", "3.5"],
+
+	"LLVMGetDiagInfoSeverity": ["LLVMDiagnosticSeverity function(LLVMDiagnosticInfoRef DI)",
+								"+", "3.5"],
+	"LLVMContextSetYieldCallback" : ["void function(LLVMContextRef C, LLVMYieldCallback Callback, void *OpaqueHandle)",
+									 "+", "3.5"],
 
 	/++ Modules ++/
 
 	"LLVMModuleCreateWithName" : ["LLVMModuleRef function(const(char)* ModuleID)"],
 	"LLVMModuleCreateWithNameInContext" : ["LLVMModuleRef function(const(char)* ModuleID, LLVMContextRef C)"],
+	"LLLVMCloneModule": ["LVMModuleRef function(LLVMModuleRef M)",
+					 "+", "3.6"],
 	"LLVMDisposeModule" : ["void function(LLVMModuleRef M)"],
 	"LLVMGetDataLayout" : ["const(char)* function(LLVMModuleRef M)"],
 	"LLVMSetDataLayout" : ["void function(LLVMModuleRef M, const(char)* Triple)"],
@@ -505,10 +544,11 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMIsAFPToSIInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAFPToUIInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAFPTruncInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFunction" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAGetElementPtrInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAGlobalAlias" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAGlobalValue" : ["LLVMValueRef function(LLVMValueRef Val)"],
+	"LLVMIsAGlobalAlias" : ["LLVMValueRef function(LLVMValueRef Val)"],
+	"LLVMIsAGlobalObject" : ["LLVMValueRef function(LLVMValueRef Val)"],
+	"LLVMIsAFunction" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAGlobalVariable" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAICmpInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
 	"LLVMIsAIndirectBrInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
@@ -557,6 +597,8 @@ package enum string[][string] LLVMC_Functions = [
 	/+++ User value +++/
 
 	"LLVMGetOperand" : ["LLVMValueRef function(LLVMValueRef Val, uint Index)"],
+	"LLVMGetOperandUse": ["LLVMUseRef function(LLVMValueRef Val, unsigned Index)",
+						  "+", "3.6"],
 	"LLVMSetOperand" : ["void function(LLVMValueRef User, uint Index, LLVMValueRef Val)"],
 	"LLVMGetNumOperands" : ["int function(LLVMValueRef Val)"],
 
@@ -579,15 +621,23 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMConstRealOfStringAndSize" : ["LLVMValueRef function(LLVMTypeRef RealTy, const(char)* Text, uint SLen)"],
 	"LLVMConstIntGetZExtValue" : ["ulong function(LLVMValueRef ConstantVal)"],
 	"LLVMConstIntGetSExtValue" : ["long function(LLVMValueRef ConstantVal)"],
+	"LLVMConstRealGetDouble": ["double function(LLVMValueRef ConstantVal, LLVMBool *losesInfo)",
+							   "+", "3.6"],
 
 	/++++ Composite Constants ++++/
 
 	"LLVMConstStringInContext" : ["LLVMValueRef function(LLVMContextRef C, const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
 	"LLVMConstString" : ["LLVMValueRef function(const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
+	"LLVMIsConstantString": ["LLVMBool function(LLVMValueRef c)",
+							 "+", "3.6"],
+	"LLVMGetAsString": ["const(char*) function(LLVMValueRef c, size_t* out)",
+						"+", "3.6"],
 	"LLVMConstStructInContext" : ["LLVMValueRef function(LLVMContextRef C, LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
 	"LLVMConstStruct" : ["LLVMValueRef function(LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
 	"LLVMConstArray" : ["LLVMValueRef function(LLVMTypeRef ElementTy, LLVMValueRef* ConstantVals, uint Length)"],
 	"LLVMConstNamedStruct" : ["LLVMValueRef function(LLVMTypeRef StructTy, LLVMValueRef* ConstantVals, uint Count)"],
+	"LLVMGetElementAsConstant": ["LLVMValueRef function(LLVMValueRef c, unsigned idx)",
+								 "+", "3.6"],
 	"LLVMConstVector" : ["LLVMValueRef function(LLVMValueRef* ScalarConstantVals, uint Size)"],
 
 	/++++ Constant Expressions ++++/
@@ -668,6 +718,14 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMSetSection" : ["void function(LLVMValueRef Global, const(char)* Section)"],
 	"LLVMGetVisibility" : ["LLVMVisibility function(LLVMValueRef Global)"],
 	"LLVMSetVisibility" : ["void function(LLVMValueRef Global, LLVMVisibility Viz)"],
+	"LLVMGetDLLStorageClass": ["LLVMDLLStorageClass function(LLVMValueRef Global)",
+							   "+", "3.5"],
+	"LLVMSetDLLStorageClass": ["void function(LLVMValueRef Global, LLVMDLLStorageClass Class)",
+							   "+", "3.5"],
+	"LLVMHasUnnamedAddr": ["LLVMBool function(LLVMValueRef Global)",
+						   "+", "3.5"],
+	"LLVMSetUnnamedAddr": ["void function(LLVMValueRef Global, LLVMBool HasUnnamedAddr)",
+						   "+", "3.5"],
 	"LLVMGetAlignment" : ["uint function(LLVMValueRef Global)"],
 	"LLVMSetAlignment" : ["void function(LLVMValueRef Global, uint Bytes)"],
 
@@ -777,6 +835,10 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMInstructionEraseFromParent" : ["void function(LLVMValueRef Inst)"],
 	"LLVMGetInstructionOpcode" : ["LLVMOpcode function(LLVMValueRef Inst)"],
 	"LLVMGetICmpPredicate" : ["LLVMIntPredicate function(LLVMValueRef Inst)"],
+	"LLVMGetFCmpPredicate": ["LLVMRealPredicate function(LLVMValueRef Inst)",
+							 "+", "3.6"],
+	"LLVMInstructionClone": ["LLVMValueRef function(LLVMValueRef Inst)",
+							 "+", "3.6"],
 	"LLVMGetSwitchDefaultDest" : ["LLVMBasicBlockRef function(LLVMValueRef SwitchInstr)"],
 
 	/++++ Call Sites and Invocations ++++/
@@ -788,6 +850,18 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMSetInstrParamAlignment" : ["void function(LLVMValueRef Instr, uint index, uint Align)"],
 	"LLVMIsTailCall" : ["LLVMBool function(LLVMValueRef CallInst)"],
 	"LLVMSetTailCall" : ["void function(LLVMValueRef CallInst, LLVMBool IsTailCall)"],
+	"LLVMGetNumSuccessors": ["uint function(LLVMValueRef Term)",
+							 "+", "3.6"],
+	"LLVMGetSuccessor": ["LLVMBasicBlockRef function(LLVMValueRef Term, unsigned i)",
+						 "+", "3.6"],
+	"LLVMSetSuccessor": ["void function(LLVMValueRef Term, unsigned i, LLVMBasicBlockRef block)",
+						 "+", "3.6"],
+	"LLVMIsConditional": ["LLVMBool function(LLVMValueRef Branch)",
+						  "+", "3.6"],
+	"LLVMGetCondition": ["LLVMValueRef function(LLVMValueRef Branch)",
+						 "+", "3.6"],
+	"LLVMSetCondition": ["void function(LLVMValueRef Branch, LLVMValueRef Cond)",
+						 "+", "3.6"],
 
 	/++++ PHI Nodes ++++/
 
@@ -908,6 +982,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMBuildPtrDiff" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
 	"LLVMBuildAtomicRMW" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMAtomicRMWBinOp op, LLVMValueRef PTR, LLVMValueRef Val, LLVMAtomicOrdering ordering, LLVMBool singleThread)",
 	                        "+", "3.3"],
+	"LLVMBuildFence": ["LLVMValueRef function(LLVMBuilderRef B, LLVMAtomicOrdering ordering, LLVMBool singleThread, const char *Name)",
+					   "+", "3.5"],
 
 	/++ Module Providers ++/
 
@@ -946,9 +1022,9 @@ package enum string[][string] LLVMC_Functions = [
 	/++ Threading ++/
 
 	"LLVMStartMultithreaded" : ["LLVMBool function()",
-	                            "+", "3.3"],
+	                            "+", "3.3", "-", "3.5"],
 	"LLVMStopMultithreaded" : ["void function()",
-	                            "+", "3.3"],
+	                            "+", "3.3", "-", "3.5"],
 	"LLVMIsMultithreaded" : ["LLVMBool function()",
 	                            "+", "3.3"],
 
@@ -957,6 +1033,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMCreateDisasm" : ["LLVMDisasmContextRef function(const(char)* TripleName, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)"],
 	"LLVMCreateDisasmCPU" : ["LLVMDisasmContextRef function(const(char)* Triple, const(char)* CPU, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)",
 	                         "+", "3.3"],
+	"LLVMCreateDisasmCPUFeatures": ["LLVMDisasmContextRef function(const char *Triple, const char *CPU, const char *Features, void *DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)",
+									"+", "3.6"],
 	"LLVMSetDisasmOptions" : ["int function(LLVMDisasmContextRef DC, ulong Options)",
 	                          "+", "3.2"],
 	"LLVMDisasmDispose" : ["void function(LLVMDisasmContextRef DC)"],
@@ -1072,8 +1150,14 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMFindFunction" : ["LLVMBool function(LLVMExecutionEngineRef EE, const(char)* Name, LLVMValueRef* OutFn)"],
 	"LLVMRecompileAndRelinkFunction" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Fn)"],
 	"LLVMGetExecutionEngineTargetData" : ["LLVMTargetDataRef function(LLVMExecutionEngineRef EE)"],
+	"LLVMGetExecutionEngineTargetMachine": ["LLVMTargetMachineRef (LLVMExecutionEngineRef EE)",
+											"+", "3.5"],
 	"LLVMAddGlobalMapping" : ["void function(LLVMExecutionEngineRef EE, LLVMValueRef Global, void* Addr)"],
 	"LLVMGetPointerToGlobal" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Global)"],
+	"LLVMGetGlobalValueAddress": ["ulong function LLVMExecutionEngineRef EE, const char *Name)",
+								  "+", "3.6"],
+	"LLVMGetFunctionAddress": ["ulong function(LLVMExecutionEngineRef EE, const char *Name)",
+							   "+", "3.6"],
 	"LLVMCreateSimpleMCJITMemoryManager" : ["LLVMMCJITMemoryManagerRef function(void* Opaque, LLVMMemoryManagerAllocateCodeSectionCallback AllocateCodeSection, LLVMMemoryManagerAllocateDataSectionCallback AllocateDataSection, LLVMMemoryManagerFinalizeMemoryCallback FinalizeMemory, LLVMMemoryManagerDestroyCallback Destroy)",
 											"+", "3.4"],
 	"LLVMDisposeMCJITMemoryManager" : ["void function(LLVMMCJITMemoryManagerRef MM)",
@@ -1117,6 +1201,13 @@ package enum string[][string] LLVMC_Functions = [
 	"lto_module_is_object_file_in_memory_for_target" : ["bool function(const(void)* mem, size_t length, const(char)* target_triple_prefix)"],
 	"lto_module_create" : ["lto_module_t function(const(char)* path)"],
 	"lto_module_create_from_memory" : ["lto_module_t function(const(void)* mem, size_t length)"],
+	"lto_module_create_from_memory_with_path": ["lto_module_t function(const void* mem, size_t length, const char *path)",
+												"+", "3.5"],
+
+	"lto_module_create_in_local_context": ["lto_module_t function(const void *mem, size_t length, const char *path)",
+										   "+", "3.6"],
+	"lto_module_create_in_codegen_context": ["lto_module_t function(const void *mem, size_t length, const char *path, lto_code_gen_t cg)",
+											 "+", "3.6"],
 	"lto_module_create_from_fd" : ["lto_module_t function(int fd, const(char)* path, size_t file_size)"],
 	/+ "offset" is originally of type "off_t", which is 64 bit on 64 bit machines,
 	 + but can be 32 bit or 64 bit on 32 bit machines depending on compilation.
@@ -1132,7 +1223,21 @@ package enum string[][string] LLVMC_Functions = [
 	"lto_module_get_num_symbols" : ["uint function(lto_module_t mod)"],
 	"lto_module_get_symbol_name" : ["const(char)* function(lto_module_t mod, uint index)"],
 	"lto_module_get_symbol_attribute" : ["lto_symbol_attributes function(lto_module_t mod, uint index)"],
+	"lto_module_get_num_deplibs": ["uint function(lto_module_t mod)",
+								   "+", "3.5"],
+
+	"lto_module_get_deplib": ["const(char)* function(lto_module_t mod, unsigned int index)",
+							  "+", "3.5"],
+	"lto_module_get_num_linkeropts": ["uint function(lto_module_t mod)",
+									  "+", "3.5"],
+
+	"lto_module_get_linkeropt": ["const(char)* function(lto_module_t mod, unsigned int index)",
+								 "+", "3.5"],
+	"lto_codegen_set_diagnostic_handler": ["void function(lto_code_gen_t, lto_diagnostic_handler_t, void *)",
+										   "+", "3.5"],
 	"lto_codegen_create" : ["lto_code_gen_t function()"],
+	"lto_codegen_create_in_local_context": ["lto_code_gen_t function()",
+											"+", "3.6"],
 	"lto_codegen_dispose" : ["void function(lto_code_gen_t)"],
 	"lto_codegen_add_module" : ["bool function(lto_code_gen_t cg, lto_module_t mod)"],
 	"lto_codegen_set_debug_model" : ["bool function(lto_code_gen_t cg, lto_debug_model)"],
@@ -1172,7 +1277,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMMoveToNextRelocation" : ["void function(LLVMRelocationIteratorRef RI)"],
 	"LLVMGetSymbolName" : ["const(char)* function(LLVMSymbolIteratorRef SI)"],
 	"LLVMGetSymbolAddress" : ["ulong function(LLVMSymbolIteratorRef SI)"],
-	"LLVMGetSymbolFileOffset" : ["ulong function(LLVMSymbolIteratorRef SI)"],
+	"LLVMGetSymbolFileOffset" : ["ulong function(LLVMSymbolIteratorRef SI)",
+								 "-", "3.5"],
 	"LLVMGetSymbolSize" : ["ulong function(LLVMSymbolIteratorRef SI)"],
 	"LLVMGetRelocationAddress" : ["ulong function(LLVMRelocationIteratorRef RI)"],
 	"LLVMGetRelocationOffset" : ["ulong function(LLVMRelocationIteratorRef RI)"],
@@ -1351,10 +1457,14 @@ package enum string[][string] LLVMC_Functions = [
 											 "+", "3.3"],
 	"LLVMGetDefaultTargetTriple" : ["char* function()",
 									"+", "3.4"],
+	"LLVMAddAnalysisPasses": ["void function(LLVMTargetMachineRef T, LLVMPassManagerRef PM)",
+							  "+", "3.5"],
 
 	/+ Support +/
 	"LLVMLoadLibraryPermanently" : ["LLVMBool function(const(char)* Filename)",
 									"+", "3.4"],
+	"LLVMParseCommandLineOptions": ["void function(int argc, const char *const *argv, const char *Overview)",
+									"+", "3.6"],
 
 	/+ IRReader +/
 	"LLVMParseIRInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage)",
