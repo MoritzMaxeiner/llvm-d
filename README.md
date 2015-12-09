@@ -1,6 +1,8 @@
 llvm-d
 ======
 
+[![Build Status](https://travis-ci.org/Calrama/llvm-d.svg?branch=master)](https://travis-ci.org/Calrama/llvm-d)
+
 **llvm-d** provides bindings to LLVM for the D programming language.
 
 It does so by automatically loading the LLVM dynamic library at program startup
