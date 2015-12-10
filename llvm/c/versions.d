@@ -18,3 +18,22 @@ else __gshared immutable string LLVM_VersionString = "3.4";
 __gshared immutable float LLVM_Version = to!float(LLVM_VersionString);
 
 __gshared immutable float LLVM_Trunk = 3.8;
+
+//qualifiers is in the form ["+", "3.3", "-", "3.5"]
+bool matchVersionQualifiers(string[] qualifiers)
+{
+	while(qualifiers.length > 0)
+	{
+		string op = qualifiers[0];
+		//TODO: use a proper semantic version type?
+		//(floats may exhibit rounding issues.)
+		float ver = to!float(qualifiers[1]);
+		if((op == "+" && LLVM_Version < ver) ||
+		   (op == "-" && LLVM_Version >= ver))
+		{
+			return false;
+		}
+		qualifiers = qualifiers[2 .. $];
+	}
+	return true;
+}

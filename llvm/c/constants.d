@@ -290,11 +290,11 @@ const
 	uint LLVMDisassembler_ReferenceType_In_PCrel_Load = 2;
 	static if(LLVM_Version >= 3.5)
 	{
-		uint LLVMDisassembler_ReferenceType_In_ARM64_ADRP = 0x100000001;
-		uint LLVMDisassembler_ReferenceType_In_ARM64_ADDXri = 0x100000002;
-		uint LLVMDisassembler_ReferenceType_In_ARM64_LDRXui = 0x100000003;
-		uint LLVMDisassembler_ReferenceType_In_ARM64_LDRXl = 0x100000004;
-		uint LLVMDisassembler_ReferenceType_In_ARM64_ADR = 0x100000005;
+		ulong LLVMDisassembler_ReferenceType_In_ARM64_ADRP = 0x100000001;
+		ulong LLVMDisassembler_ReferenceType_In_ARM64_ADDXri = 0x100000002;
+		ulong LLVMDisassembler_ReferenceType_In_ARM64_LDRXui = 0x100000003;
+		ulong LLVMDisassembler_ReferenceType_In_ARM64_LDRXl = 0x100000004;
+		ulong LLVMDisassembler_ReferenceType_In_ARM64_ADR = 0x100000005;
 	}
 	uint LLVMDisassembler_ReferenceType_Out_SymbolStub = 1;
 	uint LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr = 2;
@@ -384,27 +384,27 @@ else
 {
 	const uint LTO_API_VERSION = 4;
 }
-
-enum : lto_symbol_attributes
-{
-	LTO_SYMBOL_ALIGNMENT_MASK = 0x0000001F,
-	LTO_SYMBOL_PERMISSIONS_MASK = 0x000000E0,
-	LTO_SYMBOL_PERMISSIONS_CODE = 0x000000A0,
-	LTO_SYMBOL_PERMISSIONS_DATA = 0x000000C0,
-	LTO_SYMBOL_PERMISSIONS_RODATA = 0x00000080,
-	LTO_SYMBOL_DEFINITION_MASK = 0x00000700,
-	LTO_SYMBOL_DEFINITION_REGULAR = 0x00000100,
-	LTO_SYMBOL_DEFINITION_TENTATIVE = 0x00000200,
-	LTO_SYMBOL_DEFINITION_WEAK = 0x00000300,
-	LTO_SYMBOL_DEFINITION_UNDEFINED = 0x00000400,
-	LTO_SYMBOL_DEFINITION_WEAKUNDEF = 0x00000500,
-	LTO_SYMBOL_SCOPE_MASK = 0x00003800,
-	LTO_SYMBOL_SCOPE_INTERNAL = 0x00000800,
-	LTO_SYMBOL_SCOPE_HIDDEN = 0x00001000,
-	LTO_SYMBOL_SCOPE_PROTECTED = 0x00002000,
-	LTO_SYMBOL_SCOPE_DEFAULT = 0x00001800,
-	LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800
-}
+mixin(MixinMap_VersionedEnum(
+			  "", "lto_symbol_attributes", LLVM_Version,
+			  ["LTO_SYMBOL_ALIGNMENT_MASK =				 0x0000001F" : null,
+			   "LTO_SYMBOL_PERMISSIONS_MASK =			 0x000000E0" : null,
+			   "LTO_SYMBOL_PERMISSIONS_CODE =			 0x000000A0" : null,
+			   "LTO_SYMBOL_PERMISSIONS_DATA =			 0x000000C0" : null,
+			   "LTO_SYMBOL_PERMISSIONS_RODATA =			 0x00000080" : null,
+			   "LTO_SYMBOL_DEFINITION_MASK =			 0x00000700" : null,
+			   "LTO_SYMBOL_DEFINITION_REGULAR =			 0x00000100" : null,
+			   "LTO_SYMBOL_DEFINITION_TENTATIVE =		 0x00000200" : null,
+			   "LTO_SYMBOL_DEFINITION_WEAK =			 0x00000300" : null,
+			   "LTO_SYMBOL_DEFINITION_UNDEFINED =		 0x00000400" : null,
+			   "LTO_SYMBOL_DEFINITION_WEAKUNDEF =		 0x00000500" : null,
+			   "LTO_SYMBOL_SCOPE_MASK =					 0x00003800" : null,
+			   "LTO_SYMBOL_SCOPE_INTERNAL =			 	 0x00000800" : null,
+			   "LTO_SYMBOL_SCOPE_HIDDEN =				 0x00001000" : null,
+			   "LTO_SYMBOL_SCOPE_PROTECTED =			 0x00002000" : null,
+			   "LTO_SYMBOL_SCOPE_DEFAULT =				 0x00001800" : null,
+			   "LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800" : null,
+			   "LTO_SYMBOL_COMDAT =						 0x00004000" : ["+", "3.7"],
+			   "LTO_SYMBOL_ALIAS =						 0x00008000" : ["+", "3.7"]]));
 
 enum : lto_debug_model
 {

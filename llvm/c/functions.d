@@ -9,25 +9,6 @@ private
 	import llvm.c.types;
 }
 
-//qualifiers is in the form ["+", "3.3", "-", "3.5"]
-private bool matchVersionQualifiers(string[] qualifiers)
-{
-	while(qualifiers.length > 0)
-	{
-		string op = qualifiers[0];
-		//TODO: use a proper semantic version type?
-		//(floats may exhibit rounding issues.)
-		float ver = to!float(qualifiers[1]);
-		if((op == "+" && LLVM_Version < ver) ||
-		   (op == "-" && LLVM_Version >= ver))
-		{
-			return false;
-		}
-		qualifiers = qualifiers[2 .. $];
-	}
-	return true;
-}
-
 extern(System)
 {
 	mixin(MixinMap(LLVMC_Functions, delegate string(string symbol, string[] signature) {
@@ -472,7 +453,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMStructSetBody" : ["void function(LLVMTypeRef StructTy, LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed)"],
 	"LLVMCountStructElementTypes" : ["uint function(LLVMTypeRef StructTy)"],
 	"LLVMGetStructElementTypes" : ["void function(LLVMTypeRef StructTy, LLVMTypeRef* Dest)"],
-	"LLVMStructGetTypeAtIndex" : ["LLVMTypeRef function(LLVMTypeRef StructTy, unsigned i)",
+	"LLVMStructGetTypeAtIndex" : ["LLVMTypeRef function(LLVMTypeRef StructTy, uint i)",
 								 "+", "3.7"],
 	"LLVMIsPackedStruct" : ["LLVMBool function(LLVMTypeRef StructTy)"],
 	"LLVMIsOpaqueStruct" : ["LLVMBool function(LLVMTypeRef StructTy)"],
@@ -600,7 +581,7 @@ package enum string[][string] LLVMC_Functions = [
 	/+++ User value +++/
 
 	"LLVMGetOperand" : ["LLVMValueRef function(LLVMValueRef Val, uint Index)"],
-	"LLVMGetOperandUse" : ["LLVMUseRef function(LLVMValueRef Val, unsigned Index)",
+	"LLVMGetOperandUse" : ["LLVMUseRef function(LLVMValueRef Val, uint Index)",
 						  "+", "3.6"],
 	"LLVMSetOperand" : ["void function(LLVMValueRef User, uint Index, LLVMValueRef Val)"],
 	"LLVMGetNumOperands" : ["int function(LLVMValueRef Val)"],
@@ -639,7 +620,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMConstStruct" : ["LLVMValueRef function(LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
 	"LLVMConstArray" : ["LLVMValueRef function(LLVMTypeRef ElementTy, LLVMValueRef* ConstantVals, uint Length)"],
 	"LLVMConstNamedStruct" : ["LLVMValueRef function(LLVMTypeRef StructTy, LLVMValueRef* ConstantVals, uint Count)"],
-	"LLVMGetElementAsConstant" : ["LLVMValueRef function(LLVMValueRef c, unsigned idx)",
+	"LLVMGetElementAsConstant" : ["LLVMValueRef function(LLVMValueRef c, uint idx)",
 								 "+", "3.6"],
 	"LLVMConstVector" : ["LLVMValueRef function(LLVMValueRef* ScalarConstantVals, uint Size)"],
 
@@ -859,9 +840,9 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMSetTailCall" : ["void function(LLVMValueRef CallInst, LLVMBool IsTailCall)"],
 	"LLVMGetNumSuccessors" : ["uint function(LLVMValueRef Term)",
 							 "+", "3.6"],
-	"LLVMGetSuccessor" : ["LLVMBasicBlockRef function(LLVMValueRef Term, unsigned i)",
+	"LLVMGetSuccessor" : ["LLVMBasicBlockRef function(LLVMValueRef Term, uint i)",
 						 "+", "3.6"],
-	"LLVMSetSuccessor" : ["void function(LLVMValueRef Term, unsigned i, LLVMBasicBlockRef block)",
+	"LLVMSetSuccessor" : ["void function(LLVMValueRef Term, uint i, LLVMBasicBlockRef block)",
 						 "+", "3.6"],
 	"LLVMIsConditional" : ["LLVMBool function(LLVMValueRef Branch)",
 						  "+", "3.6"],
@@ -1159,7 +1140,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMFindFunction" : ["LLVMBool function(LLVMExecutionEngineRef EE, const(char)* Name, LLVMValueRef* OutFn)"],
 	"LLVMRecompileAndRelinkFunction" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Fn)"],
 	"LLVMGetExecutionEngineTargetData" : ["LLVMTargetDataRef function(LLVMExecutionEngineRef EE)"],
-	"LLVMGetExecutionEngineTargetMachine" : ["LLVMTargetMachineRef (LLVMExecutionEngineRef EE)",
+	"LLVMGetExecutionEngineTargetMachine" : ["LLVMTargetMachineRef function(LLVMExecutionEngineRef EE)",
 											"+", "3.5"],
 	"LLVMAddGlobalMapping" : ["void function(LLVMExecutionEngineRef EE, LLVMValueRef Global, void* Addr)"],
 	"LLVMGetPointerToGlobal" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Global)"],
@@ -1233,17 +1214,17 @@ package enum string[][string] LLVMC_Functions = [
 	"lto_module_get_symbol_name" : ["const(char)* function(lto_module_t mod, uint index)"],
 	"lto_module_get_symbol_attribute" : ["lto_symbol_attributes function(lto_module_t mod, uint index)"],
 	"lto_module_get_num_deplibs" : ["uint function(lto_module_t mod)",
-								   "+", "3.5"],
-
-	"lto_module_get_deplib" : ["const(char)* function(lto_module_t mod, unsigned int index)",
-							  "+", "3.5"],
+								   "+", "3.5", "-", "3.7"],
+	"lto_module_get_deplib" : ["const(char)* function(lto_module_t mod, uint index)",
+							  "+", "3.5", "-", "3.7"],
 	"lto_module_get_num_linkeropts" : ["uint function(lto_module_t mod)",
-									  "+", "3.5"],
-
-	"lto_module_get_linkeropt" : ["const(char)* function(lto_module_t mod, unsigned int index)",
-								 "+", "3.5"],
+									  "+", "3.5", "-", "3.7"],
+	"lto_module_get_linkeropt" : ["const(char)* function(lto_module_t mod, uint index)",
+								  "+", "3.5", "-", "3.7"],
+	"lto_module_get_linkeropts" : ["const(char)* function(lto_module_t mod)",
+								   "+", "3.7"],
 	"lto_codegen_set_diagnostic_handler" : ["void function(lto_code_gen_t, lto_diagnostic_handler_t, void *)",
-										   "+", "3.5"],
+											"+", "3.5"],
 	"lto_codegen_create" : ["lto_code_gen_t function()"],
 	"lto_codegen_create_in_local_context" : ["lto_code_gen_t function()",
 											"+", "3.6"],
