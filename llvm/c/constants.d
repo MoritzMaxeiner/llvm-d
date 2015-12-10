@@ -366,7 +366,7 @@ enum : llvm_lto_status
 
 static if(LLVM_Version >= 3.7)
 {
-	const uinnt LTO_API_VERSION = 17;
+	const uint LTO_API_VERSION = 17;
 }
 else static if(LLVM_Version >= 3.6)
 {

@@ -284,6 +284,8 @@ package enum string[][string] LLVMC_Functions = [
 	/++ Scalar transformations ++/
 
 	"LLVMAddAggressiveDCEPass" : ["void function(LLVMPassManagerRef PM)"],
+	"LLVMAddBitTrackingDCEPass" : ["void function(LLVMPassManagerRef PM)",
+								   "+", "3.7"],
 	"LLVMAddAlignmentFromAssumptionsPass" : ["void function(LLVMPassManagerRef PM)",
 											"+", "3.6"],
 	"LLVMAddCFGSimplificationPass" : ["void function(LLVMPassManagerRef PM)"],
@@ -1230,6 +1232,8 @@ package enum string[][string] LLVMC_Functions = [
 											"+", "3.6"],
 	"lto_codegen_dispose" : ["void function(lto_code_gen_t)"],
 	"lto_codegen_add_module" : ["bool function(lto_code_gen_t cg, lto_module_t mod)"],
+	"lto_codegen_add_module" : ["void function(lto_code_gen_t cg, lto_module_t mod)",
+								"+", "3.7"],
 	"lto_codegen_set_debug_model" : ["bool function(lto_code_gen_t cg, lto_debug_model)"],
 	"lto_codegen_set_pic_model" : ["bool function(lto_code_gen_t cg, lto_codegen_model)"],
 	"lto_codegen_set_cpu" : ["void function(lto_code_gen_t cg, const(char)* cpu)"],
@@ -1239,9 +1243,19 @@ package enum string[][string] LLVMC_Functions = [
 	"lto_codegen_write_merged_modules" : ["bool function(lto_code_gen_t cg, const(char)* path)"],
 	"lto_codegen_compile" : ["const(void)* function(lto_code_gen_t cg, size_t* length)"],
 	"lto_codegen_compile_to_file" : ["bool function(lto_code_gen_t cg, const(char)** name)"],
+	"lto_codegen_optimize" : ["bool function(lto_code_gen_t cg)",
+							  "+", "3.7"],
+	"lto_codegen_compile_optimized" : ["const(void)* function(lto_code_gen_t cg, size_t* length)",
+									   "+", "3.7"],
+	"lto_api_version" : ["uint function()",
+						 "+", "3.7"],
 	"lto_codegen_debug_options" : ["void function(lto_code_gen_t cg, const(char)* )"],
 	"lto_initialize_disassembler" : ["void function()",
 	                                 "+", "3.3"],
+	"lto_codegen_set_should_internalize" : ["void function(lto_code_gen_t cg, bool ShouldInternalize)",
+											"+", "3.7"],
+	"lto_codegen_set_should_embed_uselists" : ["void function(lto_code_gen_t cg, bool ShouldEmbedUselists)",
+											   "+", "3.7"],
 
 	/+ Object file reading and writing +/
 
@@ -1270,7 +1284,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMGetSymbolFileOffset" : ["ulong function(LLVMSymbolIteratorRef SI)",
 								 "-", "3.5"],
 	"LLVMGetSymbolSize" : ["ulong function(LLVMSymbolIteratorRef SI)"],
-	"LLVMGetRelocationAddress" : ["ulong function(LLVMRelocationIteratorRef RI)"],
+	"LLVMGetRelocationAddress" : ["ulong function(LLVMRelocationIteratorRef RI)",
+								  "-", "3.7"],
 	"LLVMGetRelocationOffset" : ["ulong function(LLVMRelocationIteratorRef RI)"],
 	"LLVMGetRelocationSymbol" : ["LLVMSymbolIteratorRef function(LLVMRelocationIteratorRef RI)"],
 	"LLVMGetRelocationType" : ["ulong function(LLVMRelocationIteratorRef RI)"],
@@ -1439,7 +1454,8 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMGetTargetMachineTriple" : ["char* function(LLVMTargetMachineRef T)"],
 	"LLVMGetTargetMachineCPU" : ["char* function(LLVMTargetMachineRef T)"],
 	"LLVMGetTargetMachineFeatureString" : ["char* function(LLVMTargetMachineRef T)"],
-	"LLVMGetTargetMachineData" : ["LLVMTargetDataRef function(LLVMTargetMachineRef T)"],
+	"LLVMGetTargetMachineData" : ["LLVMTargetDataRef function(LLVMTargetMachineRef T)",
+								  "-", "3.7"],
 	"LLVMSetTargetMachineAsmVerbosity" : ["void function(LLVMTargetMachineRef T, LLVMBool VerboseAsm)",
 										  "+", "3.4"],
 	"LLVMTargetMachineEmitToFile" : ["LLVMBool function(LLVMTargetMachineRef T, LLVMModuleRef M,  char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage)"],
@@ -1455,6 +1471,10 @@ package enum string[][string] LLVMC_Functions = [
 									"+", "3.4"],
 	"LLVMParseCommandLineOptions" : ["void function(int argc, const(char*)* argv, const(char)* Overview)",
 									"+", "3.6"],
+	"LLVMSearchForAddressOfSymbol" : ["void* function(const char *symbolName)",
+									  "+", "3.7"],
+	"LLVMAddSymbol" : ["void function(const char *symbolName, void *symbolValue)",
+					   "+", "3.7"],
 
 	/+ IRReader +/
 	"LLVMParseIRInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage)",
