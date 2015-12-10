@@ -340,12 +340,10 @@ static if(LLVM_Version >= 3.2)
 {
 	/+ Linker +/
 
-	enum : LLVMLinkerMode
-	{
-		LLVMLinkerDestroySource = 0,
-		//TODO: remove this if LLVM doesn't make it work again?
-		LLVMLinkerPreserveSource = 1
-	}
+	mixin(MixinMap_VersionedEnum(
+			  "", "LLVMLinkerMode", LLVM_Version,
+			  ["LLVMLinkerDestroySource  = 0" : null,
+			   "LLVMLinkerPreserveSource = 1" : ["-", "3.7"]]));
 }
 
 /+ Link Time Optimization +/
@@ -366,8 +364,13 @@ enum : llvm_lto_status
 
 /+ LTO +/
 
-static if(LLVM_Version >= 3.6) {
-	const uinnt LTO_API_VERSION = 11;
+static if(LLVM_Version >= 3.7)
+{
+	const uinnt LTO_API_VERSION = 17;
+}
+else static if(LLVM_Version >= 3.6)
+{
+	const uint LTO_API_VERSION = 11;
 }
 else static if(LLVM_Version >= 3.5)
 {

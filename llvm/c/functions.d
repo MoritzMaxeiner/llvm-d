@@ -900,7 +900,9 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMBuildSwitch" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V, LLVMBasicBlockRef Else, uint NumCases)"],
 	"LLVMBuildIndirectBr" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Addr, uint NumDests)"],
 	"LLVMBuildInvoke" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Fn, LLVMValueRef* Args, uint NumArgs, LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, const(char)* Name)"],
-	"LLVMBuildLandingPad" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef PersFn, uint NumClauses, const(char)* Name)"],
+	"LLVMBuildLandingPad" : (LLVM_Version >= 3.7) ?
+			["LLVMValueRef function(LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef PersFn, uint NumClauses, const(char)* Name)"] :
+			["LLVMValueRef function(LLVMBuilderRef B, LLVMTypeRef Ty, uint NumClauses, const(char)* Name)"],
 	"LLVMBuildResume" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Exn)"],
 	"LLVMBuildUnreachable" : ["LLVMValueRef function(LLVMBuilderRef)"],
 	"LLVMAddCase" : ["void function(LLVMValueRef Switch, LLVMValueRef OnVal, LLVMBasicBlockRef Dest)"],
