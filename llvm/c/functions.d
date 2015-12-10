@@ -245,7 +245,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMWriteBitcodeToFile" : ["int function(LLVMModuleRef M, const(char)* Path)"],
 	"LLVMWriteBitcodeToFD" : ["int function(LLVMModuleRef M, int FD, int ShouldClose, int Unbuffered)"],
 	"LLVMWriteBitcodeToFileHandle" : ["int function(LLVMModuleRef M, int Handle)"],
-	"LLLVMWriteBitcodeToMemoryBuffer" : ["LVMMemoryBufferRef function(LLVMModuleRef M)",
+	"LLLVMWriteBitcodeToMemoryBuffer" : ["LLVMMemoryBufferRef function(LLVMModuleRef M)",
 							"+", "3.6"],
 
 	/+ Transforms +/
@@ -370,7 +370,7 @@ package enum string[][string] LLVMC_Functions = [
 
 	"LLVMModuleCreateWithName" : ["LLVMModuleRef function(const(char)* ModuleID)"],
 	"LLVMModuleCreateWithNameInContext" : ["LLVMModuleRef function(const(char)* ModuleID, LLVMContextRef C)"],
-	"LLLVMCloneModule" : ["LVMModuleRef function(LLVMModuleRef M)",
+	"LLLVMCloneModule" : ["LLVMModuleRef function(LLVMModuleRef M)",
 					 "+", "3.6"],
 	"LLVMDisposeModule" : ["void function(LLVMModuleRef M)"],
 	"LLVMGetDataLayout" : ["const(char)* function(LLVMModuleRef M)"],
@@ -614,7 +614,7 @@ package enum string[][string] LLVMC_Functions = [
 	"LLVMConstString" : ["LLVMValueRef function(const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
 	"LLVMIsConstantString" : ["LLVMBool function(LLVMValueRef c)",
 							 "+", "3.6"],
-	"LLVMGetAsString" : ["const(char*) function(LLVMValueRef c, size_t* out)",
+	"LLVMGetAsString" : ["const(char*) function(LLVMValueRef c, size_t* out_)",
 						"+", "3.6"],
 	"LLVMConstStructInContext" : ["LLVMValueRef function(LLVMContextRef C, LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
 	"LLVMConstStruct" : ["LLVMValueRef function(LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
@@ -1144,7 +1144,7 @@ package enum string[][string] LLVMC_Functions = [
 											"+", "3.5"],
 	"LLVMAddGlobalMapping" : ["void function(LLVMExecutionEngineRef EE, LLVMValueRef Global, void* Addr)"],
 	"LLVMGetPointerToGlobal" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Global)"],
-	"LLVMGetGlobalValueAddress" : ["ulong function LLVMExecutionEngineRef EE, const char *Name)",
+	"LLVMGetGlobalValueAddress" : ["ulong function(LLVMExecutionEngineRef EE, const char *Name)",
 								  "+", "3.6"],
 	"LLVMGetFunctionAddress" : ["ulong function(LLVMExecutionEngineRef EE, const char *Name)",
 							   "+", "3.6"],
@@ -1453,7 +1453,7 @@ package enum string[][string] LLVMC_Functions = [
 	/+ Support +/
 	"LLVMLoadLibraryPermanently" : ["LLVMBool function(const(char)* Filename)",
 									"+", "3.4"],
-	"LLVMParseCommandLineOptions" : ["void function(int argc, const char *const *argv, const char *Overview)",
+	"LLVMParseCommandLineOptions" : ["void function(int argc, const(char*)* argv, const(char)* Overview)",
 									"+", "3.6"],
 
 	/+ IRReader +/
