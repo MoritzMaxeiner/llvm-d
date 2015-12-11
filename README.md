@@ -36,7 +36,7 @@ void main(string[] args)
 Note that a static if is used to assure that the function calls are only compiled
 in if **llvm-d** is set to compile for at least the LLVM version that is needed
 (the multithreaded functions where added to LLVM's C API in the 3.3 development
-cycle and are thus only available from version 3.3 upwards).
+cycle and removed in the 3.5 development cycle; thus they are only available in versions 3.3 and 3.4).
 
 A more complex example showing how to calculate the fibonacci series:
 
