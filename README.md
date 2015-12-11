@@ -22,7 +22,7 @@ import std.stdio;
 
 void main(string[] args)
 {
-	static if((3.3 <= LLVM_Version) && (LLVM_VERSION < 3.5))
+	static if((3.3 <= LLVM_Version) && (LLVM_Version < 3.5))
 	{
 		writefln("LLVM multithreading on? %s", cast(bool) LLVMIsMultithreaded());
 		writefln("Turning it on"); LLVMStartMultithreaded();
