@@ -22,7 +22,7 @@ import std.stdio;
 
 void main(string[] args)
 {
-	static if(LLVM_Version >= 3.3)
+	static if((3.3 <= LLVM_Version) && (LLVM_VERSION < 3.5))
 	{
 		writefln("LLVM multithreading on? %s", cast(bool) LLVMIsMultithreaded());
 		writefln("Turning it on"); LLVMStartMultithreaded();
@@ -179,8 +179,8 @@ The identifier to set the LLVM version is defined as
 "LLVM_{MAJOR_VERSION}_{MINOR_VERSION}", so to get LLVM version 3.1
 use "LLVM_3_1" (without the quotes).
 
-Current supported versions are 3.1 - 3.3 and if no version is given
-at compile time, 3.2 will be assumed.
+Current supported versions are 3.1 - 3.7 and if no version is given
+at compile time, 3.7 will be assumed.
 
 Documentation
 -------------
@@ -193,9 +193,7 @@ License
 **llvm-d** is released under the MIT license, see LICENSE.txt
 or [here](http://opensource.org/licenses/MIT) for more details.
 
-**llvm-d** uses source code from LLVM that has been ported to D
-both for accessing LLVM's C API as well as in recreating
-LLVM's class hierarchy in D. The above paragraph does not apply
+**llvm-d** uses source code from LLVM that has been ported to D for accessing LLVM's C API. The above paragraph does not apply
 to that source code - it is a redistribution of LLVM source code.
 
 **LLVM is Copyright (c) 2003-2015 University of Illinois at Urbana-Champaign.
