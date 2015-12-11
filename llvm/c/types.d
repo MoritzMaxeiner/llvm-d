@@ -27,6 +27,9 @@ static if(LLVM_Version >= 3.4)
 
 static if(LLVM_Version >= 3.5)
 {
+	//This is here because putting it where it belongs creates forward reference issues.
+	struct LLVMOpaqueDiagnosticInfo {}; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
+
 	alias extern(C) void function(LLVMDiagnosticInfoRef, void*) LLVMDiagnosticHandler;
 	alias extern(C) void function(LLVMContextRef, void *) LLVMYieldCallback;
 }
@@ -41,10 +44,6 @@ struct LLVMOpaqueValue {}; alias LLVMOpaqueValue* LLVMValueRef;
 struct LLVMOpaqueBasicBlock {}; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
 struct LLVMOpaqueBuilder {}; alias LLVMOpaqueBuilder* LLVMBuilderRef;
 struct LLVMOpaqueModuleProvider {}; alias LLVMOpaqueModuleProvider* LLVMModuleProviderRef;
-static if(LLVM_Version >=  3.5)
-{
-	struct LLVMOpaqueDiagnosticInfo {}; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
-}
 struct LLVMOpaqueMemoryBuffer {}; alias LLVMOpaqueMemoryBuffer* LLVMMemoryBufferRef;
 struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef;
 struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;

@@ -21,9 +21,7 @@ private void loadSymbols(SharedLib library)
 		      LLVMC_Functions,
 		      delegate string(string symbol, string[] signature)
 		      {
-			      if((signature.length == 1) ||
-			         ((signature[1] == "+") && (to!float(signature[2]) <= LLVM_Version)) ||
-			         ((signature[1] == "-") && (to!float(signature[2]) > LLVM_Version)))
+			      if(matchVersionQualifiers(signature[1 .. $]))
 			      {
 				      return symbol ~ " = " ~ "library.loadSymbol!(da_"
 					      ~ symbol ~ ")(\"" ~ symbol ~ "\");\n";
