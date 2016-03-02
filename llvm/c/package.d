@@ -47,6 +47,10 @@ public struct LLVM
 	@property
 	static bool loaded() { return _loaded; }
 
+	public static void load() {
+		load(null);
+	}
+
 	public static void load(string file)
 	{
 		loadFromPath("", file);
