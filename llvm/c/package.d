@@ -87,12 +87,14 @@ public struct LLVM
 	}
 }
 
-shared static this()
-{
-	LLVM.load(null);
-}
+version(LLVM_Autoload) {
+	shared static this()
+	{
+		LLVM.load(null);
+	}
 
-shared static ~this()
-{
-	LLVM.unload();
+	shared static ~this()
+	{
+		LLVM.unload();
+	}
 }
