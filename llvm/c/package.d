@@ -15,6 +15,15 @@ public
 	import llvm.c.functions;
 }
 
+final class LLVMLoadException : Exception
+{
+	@safe pure nothrow
+	this(string msg)
+	{
+		super(msg);
+	}
+}
+
 private void loadSymbols(SharedLib library)
 {
 	mixin(MixinMap(
@@ -64,18 +73,10 @@ public struct LLVM
 			{
 				loadSymbols(library);
 				_loaded = true;
-				debug
-				{
-					import std.stdio;
-					writefln("LLVM shared library \"%s\" sucessfully loaded", path ~ file);
-				}
 			}
-			else debug
+			else
 			{
-				import std.stdio;
-				import std.cstream;
-				writefln("LLVM shared library \"%s\" could not be loaded", path ~ file);
-				derr.writefln(to!string(library.error));
+				throw new LLVMLoadException("LLVM shared library \""~path~file~"\" could not be loaded");
 			}
 		}
 	}
