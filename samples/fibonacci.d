@@ -9,9 +9,14 @@ import llvm.util.memory;
 
 int main(string[] args)
 {
+	LLVM.load();
+	
 	char* error;
 
 	LLVMInitializeNativeTarget();
+	LLVMInitializeNativeAsmPrinter();
+	LLVMInitializeNativeAsmParser();
+	
 	auto _module = LLVMModuleCreateWithName("fibonacci".toCString());
 	auto f_args = [ LLVMInt32Type() ];
 	auto f = LLVMAddFunction(

@@ -30,7 +30,6 @@
 			"targetType": "executable",
 			"importPaths": ["."],
 			"sourceFiles": ["samples/fibonacci.d"],
-			"versions": ["LLVM_Autoload"],
 			"dependencies": {
 				"llvm-d:c-api": "~master"
 			},

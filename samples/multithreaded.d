@@ -6,6 +6,8 @@ import llvm.d.llvm_c;
 
 void main(string[] args)
 {
+	LLVM.load();
+	
 	static if((3.3 <= LLVM_Version) && (LLVM_Version < 3.5))
 	{
 		writefln("LLVM multithreading on? %s", cast(bool) LLVMIsMultithreaded());
