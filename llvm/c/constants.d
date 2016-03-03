@@ -94,7 +94,7 @@ mixin(MixinMap_VersionedEnum(
 			   "LLVMPtrToInt       = 39" : null,
 			   "LLVMIntToPtr       = 40" : null,
 			   "LLVMBitCast        = 41" : null,
-			   "LLVMAddrSpaceCast  = 60" : ["+", "3.4"],
+			   "LLVMAddrSpaceCast  = 60" : ["+", "3", "4", "0"],
 			   "LLVMICmp           = 42" : null,
 			   "LLVMFCmp           = 43" : null,
 			   "LLVMPHI            = 44" : null,
@@ -140,7 +140,7 @@ mixin(MixinMap_VersionedEnum(
 	       "LLVMAvailableExternallyLinkage" : null,
 	       "LLVMLinkOnceAnyLinkage" : null,
 	       "LLVMLinkOnceODRLinkage" : null,
-	       "LLVMLinkOnceODRAutoHideLinkage" : ["+", "3.2"],
+	       "LLVMLinkOnceODRAutoHideLinkage" : ["+", "3", "2", "0"],
 	       "LLVMWeakAnyLinkage" : null,
 	       "LLVMWeakODRLinkage" : null,
 	       "LLVMAppendingLinkage" : null,
@@ -153,7 +153,7 @@ mixin(MixinMap_VersionedEnum(
 	       "LLVMCommonLinkage" : null,
 	       "LLVMLinkerPrivateLinkage" : null,
 	       "LLVMLinkerPrivateWeakLinkage" : null,
-	       "LLVMLinkerPrivateWeakDefAutoLinkage" : ["-", "3.2"]]));
+	       "LLVMLinkerPrivateWeakDefAutoLinkage" : ["-", "3", "2", "0"]]));
 
 enum : LLVMVisibility
 {
@@ -162,7 +162,7 @@ enum : LLVMVisibility
 	LLVMProtectedVisibility
 }
 
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	enum : LLVMDLLStorageClass {
 		LLVMDefaultStorageClass = 0,
@@ -176,8 +176,8 @@ mixin(MixinMap_VersionedEnum(
 			  ["LLVMCCallConv           = 0" : null,
 			   "LLVMFastCallConv        = 8" : null,
 			   "LLVMColdCallConv        = 9" : null,
-			   "LLVMWebKitJSCallConv    = 12" : ["+", "3.4"],
-			   "LLVMAnyRegCallConv      = 13" : ["+", "3.4"],
+			   "LLVMWebKitJSCallConv    = 12" : ["+", "3", "4", "0"],
+			   "LLVMAnyRegCallConv      = 13" : ["+", "3", "4", "0"],
 			   "LLVMX86StdcallCallConv  = 64" : null,
 			   "LLVMX86FastcallCallConv = 65" : null]));
 
@@ -221,7 +221,7 @@ enum : LLVMLandingPadClauseTy
 	LLVMLandingPadFilter
 }
 
-static if(LLVM_Version >= 3.3)
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
 {
 	enum : LLVMThreadLocalMode
 	{
@@ -258,7 +258,7 @@ static if(LLVM_Version >= 3.3)
 		LLVMAtomicRMWBinOpUMin
 	}
 }
-static if(LLVM_Version > 3.5)
+static if(LLVM_Version > LLVMDVersion(3, 5, 0))
 {
 	enum : LLVMDiagnosticSeverity {
 		LLVMDSError,
@@ -324,7 +324,7 @@ const
 	}
 }
 
-static if(LLVM_Version < 3.3)
+static if(LLVM_Version < LLVMDVersion(3, 3, 0))
 {
 	/+ Enhanced Disassembly +/
 
@@ -336,14 +336,14 @@ static if(LLVM_Version < 3.3)
 	}
 }
 
-static if(LLVM_Version >= 3.2)
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0))
 {
 	/+ Linker +/
 
 	mixin(MixinMap_VersionedEnum(
 			  "", "LLVMLinkerMode", LLVM_Version,
 			  ["LLVMLinkerDestroySource  = 0" : null,
-			   "LLVMLinkerPreserveSource = 1" : ["-", "3.7"]]));
+			   "LLVMLinkerPreserveSource = 1" : ["-", "3", "7", "0"]]));
 }
 
 /+ Link Time Optimization +/
@@ -364,19 +364,19 @@ enum : llvm_lto_status
 
 /+ LTO +/
 
-static if(LLVM_Version >= 3.7)
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0))
 {
 	const uint LTO_API_VERSION = 17;
 }
-else static if(LLVM_Version >= 3.6)
+else static if(LLVM_Version >= LLVMDVersion(3, 6, 0))
 {
 	const uint LTO_API_VERSION = 11;
 }
-else static if(LLVM_Version >= 3.5)
+else static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	const uint LTO_API_VERSION = 10;
 }
-else static if(LLVM_Version >= 3.4)
+else static if(LLVM_Version >= LLVMDVersion(3, 4, 0))
 {
 	const uint LTO_API_VERSION = 5;
 }
@@ -403,8 +403,8 @@ mixin(MixinMap_VersionedEnum(
 			   "LTO_SYMBOL_SCOPE_PROTECTED =			 0x00002000" : null,
 			   "LTO_SYMBOL_SCOPE_DEFAULT =				 0x00001800" : null,
 			   "LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800" : null,
-			   "LTO_SYMBOL_COMDAT =						 0x00004000" : ["+", "3.7"],
-			   "LTO_SYMBOL_ALIAS =						 0x00008000" : ["+", "3.7"]]));
+			   "LTO_SYMBOL_COMDAT =						 0x00004000" : ["+", "3", "7", "0"],
+			   "LTO_SYMBOL_ALIAS =						 0x00008000" : ["+", "3", "7", "0"]]));
 
 enum : lto_debug_model
 {
@@ -420,7 +420,7 @@ enum : lto_codegen_model
 	LTO_CODEGEN_PIC_MODEL_DEFAULT = 3
 }
 
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	enum : lto_codegen_diagnostic_severity_t
 	{

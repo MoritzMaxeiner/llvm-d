@@ -5,6 +5,7 @@ private
 {
 	import std.conv : to;
 	import std.traits : isArray, isAssociativeArray, isCallable;
+	import llvm.c.versions;
 }
 
 public string MixinMap(List,Function)(List list, Function f)
@@ -25,12 +26,8 @@ body
 	return code;
 }
 
-public string MixinMap_VersionedEnum(List)(string enumName, string enumType, float enumVersion, List enumList)
-in
-{
-	assert(isArray!(List) || isAssociativeArray!(List));
-}
-body
+public string MixinMap_VersionedEnum(List)(string enumName, string enumType, ulong enumVersion, List enumList)
+if(isAssociativeArray!(List))
 {
 	return "enum"
 		~ (enumName != "" ? (" " ~ enumName) : "")
@@ -39,8 +36,8 @@ body
 			~ MixinMap(enumList, delegate string (string item, string[] change)
 				{
 					if((change is null) ||
-						((change[0] == "+") && (to!float(change[1]) <= enumVersion)) ||
-						((change[0] == "-") && (to!float(change[1]) > enumVersion)))
+						((change[0] == "+") && (LLVMDVersion(change[1].to!ushort, change[2].to!ushort, change[3].to!ushort) <= enumVersion)) ||
+						((change[0] == "-") && (LLVMDVersion(change[1].to!ushort, change[2].to!ushort, change[3].to!ushort) > enumVersion)))
 					{
 						return item ~ ",";
 					}

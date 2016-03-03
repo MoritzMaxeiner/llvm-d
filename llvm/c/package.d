@@ -57,9 +57,7 @@ public struct LLVM
 	{
 		if(file is null)
 		{
-			file = libPrefix ~ "LLVM-" ~
-				to!string(LLVM_Version) ~ (LLVM_Version == LLVM_Trunk ? "svn" : "")
-				~ "." ~ libSuffix;
+			file = libPrefix ~ "LLVM-" ~ LLVM_VersionString ~ "." ~ libSuffix;
 		}
 
 		if((path != "") && path[$-1] != '/')
