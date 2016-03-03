@@ -8,7 +8,7 @@ void main(string[] args)
 {
 	LLVM.load();
 	
-	static if((3.3 <= LLVM_Version) && (LLVM_Version < 3.5))
+	static if((LLVMDVersion(3, 3, 0) <= LLVM_Version) && (LLVM_Version < LLVMDVersion(3, 5, 0)))
 	{
 		writefln("LLVM multithreading on? %s", cast(bool) LLVMIsMultithreaded());
 		writefln("Turning it on"); LLVMStartMultithreaded();
