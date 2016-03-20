@@ -8,7 +8,7 @@
 		"Alex Parrill"
 	],
 	"targetType": "library",
-	"sourcePaths": ["llvm"],
+	"sourcePaths": ["source"],
 	"subPackages": [
 		{
 			"name": "fibonacci",
