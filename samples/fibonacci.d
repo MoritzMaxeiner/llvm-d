@@ -2,17 +2,21 @@ module samples.fibonacci;
 
 import std.conv : to;
 import std.stdio : writefln, writeln;
+import std.string : toStringz, fromStringz;
 
 import llvm.c;
 
-import llvm.util.memory;
-
 int main(string[] args)
 {
+	LLVM.load();
+	
 	char* error;
 
 	LLVMInitializeNativeTarget();
-	auto _module = LLVMModuleCreateWithName("fibonacci".toCString());
+	LLVMInitializeNativeAsmPrinter();
+	LLVMInitializeNativeAsmParser();
+	
+	auto _module = LLVMModuleCreateWithName("fibonacci".toStringz());
 	auto f_args = [ LLVMInt32Type() ];
 	auto f = LLVMAddFunction(
 		_module,
@@ -22,11 +26,11 @@ int main(string[] args)
 	
 	auto n = LLVMGetParam(f, 0);
 	
-	auto entry = LLVMAppendBasicBlock(f, "entry".toCString());
-	auto case_base0 = LLVMAppendBasicBlock(f, "case_base0".toCString());
-	auto case_base1 = LLVMAppendBasicBlock(f, "case_base1".toCString());
-	auto case_default = LLVMAppendBasicBlock(f, "case_default".toCString());
-	auto end = LLVMAppendBasicBlock(f, "end".toCString());
+	auto entry = LLVMAppendBasicBlock(f, "entry".toStringz());
+	auto case_base0 = LLVMAppendBasicBlock(f, "case_base0".toStringz());
+	auto case_base1 = LLVMAppendBasicBlock(f, "case_base1".toStringz());
+	auto case_default = LLVMAppendBasicBlock(f, "case_default".toStringz());
+	auto end = LLVMAppendBasicBlock(f, "end".toStringz());
 	auto builder = LLVMCreateBuilder();
 	
 	/+ Entry basic block +/
@@ -56,24 +60,24 @@ int main(string[] args)
 		builder,
 		n,
 		LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false),
-		"n - 1".toCString());
+		"n - 1".toStringz());
 	auto call_f_1_args = [ n_minus_1 ];
-	auto call_f_1 = LLVMBuildCall(builder, f, call_f_1_args.ptr, 1, "fib(n - 1)".toCString());
+	auto call_f_1 = LLVMBuildCall(builder, f, call_f_1_args.ptr, 1, "fib(n - 1)".toStringz());
 	
 	auto n_minus_2 = LLVMBuildSub(
 		builder,
 		n,
 		LLVMConstInt(LLVMInt32Type(), 2, cast(LLVMBool) false),
-		"n - 2".toCString());
+		"n - 2".toStringz());
 	auto call_f_2_args = [ n_minus_2 ];
-	auto call_f_2 = LLVMBuildCall(builder, f, call_f_2_args.ptr, 1, "fib(n - 2)".toCString());
+	auto call_f_2 = LLVMBuildCall(builder, f, call_f_2_args.ptr, 1, "fib(n - 2)".toStringz());
 	
-	auto res_default = LLVMBuildAdd(builder, call_f_1, call_f_2, "fib(n - 1) + fib(n - 2)".toCString());
+	auto res_default = LLVMBuildAdd(builder, call_f_1, call_f_2, "fib(n - 1) + fib(n - 2)".toStringz());
 	LLVMBuildBr(builder, end);
 	
 	/+ Basic block for collecting the result +/
 	LLVMPositionBuilderAtEnd(builder, end);
-	auto res = LLVMBuildPhi(builder, LLVMInt32Type(), "result".toCString());
+	auto res = LLVMBuildPhi(builder, LLVMInt32Type(), "result".toStringz());
 	auto phi_vals = [ res_base0, res_base1, res_default ];
 	auto phi_blocks = [ case_base0, case_base1, case_default ];
 	LLVMAddIncoming(res, phi_vals.ptr, phi_blocks.ptr, 3);
@@ -110,7 +114,7 @@ int main(string[] args)
 
 	if(error !is null)
 	{
-		writefln("%s", error.fromCString());
+		writefln("%s", error.fromStringz());
 		LLVMDisposeMessage(error);
 		return 1;
 	}

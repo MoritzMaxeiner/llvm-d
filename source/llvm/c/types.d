@@ -20,12 +20,12 @@ struct LLVMOpaquePassManagerBuilder {}; alias LLVMOpaquePassManagerBuilder* LLVM
 
 /+ Core +/
 
-static if(LLVM_Version >= 3.4)
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0))
 {
 	alias extern(C) void function(const char* Reason) LLVMFatalErrorHandler;
 }
 
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	//This is here because putting it where it belongs creates forward reference issues.
 	struct LLVMOpaqueDiagnosticInfo {}; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
@@ -59,13 +59,13 @@ alias int LLVMCallConv;
 alias int LLVMIntPredicate;
 alias int LLVMRealPredicate;
 alias int LLVMLandingPadClauseTy;
-static if(LLVM_Version >= 3.3)
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
 {
 	alias int LLVMThreadLocalMode;
 	alias int LLVMAtomicOrdering;
 	alias int LLVMAtomicRMWBinOp;
 }
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	alias int LLVMDiagnosticSeverity;
 }
@@ -91,7 +91,7 @@ struct LLVMOpInfo1
 	ulong VariantKind;
 }
 
-static if(LLVM_Version < 3.3)
+static if(LLVM_Version < LLVMDVersion(3, 3, 0))
 {
 	/+ Enhanced Disassembly +/
 
@@ -115,7 +115,7 @@ static if(LLVM_Version < 3.3)
 struct LLVMOpaqueGenericValue {}; alias LLVMOpaqueGenericValue* LLVMGenericValueRef;
 struct LLVMOpaqueExecutionEngine {}; alias LLVMOpaqueExecutionEngine* LLVMExecutionEngineRef;
 
-static if(LLVM_Version >= 3.3)
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
 {
 	static if(LLVM_Version >= 3.4)
 	{
@@ -147,7 +147,7 @@ static if(LLVM_Version >= 3.3)
 	}
 }
 
-static if(LLVM_Version >= 3.2)
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0))
 {
 	/+ Linker +/
 
@@ -164,7 +164,7 @@ alias int llvm_lto_status;
 
 /+ LTO +/
 
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	struct LLVMOpaqueLTOModule {}; alias LLVMOpaqueLTOModule* lto_module_t;
 }
@@ -172,7 +172,7 @@ else
 {
 	struct LTOModule {}; alias LTOModule* lto_module_t;
 }
-static if(LLVM_Version >= 3.5)
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	struct LLVMOpaqueLTOCodeGenerator {}; alias LLVMOpaqueLTOCodeGenerator* lto_code_gen_t;
 }
@@ -199,7 +199,7 @@ struct LLVMOpaqueRelocationIterator {}; alias LLVMOpaqueRelocationIterator* LLVM
 
 struct LLVMOpaqueTargetData {}; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
 struct LLVMOpaqueTargetLibraryInfotData {}; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
-static if(LLVM_Version < 3.4)
+static if(LLVM_Version < LLVMDVersion(3, 4, 0))
 {
 	struct LLVMStructLayout {}; alias LLVMStructLayout* LLVMStructLayoutRef;
 }

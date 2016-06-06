@@ -30,26 +30,34 @@ private void loadSymbols(SharedLib library)
 		      }));
 }
 
+/++
+ + Container for holding the LLVM library and the load/unload functions.
+++/
 public struct LLVM
 {
 	private __gshared static SharedLib library;
-	private __gshared static bool _loaded = false;
 
+	/// Returns true if the LLVM library is loaded, false if not
 	@property
-	static bool loaded() { return _loaded; }
+	static bool loaded() { return library !is null; }
 
+	/// Loads the LLVM library, using the default name.
+	public static void load() {
+		load(null);
+	}
+
+	/// Loads the LLVM library, using the specified file name
 	public static void load(string file)
 	{
 		loadFromPath("", file);
 	}
 
+	/// Loads the LLVM library, using the specified file name and path
 	public static void loadFromPath(string path, string file = null)
 	{
 		if(file is null)
 		{
-			file = libPrefix ~ "LLVM-" ~
-				to!string(LLVM_Version) ~ (LLVM_Version == LLVM_Trunk ? "svn" : "")
-				~ "." ~ libSuffix;
+			file = libPrefix ~ "LLVM-" ~ LLVM_VersionString ~ "." ~ libSuffix;
 		}
 
 		if((path != "") && path[$-1] != '/')
@@ -57,42 +65,32 @@ public struct LLVM
 			path ~= '/';
 		}
 
-		if(!_loaded)
+		if(library)
 		{
-			library = new SharedLib(path ~ file);
-			if(library.load())
-			{
-				loadSymbols(library);
-				_loaded = true;
-				debug
-				{
-					import std.stdio;
-					writefln("LLVM shared library \"%s\" sucessfully loaded", path ~ file);
-				}
-			}
-			else debug
-			{
-				import std.stdio;
-				import std.cstream;
-				writefln("LLVM shared library \"%s\" could not be loaded", path ~ file);
-				derr.writefln(to!string(library.error));
-			}
+			unload();
 		}
+		
+		library = new SharedLib(path ~ file);
+		library.load();
+		loadSymbols(library);
 	}
 
-	private static void unload()
+	/// Unloads the LLVM library
+	public static void unload()
 	{
 		library.unload();
-		_loaded = false;
+		library = null;
 	}
 }
 
-shared static this()
-{
-	LLVM.load(null);
-}
+version(LLVM_Autoload) {
+	shared static this()
+	{
+		LLVM.load(null);
+	}
 
-shared static ~this()
-{
-	LLVM.unload();
+	shared static ~this()
+	{
+		LLVM.unload();
+	}
 }

@@ -3,8 +3,17 @@ module llvm.util.shlib;
 
 private
 {
-	import std.string : toStringz;
+	import std.string : toStringz, fromStringz;
 	import std.conv : to;
+}
+
+final class SharedLibLoadException : Exception
+{
+	@safe pure nothrow
+	this(string msg)
+	{
+		super(msg);
+	}
 }
 
 version(Posix)
@@ -35,59 +44,37 @@ else version(Windows)
 
 	string libPrefix = "";
 	string libSuffix = "dll";
+} else {
+	static assert(false, "Shared libraries unimplemented for this system.");
 }
 
 class SharedLib
 {
 	private SharedLibHandle handle;
 	private string libName;
-	private string[] _errors;
-
-	@property
-	public string[] error()
-	{
-		string[] errors = _errors;
-		_errors = null;
-		return errors;
-	}
-
+	
 	public this(string libName)
 	{
 		this.libName = libName;
 	}
 
-	public bool load()
+	public void load()
 	{
-		if((libName[0] != '/' ? loadFile("./" ~ libName) : false) || loadFile(libName))
-		{
-			_errors = null;
-			return true;
-		}
-
-		return false;
+		return loadFile(libName);
 	}
 
-	private bool loadFile(string file)
+	private void loadFile(string file)
 	{
 		version(Posix)
 		{
-			if((handle = dlopen(file.toStringz(), RTLD_NOW)) !is null)
+			if((handle = dlopen(file.toStringz(), RTLD_NOW)) is null)
 			{
-				return true;
-			}
-			else
-			{
-				auto error = dlerror();
-				_errors ~= (error !is null) ? to!string(error) : "Unknown error";
+				throw new SharedLibLoadException("Failed to load library "~file~": "~dlerror().fromStringz().idup);
 			}
 		}
 		else version(Windows)
 		{
-			if((handle = LoadLibraryA(file.toStringz())) !is null)
-			{
-				return true;
-			}
-			else
+			if((handle = LoadLibraryA(file.toStringz())) is null)
 			{
 				LPCSTR error;
 				DWORD tchar_length = FormatMessageA(
@@ -100,13 +87,11 @@ class SharedLib
 					cast(char*) &error,
 					0,
 					null);
-
-				_errors ~= to!string(error[0..tchar_length+1]);
-				LocalFree(cast(HLOCAL) error);
+				scope(exit) LocalFree(cast(HLOCAL) error);
+				
+				throw new SharedLibLoadException("Failed to load library "~file~": "~error[0..tchar_length]);
 			}
 		}
-
-		return false;
 	}
 
 	public void unload()
@@ -118,7 +103,7 @@ class SharedLib
 				dlclose(handle);
 			}
 		}
-		else version(Windows)
+		else
 		{
 			if(handle !is null)
 			{
@@ -133,13 +118,9 @@ class SharedLib
 		{
 			return cast(T) dlsym(handle, symbol.toStringz());
 		}
-		else version(Windows)
-		{
-			return cast(T) GetProcAddress(handle, symbol.toStringz());
-		}
 		else
 		{
-			return null;
+			return cast(T) GetProcAddress(handle, symbol.toStringz());
 		}
 	}
 }
