@@ -1,7 +1,9 @@
-llvm-d-2
+llvm-d
 ========
 
-llvm-d-2 provides bindings to LLVM for the D programming language.
+-[![Build Status](https://travis-ci.org/Calrama/llvm-d.svg?branch=master)](https://travis-ci.org/Calrama/llvm-d)
+
+llvm-d provides bindings to LLVM for the D programming language.
 
 It does so by automatically loading the LLVM dynamic library at program startup
 and binding to LLVM's C API functions.
@@ -12,7 +14,7 @@ and does not version its releases.
 Usage
 -----
 
-To use llvm-d-2 you just need to import it and then you can use
+To use llvm-d you just need to import it and then you can use
 the functions defined by LLVM's C API. For example:
 
 ```d
@@ -62,7 +64,7 @@ at compile time, 3.7.1 will be assumed.
 Documentation
 -------------
 
-llvm-d-2 exposes C function pointers, constants, and types with the same names as LLVM's C API.
+llvm-d exposes C function pointers, constants, and types with the same names as LLVM's C API.
 [See the LLVM Doxygen pages for a reference.](http://llvm.org/doxygen/modules.html)
 
 Changes from llvm-d
@@ -77,7 +79,7 @@ Changes from llvm-d
 License
 -------
 
-llvm-d-2 is released under the [MIT license](http://opensource.org/licenses/MIT), see LICENSE.txt.
+llvm-d is released under the [MIT license](http://opensource.org/licenses/MIT), see LICENSE.txt.
 
 llvm-d uses source code from LLVM that has been ported to D for accessing LLVM's C API. The above paragraph does not apply
 to that source code - it is a redistribution of LLVM source code.

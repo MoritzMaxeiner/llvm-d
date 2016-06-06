@@ -1,7 +1,7 @@
 {
 	"name": "llvm-d",
 	"description": "D bindings for LLVM",
-	"copyright": "Copyright © 2013-2016 Moritz Maxeiner", Copyright © 2016 Alex Parrill",
+	"copyright": "Copyright © 2013-2016 Moritz Maxeiner, Copyright © 2016 Alex Parrill",
 	"license": "MIT",
 	"authors": [
 		"Moritz Maxeiner",
@@ -10,11 +10,7 @@
 	"homepage": "https://github.com/Calrama/llvm-d",
 	"license": "MIT",
 
-	"targetType": "sourceLibrary",
-	"importPaths": ["."],
-	"sourcePaths": ["llvm"],
 	"targetType": "library",
-	"sourcePaths": ["source"],
 	"subPackages": [ {
 			"name": "fibonacci",
 			"targetName": "fibonacci",
@@ -22,8 +18,9 @@
 			"targetType": "executable",
 			"sourceFiles": ["samples/fibonacci.d"],
 			"dependencies": {
-				"llvm-d-2": { "path": "." }
-			},
+				"llvm-d": { "path": "." }
+			}
 		}
 	]
 }
+
