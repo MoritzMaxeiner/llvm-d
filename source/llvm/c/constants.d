@@ -112,27 +112,32 @@ mixin(MixinMap_VersionedEnum(
 			   "LLVMAtomicCmpXchg  = 56" : null,
 			   "LLVMAtomicRMW      = 57" : null,
 			   "LLVMResume         = 58" : null,
-			   "LLVMLandingPad     = 59" : null]));
+			   "LLVMLandingPad     = 59" : null,
+			   "LLVMCleanupRet     = 61" : ["+", "3", "8", "0"],
+			   "LLVMCatchRet       = 62" : ["+", "3", "8", "0"],
+			   "LLVMCatchPad       = 63" : ["+", "3", "8", "0"],
+			   "LLVMCleanupPad     = 64" : ["+", "3", "8", "0"],
+			   "LLVMCatchSwitch    = 65" : ["+", "3", "8", "0"]]));
 
-enum : LLVMTypeKind
-{
-	LLVMVoidTypeKind,
-	LLVMHalfTypeKind,
-	LLVMFloatTypeKind,
-	LLVMDoubleTypeKind,
-	LLVMX86_FP80TypeKind,
-	LLVMFP128TypeKind,
-	LLVMPPC_FP128TypeKind,
-	LLVMLabelTypeKind,
-	LLVMIntegerTypeKind,
-	LLVMFunctionTypeKind,
-	LLVMStructTypeKind,
-	LLVMArrayTypeKind,
-	LLVMPointerTypeKind,
-	LLVMVectorTypeKind,
-	LLVMMetadataTypeKind,
-	LLVMX86_MMXTypeKind
-}
+mixin(MixinMap_VersionedEnum(
+	      "", "LLVMTypeKind", LLVM_Version,
+	      ["LLVMVoidTypeKind" : null,
+           "LLVMHalfTypeKind" : null,
+           "LLVMFloatTypeKind" : null,
+           "LLVMDoubleTypeKind" : null,
+           "LLVMX86_FP80TypeKind" : null,
+           "LLVMFP128TypeKind" : null,
+           "LLVMPPC_FP128TypeKind" : null,
+           "LLVMLabelTypeKind" : null,
+           "LLVMIntegerTypeKind" : null,
+           "LLVMFunctionTypeKind" : null,
+           "LLVMStructTypeKind" : null,
+           "LLVMArrayTypeKind" : null,
+           "LLVMPointerTypeKind" : null,
+           "LLVMVectorTypeKind" : null,
+           "LLVMMetadataTypeKind" : null,
+           "LLVMX86_MMXTypeKind" : null,
+           "LLVMTokenTypeKind": ["+", "3", "8", "0"]]));
 
 mixin(MixinMap_VersionedEnum(
 	      "", "LLVMLinkage", LLVM_Version,

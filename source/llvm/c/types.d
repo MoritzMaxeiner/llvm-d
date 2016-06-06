@@ -27,7 +27,7 @@ static if(LLVM_Version >= LLVMDVersion(3, 4, 0))
 
 static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
-	//This is here because putting it where it belongs creates forward reference issues.
+	//This is here because putting it where it semantically belongs creates a forward reference issues.
 	struct LLVMOpaqueDiagnosticInfo {}; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
 
 	alias extern(C) void function(LLVMDiagnosticInfoRef, void*) LLVMDiagnosticHandler;
@@ -185,8 +185,7 @@ alias int lto_symbol_attributes;
 alias int lto_debug_model;
 alias int lto_codegen_model;
 alias int lto_codegen_diagnostic_severity_t;
-alias extern(C) void function(lto_codegen_diagnostic_severity_t severity,
-		const char *diag, void *ctxt) lto_diagnostic_handler_t;
+alias extern(C) void function(lto_codegen_diagnostic_severity_t severity, const(char)* diag, void* ctxt) lto_diagnostic_handler_t;
 
 /+ Object file reading and writing +/
 
@@ -214,3 +213,16 @@ alias int LLVMCodeGenOptLevel;
 alias int LLVMRelocMode;
 alias int LLVMCodeModel;
 alias int LLVMCodeGenFileType;
+
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0))
+{
+	/+ JIT compilation of LLVM IR +/
+	
+	struct LLVMOrcOpaqueJITStack {}; alias LLVMOrcOpaqueJITStack* LLVMOrcJITStackRef;
+
+	alias uint LLVMOrcModuleHandle;
+	alias uint LLVMOrcTargetAddress;
+
+	alias extern(C) ulong function(const(char)* Name, void* LookupCtx) LLVMOrcSymbolResolverFn;
+	alias extern(C) ulong function(LLVMOrcJITStackRef JITStack, void* CallbackCtx) LLVMOrcLazyCompileCallbackFn;
+}

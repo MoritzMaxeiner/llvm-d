@@ -16,6 +16,7 @@ ulong LLVMDVersion(ushort major, ushort minor, ushort patch)
 }
 
 private enum KnownVersions = [
+	[3,8,0],
 	[3,7,1],
 	[3,7,0],
 	[3,6,2],
@@ -51,7 +52,8 @@ enum LLVM_Version = LLVMDVersion(LLVM_VERSION_MAJOR, LLVM_VERSION_MINOR, LLVM_VE
 /// ditto
 enum LLVM_VersionString = LLVM_VERSION_MAJOR.to!string ~ "." ~ LLVM_VERSION_MINOR.to!string ~ "." ~ LLVM_VERSION_PATCH.to!string;
 
-//qualifiers is in the form ["+", "3", "2, "0", "-", "3", "5", "0"]
+// Qualifiers are expressed in the form ["+", "3", "2, "0", "-", "3", "5", "0"].
+// The example translates to "added in LLVM 3.2.0 and removed in LLVM 3.5.0"
 bool matchVersionQualifiers(string[] qualifiers)
 {
 	while(qualifiers.length > 0)
