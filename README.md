@@ -51,15 +51,15 @@ for an example.
 LLVM versions
 -------------
 
-The LLVM version to be used is selected via version statements.
-For DMD, this is the `-version` argument; for dub, it is the `"version"` field.
+The LLVM version to be used is selected by setting a [conditional compilation version identifier](https://dlang.org/spec/version.html).
+For DMD, this is the `-version` argument; for dub, the `versions` field.
 
 The identifier to set the LLVM version is defined as
 `LLVM_{MAJOR_VERSION}_{MINOR_VERSION}_{PATCH_VERSION}`, so to get LLVM version 3.1.0
 use `LLVM_3_1_0`.
 
-Current supported versions are 3.1.0 - 3.7.1 and if no version is given
-at compile time, 3.7.1 will be assumed.
+Current supported versions are 3.1.0 - 3.8.0 and if no version is given
+at compile time, 3.8.0 will be assumed.
 
 Documentation
 -------------
