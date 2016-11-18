@@ -119,6 +119,45 @@ mixin(MixinMap_VersionedEnum(
 			   "LLVMCleanupPad     = 64" : ["+", "3", "8", "0"],
 			   "LLVMCatchSwitch    = 65" : ["+", "3", "8", "0"]]));
 
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+{
+	enum : LLVMValueKind
+	{
+		LLVMArgumentValueKind,
+		LLVMBasicBlockValueKind,
+		LLVMMemoryUseValueKind,
+		LLVMMemoryDefValueKind,
+		LLVMMemoryPhiValueKind,
+		LLVMFunctionValueKind,
+		LLVMGlobalAliasValueKind,
+		LLVMGlobalIFuncValueKind,
+		LLVMGlobalVariableValueKind,
+		LLVMBlockAddressValueKind,
+		LLVMConstantExprValueKind,
+		LLVMConstantArrayValueKind,
+		LLVMConstantStructValueKind,
+		LLVMConstantVectorValueKind,
+		LLVMUndefValueValueKind,
+		LLVMConstantAggregateZeroValueKind,
+		LLVMConstantDataArrayValueKind,
+		LLVMConstantDataVectorValueKind,
+		LLVMConstantIntValueKind,
+		LLVMConstantFPValueKind,
+		LLVMConstantPointerNullValueKind,
+		LLVMConstantTokenNoneValueKind,
+		LLVMMetadataAsValueValueKind,
+		LLVMInlineAsmValueKind,
+		LLVMInstructionValueKind,
+	}
+
+	enum : LLVMAttributeIndex
+	{
+		LLVMAttributeReturnIndex = 0U,
+		LLVMAttributeFunctionIndex = -1,
+	}
+}
+
 mixin(MixinMap_VersionedEnum(
 	      "", "LLVMTypeKind", LLVM_Version,
 	      ["LLVMVoidTypeKind" : null,
@@ -138,6 +177,7 @@ mixin(MixinMap_VersionedEnum(
            "LLVMMetadataTypeKind" : null,
            "LLVMX86_MMXTypeKind" : null,
            "LLVMTokenTypeKind": ["+", "3", "8", "0"]]));
+
 
 mixin(MixinMap_VersionedEnum(
 	      "", "LLVMLinkage", LLVM_Version,
@@ -476,4 +516,16 @@ enum : LLVMCodeGenFileType
 {
 	LLVMAssemblyFile,
 	LLVMObjectFile
+}
+
+
+/+ Orc +/
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+{
+	enum : LLVMOrcErrorCode
+	{
+		LLVMOrcErrSuccess = 0,
+		LLVMOrcErrGeneric,
+	}
 }

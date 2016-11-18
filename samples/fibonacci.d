@@ -120,7 +120,8 @@ int main(string[] args)
 	}
 	
 	auto pass = LLVMCreatePassManager();
-	LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
+	static if(LLVM_Version < 3.9)
+		LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
 	LLVMAddConstantPropagationPass(pass);
 	LLVMAddInstructionCombiningPass(pass);
 	LLVMAddPromoteMemoryToRegisterPass(pass);
