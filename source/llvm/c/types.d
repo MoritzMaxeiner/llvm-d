@@ -49,6 +49,11 @@ struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef
 struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
 struct LLVMOpaqueUse {}; alias LLVMOpaqueUse* LLVMUseRef;
 
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+{
+	struct LLVMOpaqueAttributeRef {}; alias LLVMOpaqueAttributeRef* LLVMAttributeRef;
+}
+
 alias long LLVMAttribute;
 alias int LLVMOpcode;
 alias int LLVMTypeKind;
@@ -69,7 +74,11 @@ static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 {
 	alias int LLVMDiagnosticSeverity;
 }
-
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+{
+	alias int LLVMValueKind;
+	alias uint LLVMAttributeIndex;
+}
 /+ Disassembler +/
 
 alias void* LLVMDisasmContextRef;
@@ -155,7 +164,7 @@ static if(LLVM_Version >= LLVMDVersion(3, 2, 0))
 }
 
 /+ Link Time Optimization +/
-
+alias bool lto_bool_t;
 alias void* llvm_lto_t;
 alias llvm_lto_status llvm_lto_status_t;
 
@@ -179,6 +188,10 @@ static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
 else
 {
 	struct LTOCodeGenerator {}; alias LTOCodeGenerator* lto_code_gen_t;
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+{
+	struct LLVMOpaqueThinLTOCodeGenerator {}; alias LLVMOpaqueThinLTOCodeGenerator* thinlto_code_gen_t;
 }
 
 alias int lto_symbol_attributes;
@@ -225,4 +238,15 @@ static if(LLVM_Version >= LLVMDVersion(3, 8, 0))
 
 	alias extern(C) ulong function(const(char)* Name, void* LookupCtx) LLVMOrcSymbolResolverFn;
 	alias extern(C) ulong function(LLVMOrcJITStackRef JITStack, void* CallbackCtx) LLVMOrcLazyCompileCallbackFn;
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+{
+	alias int LLVMOrcErrorCode;
+
+	struct LTOObjectBuffer
+	{
+		const(char)* Buffer;
+		size_t Size;
+	}
 }

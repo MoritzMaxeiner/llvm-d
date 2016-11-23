@@ -58,8 +58,8 @@ The identifier to set the LLVM version is defined as
 `LLVM_{MAJOR_VERSION}_{MINOR_VERSION}_{PATCH_VERSION}`, so to get LLVM version 3.1.0
 use `LLVM_3_1_0`.
 
-Current supported versions are 3.1.0 - 3.8.0 and if no version is given
-at compile time, 3.8.0 will be assumed.
+Current supported versions are 3.1.0 - 3.9.0 and if no version is given
+at compile time, 3.9.0 will be assumed.
 
 Documentation
 -------------

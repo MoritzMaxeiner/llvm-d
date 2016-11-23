@@ -8,7 +8,6 @@
 		"Alex Parrill"
 	],
 	"homepage": "https://github.com/Calrama/llvm-d",
-	"license": "MIT",
 
 	"targetType": "library",
 	"subPackages": [ {
