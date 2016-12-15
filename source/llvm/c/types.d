@@ -234,7 +234,7 @@ static if(LLVM_Version >= LLVMDVersion(3, 8, 0))
 	struct LLVMOrcOpaqueJITStack {}; alias LLVMOrcOpaqueJITStack* LLVMOrcJITStackRef;
 
 	alias uint LLVMOrcModuleHandle;
-	alias uint LLVMOrcTargetAddress;
+	alias ulong LLVMOrcTargetAddress;
 
 	alias extern(C) ulong function(const(char)* Name, void* LookupCtx) LLVMOrcSymbolResolverFn;
 	alias extern(C) ulong function(LLVMOrcJITStackRef JITStack, void* CallbackCtx) LLVMOrcLazyCompileCallbackFn;
