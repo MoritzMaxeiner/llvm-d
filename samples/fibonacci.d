@@ -4,7 +4,7 @@ import std.conv : to;
 import std.stdio : writefln, writeln;
 import std.string : toStringz, fromStringz;
 
-import llvm.c;
+import llvm;
 
 int main(string[] args)
 {
