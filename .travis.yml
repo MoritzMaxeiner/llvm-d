@@ -14,9 +14,6 @@ d:
   - dmd-2.071.0
   - dmd-2.070.0
   - dmd-2.069.2
-  - ldc-1.0.0
-  - ldc-0.17.1
-  - ldc-0.17.0
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
