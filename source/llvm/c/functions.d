@@ -3,1731 +3,1764 @@ module llvm.c.functions;
 
 private
 {
+	import std.algorithm.iteration : map, joiner;
+	import std.array : array;
+
 	import llvm.util.templates;
 
-	import llvm.c.versions;
+	import llvm.c.config;
 	import llvm.c.types;
-}
-
-extern(System)
-{
-	mixin(MixinMap(LLVMC_Functions, delegate string(string symbol, string[] signature) {
-		if(matchVersionQualifiers(signature[1 .. $]))
-		{
-			return "alias nothrow " ~ signature[0] ~ " da_" ~ symbol ~ ";";
-		}
-		return "";
-	}));
-}
-
-//TODO: make sure to update these!
-static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
-{
-	private enum string[][string] LLVMC_TargetCapabilities =
-		[
-		 "AArch64" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "CppBackend" : ["TargetInfo", "Target", "TargetMC"],
-		 "Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "NVPTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
-		 ];
-}
-else static if(LLVM_Version >= 3.2)
-{
-	private enum string[][string] LLVMC_TargetCapabilities =
-		[
-		 "ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "CellSPU" : ["TargetInfo", "Target", "TargetMC"],
-		 "CppBackend" : ["TargetInfo", "Target", "TargetMC"],
-		 "Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "NVPTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "PTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
-		 ];
-
-}
-else
-{
-	private enum string[][string] LLVMC_TargetCapabilities =
-		[
-		 "ARM" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "CellSPU" : ["TargetInfo", "Target", "TargetMC"],
-		 "CppBackend" : ["TargetInfo", "Target", "TargetMC"],
-		 "Hexagon" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "MBlaze" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "Mips" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "MSP430" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "PTX" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "PowerPC" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "Sparc" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter"],
-		 "X86" : ["TargetInfo", "Target", "TargetMC", "AsmParser", "AsmPrinter", "Disassembler"],
-		 "XCore" : ["TargetInfo", "Target", "TargetMC", "AsmPrinter", "Disassembler"],
-		 ];
 }
 
 __gshared
 {
-	mixin(MixinMap(
-		      LLVMC_Functions,
-		      delegate string(string symbol, string[] signature)
-		      {
-			      if(matchVersionQualifiers(signature[1 .. $]))
-			      {
-				      return "da_" ~ symbol ~ " " ~ symbol ~ ";";
-			      }
-			      return "";
-		      }
-		      ));
+	nothrow void LLVMInitializeAllTargetInfos()
+	{
+		mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "TargetInfo();").joiner.array);
+	}
 
-	mixin(MixinMap([
-		                "TargetInfo",
-		                "Target",
-		                "TargetMC",
-		                "AsmPrinter",
-		                "AsmParser",
-		                "Disassembler"],
-	                delegate string(size_t i, string capability)
-	                {
-		                string genOnlyTargetsWithCapability()
-		                {
-			                auto capabilities = LLVMC_TargetCapabilities;
-			                string code = "";
+	nothrow void LLVMInitializeAllTargets()
+	{
+		mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "Target();").joiner.array);
+	}
 
-			                foreach(string target; capabilities.keys)
-			                {
-				                foreach(string targetCapability; capabilities[target])
-				                {
-					                if(capability == targetCapability)
-					                {
-						                code ~= "if(LLVMInitialize"
-							                ~ target ~ capability
-							                ~ " !is null) { LLVMInitialize"
-							                ~ target ~ capability
-							                ~ "(); } ";
-						                break;
-					                }
-				                }
-			                }
+	nothrow void LLVMInitializeAllTargetMCs()
+	{
+		mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "TargetMC();").joiner.array);
+	}
 
-			                return code;
-		                }
+	nothrow void LLVMInitializeAllAsmPrinters()
+	{
+		mixin(LLVM_AsmPrinters.map!(t => "LLVMInitialize" ~ t ~ "AsmPrinter();").joiner.array);
+	}
 
-		                return "nothrow void LLVMInitializeAll" ~ capability ~ "s() { "
-			                ~ genOnlyTargetsWithCapability()
-			                ~ " }";
-	                }));
+	nothrow void LLVMInitializeAllAsmParsers()
+	{
+		mixin(LLVM_AsmParsers.map!(t => "LLVMInitialize" ~ t ~ "AsmParser();").joiner.array);
+	}
+
+	nothrow void LLVMInitializeAllDisassemblers()
+	{
+		mixin(LLVM_Disassemblers.map!(t => "LLVMInitialize" ~ t ~ "Disassembler();").joiner.array);
+	}
 
 	nothrow LLVMBool LLVMInitializeNativeTarget()
 	{
-		mixin(MixinMap(["ARM64" : "AArch64",
-		                 "ARM" : "ARM",
-		                 "X86" : "X86",
-		                 "X86_64" : "X86",
-		                 "MIPS" : "Mips",
-		                 "PPC" : "PowerPC",
-		                 "PPC64" : "PowerPC",
-		                 "SPARC" : "Sparc",
-		                 "SPARC64" : "SPARC64"],
-		                delegate string(string arch, string target)
-		                {
-			                return "version(" ~ arch ~ ") {"
-				                ~ " if((LLVMInitialize" ~ target ~ "TargetInfo !is null)"
-				                ~ " && (LLVMInitialize" ~ target ~ "Target !is null)"
-				                ~ " && (LLVMInitialize" ~ target ~ "TargetMC !is null)) {"
-				                ~ " LLVMInitialize" ~ target ~ "TargetInfo();"
-				                ~ " LLVMInitialize" ~ target ~ "Target();"
-				                ~ " LLVMInitialize" ~ target ~ "TargetMC();"
-				                ~ " return 0; }}";
-		                }
-			      ));
-
-		return 1;
+		static if (LLVM_NativeTarget != "") {
+			mixin("LLVMInitialize" ~ LLVM_NativeTarget ~ "TargetInfo();");
+			mixin("LLVMInitialize" ~ LLVM_NativeTarget ~ "Target();");
+			mixin("LLVMInitialize" ~ LLVM_NativeTarget ~ "TargetMC();");
+			return 0;
+		} else {
+			return 1;
+		}
 	}
 
-	static if(LLVM_Version >= 3.4)
+	static if(LLVM_Version >= LLVMDVersion(3, 4, 0))
 	{
 		nothrow LLVMBool LLVMInitializeNativeAsmParser()
 		{
-			mixin(MixinMap(["ARM64" : "AArch64",
-							"ARM" : "ARM",
-							"X86" : "X86",
-							"X86_64" : "X86",
-							"MIPS" : "Mips"],
-						   delegate string(string arch, string target)
-						   {
-							   return "version(" ~ arch ~ ") {"
-									   ~ " if(LLVMInitialize" ~ target ~ "AsmParser !is null) {"
-									   ~ " LLVMInitialize" ~ target ~ "AsmParser();"
-									   ~ " return 0; }}";
-						   }
-						  ));
-
-			return 1;
+			static if (LLVM_NativeTarget != "") {
+				mixin("LLVMInitialize" ~ LLVM_NativeTarget ~ "AsmParser();");
+				return 0;
+			} else {
+				return 1;
+			}
 		}
 
 		nothrow LLVMBool LLVMInitializeNativeAsmPrinter()
 		{
-			mixin(MixinMap(["ARM64" : "AArch64",
-							"ARM" : "ARM",
-							"X86" : "X86",
-							"X86_64" : "X86",
-							"MIPS" : "Mips",
-							"PPC" : "PowerPC",
-							"PPC64" : "PowerPC",
-							"SPARC" : "Sparc",
-							"SPARC64" : "SPARC64"],
-						   delegate string(string arch, string target)
-						   {
-							   return "version(" ~ arch ~ ") {"
-									   ~ " if(LLVMInitialize" ~ target ~ "AsmPrinter !is null) {"
-									   ~ " LLVMInitialize" ~ target ~ "AsmPrinter();"
-									   ~ " return 0; }}";
-						   }
-						  ));
-
-			return 1;
+			static if (LLVM_NativeTarget != "") {
+				mixin("LLVMInitialize" ~ LLVM_NativeTarget ~ "AsmPrinter();");
+				return 0;
+			} else {
+				return 1;
+			}
 		}
 
 		nothrow LLVMBool LLVMInitializeNativeDisassembler()
 		{
-			mixin(MixinMap(["ARM64" : "AArch64",
-							"ARM" : "ARM",
-							"X86" : "X86",
-							"X86_64" : "X86",
-							"MIPS" : "Mips"],
-						   delegate string(string arch, string target)
-						   {
-							   return "version(" ~ arch ~ ") {"
-									   ~ " if(LLVMInitialize" ~ target ~ "Disassembler !is null) {"
-									   ~ " LLVMInitialize" ~ target ~ "Disassembler();"
-									   ~ " return 0; }}";
-						   }
-						  ));
-
-			return 1;
+			static if (LLVM_NativeTarget != "") {
+				mixin("LLVMInitialize" ~ LLVM_NativeTarget ~ "Disassembler();");
+				return 0;
+			} else {
+				return 1;
+			}
 		}
 	}
 }
 
-package enum string[][string] LLVMC_Functions = [
-
-	/+ Analysis +/
-
-	"LLVMVerifyModule" : ["LLVMBool function(LLVMModuleRef M, LLVMVerifierFailureAction Action, char** OutMessage)"],
-	"LLVMVerifyFunction" : ["LLVMBool function(LLVMValueRef Fn, LLVMVerifierFailureAction Action)"],
-	"LLVMViewFunctionCFG" : ["void function(LLVMValueRef Fn)"],
-	"LLVMViewFunctionCFGOnly" : ["void function(LLVMValueRef Fn)"],
-
-	/+ Bit Reader +/
-
-	"LLVMParseBitcode" : ["LLVMBool function(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule, char** OutMessage)",
-		                  "-", "3", "9", "0"],
-	"LLVMParseBitcode2": ["LLVMBool function(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule)",
-	                      "+", "3", "8", "0"],
-	"LLVMParseBitcodeInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule, char** OutMessage)",
-		                           "-", "3", "9", "0"],
-	"LLVMParseBitcodeInContext2": ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule)",
-	                               "+", "3", "8", "0"],
-	"LLVMGetBitcodeModuleInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage)",
-		                               "-", "3", "9", "0"],
-	"LLVMGetBitcodeModuleInContext2": ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM)",
-	                                   "+", "3", "8", "0"],
-	"LLVMGetBitcodeModule" : ["LLVMBool function(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage)",
-		                      "-", "3", "9", "0"],
-	"LLVMGetBitcodeModule2": ["LLVMBool function(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM)",
-	                          "+", "3", "8", "0"],
-	"LLVMGetBitcodeModuleProviderInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleProviderRef* OutMP, char** OutMessage)",
-	                                           "-", "3", "8", "0"],
-	"LLVMGetBitcodeModuleProvider" : ["LLVMBool function(LLVMMemoryBufferRef MemBuf, LLVMModuleProviderRef* OutMP, char** OutMessage)",
-	                                  "-", "3", "8", "0"],
-
-	/+ Bit Writer +/
-
-	"LLVMWriteBitcodeToFile" : ["int function(LLVMModuleRef M, const(char)* Path)"],
-	"LLVMWriteBitcodeToFD" : ["int function(LLVMModuleRef M, int FD, int ShouldClose, int Unbuffered)"],
-	"LLVMWriteBitcodeToFileHandle" : ["int function(LLVMModuleRef M, int Handle)"],
-	"LLLVMWriteBitcodeToMemoryBuffer" : ["LLVMMemoryBufferRef function(LLVMModuleRef M)",
-							"+", "3", "6", "0"],
-
-	/+ Transforms +/
-
-	/++ Interprocedural transformations ++/
-
-	"LLVMAddArgumentPromotionPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddConstantMergePass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddDeadArgEliminationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddFunctionAttrsPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddFunctionInliningPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddAlwaysInlinerPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddGlobalDCEPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddGlobalOptimizerPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddIPConstantPropagationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddPruneEHPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddIPSCCPPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddInternalizePass" : ["void function(LLVMPassManagerRef, uint AllButMain)"],
-	"LLVMAddStripDeadPrototypesPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddStripSymbolsPass" : ["void function(LLVMPassManagerRef PM)"],
-
-	/++ Pass manager builder ++/
-
-	"LLVMPassManagerBuilderCreate" : ["LLVMPassManagerBuilderRef function()"],
-	"LLVMPassManagerBuilderDispose" : ["void function(LLVMPassManagerBuilderRef PMB)"],
-	"LLVMPassManagerBuilderSetOptLevel" : ["void function(LLVMPassManagerBuilderRef PMB, uint OptLevel)"],
-	"LLVMPassManagerBuilderSetSizeLevel" : ["void function(LLVMPassManagerBuilderRef PMB, uint SizeLevel)"],
-	"LLVMPassManagerBuilderSetDisableUnitAtATime" : ["void function(LLVMPassManagerBuilderRef PMB, LLVMBool Value)"],
-	"LLVMPassManagerBuilderSetDisableUnrollLoops" : ["void function(LLVMPassManagerBuilderRef PMB, LLVMBool Value)"],
-	"LLVMPassManagerBuilderSetDisableSimplifyLibCalls" : ["void function(LLVMPassManagerBuilderRef PMB, LLVMBool Value)"],
-	"LLVMPassManagerBuilderUseInlinerWithThreshold" : ["void function(LLVMPassManagerBuilderRef PMB, uint Threshold)"],
-	"LLVMPassManagerBuilderPopulateFunctionPassManager" : ["void function(LLVMPassManagerBuilderRef PMB, LLVMPassManagerRef PM)"],
-	"LLVMPassManagerBuilderPopulateModulePassManager" : ["void function(LLVMPassManagerBuilderRef PMB, LLVMPassManagerRef PM)"],
-	"LLVMPassManagerBuilderPopulateLTOPassManager" : ["void function(LLVMPassManagerBuilderRef PMB, LLVMPassManagerRef PM, LLVMBool Internalize, LLVMBool RunInliner)"],
-
-	/++ Scalar transformations ++/
-
-	"LLVMAddAggressiveDCEPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddBitTrackingDCEPass" : ["void function(LLVMPassManagerRef PM)",
-								   "+", "3", "7", "0"],
-	"LLVMAddAlignmentFromAssumptionsPass" : ["void function(LLVMPassManagerRef PM)",
-											"+", "3", "6", "0"],
-	"LLVMAddCFGSimplificationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddDeadStoreEliminationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddScalarizerPass" : ["void function(LLVMPassManagerRef PM)",
-							  "+", "3", "5", "0"],
-	"LLVMAddMergedLoadStoreMotionPass" : ["void function(LLVMPassManagerRef PM)",
-										 "+", "3", "5", "0"],
-	"LLVMAddGVNPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddIndVarSimplifyPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddInstructionCombiningPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddJumpThreadingPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLICMPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLoopDeletionPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLoopIdiomPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLoopRotatePass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLoopRerollPass" : ["void function(LLVMPassManagerRef PM)",
-							   "+", "3", "4", "0"],
-	"LLVMAddLoopUnrollPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLoopUnswitchPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddMemCpyOptPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddPartiallyInlineLibCallsPass" : ["void function(LLVMPassManagerRef PM)",
-											"+", "3", "4", "0"],
-	"LLVMAddLowerSwitchPass" : ["void function(LLVMPassManagerRef PM)",
-							   "+", "3", "6", "0"],
-	"LLVMAddPromoteMemoryToRegisterPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddReassociatePass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddSCCPPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddScalarReplAggregatesPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddScalarReplAggregatesPassSSA" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddScalarReplAggregatesPassWithThreshold" : ["void function(LLVMPassManagerRef PM, int Threshold)"],
-	"LLVMAddSimplifyLibCallsPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddTailCallEliminationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddConstantPropagationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddDemoteMemoryToRegisterPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddVerifierPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddCorrelatedValuePropagationPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddEarlyCSEPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLowerExpectIntrinsicPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddTypeBasedAliasAnalysisPass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddScopedNoAliasAAPass" : ["void function(LLVMPassManagerRef PM)",
-								   "+", "3", "6", "0"],
-	"LLVMAddBasicAliasAnalysisPass" : ["void function(LLVMPassManagerRef PM)"],
-
-	/++ Vectorization transformations ++/
-
-	"LLVMAddBBVectorizePass" : ["void function(LLVMPassManagerRef PM)"],
-	"LLVMAddLoopVectorizePass" : ["void function(LLVMPassManagerRef PM)",
-	                              "+", "3", "2", "0"],
-
-	/+ Core +/
-
-	"LLVMShutdown" : ["void function()",
-	                  "+", "3", "3", "0"],
-	"LLVMCreateMessage" : ["char* function(const(char)* Message)",
-						   "+", "3", "4", "0"],
-	"LLVMDisposeMessage" : ["void function(char* Message)"],
-	"LLVMInstallFatalErrorHandler" : ["void function(LLVMFatalErrorHandler Handler)",
-									  "+", "3", "4", "0"],
-	"LLVMResetFatalErrorHandler" : ["void function()",
-									"+", "3", "4", "0"],
-	"LLVMEnablePrettyStackTrace" : ["void function()",
-									"+", "3", "4", "0"],
-
-	/++ Contexts ++/
-
-	"LLVMContextCreate" : ["LLVMContextRef function()"],
-	"LLVMGetGlobalContext" : ["LLVMContextRef function()"],
-	"LLVMContextDispose" : ["void function(LLVMContextRef C)"],
-	"LLVMGetMDKindIDInContext" : ["uint function(LLVMContextRef C, const(char)* Name, uint SLen)"],
-	"LLVMGetMDKindID" : ["uint function(const(char)* Name, uint SLen)"],
-
-
-	"LLVMGetEnumAttributeKindForName" : ["uint function(const(char)*Name, size_t SLen)", 
-		                                 "+", "3", "9", "0"],
-	"LLVMGetLastEnumAttributeKind" : ["uint function()", 
-		                              "+", "3", "9", "0"],
-	"LLVMCreateEnumAttribute" : ["LLVMAttributeRef function(LLVMContextRef C, uint KindID, ulong Val)", 
-		                         "+", "3", "9", "0"],
-	"LLVMGetEnumAttributeKind" : ["uint function(LLVMAttributeRef A)", 
-		                          "+", "3", "9", "0"],
-	"LLVMGetEnumAttributeValue" : ["ulong function(LLVMAttributeRef A)", 
-		                           "+", "3", "9", "0"],
-	"LLVMCreateStringAttribute" : ["LLVMAttributeRef function(LLVMContextRef C, const(char)*K, uint KLength, const(char)*V, uint VLength)", 
-		                           "+", "3", "9", "0"],
-	"LLVMGetStringAttributeKind" : ["const(char)* function(LLVMAttributeRef A, uint *Length)", 
-		                            "+", "3", "9", "0"],
-	"LLVMGetStringAttributeValue" : ["const(char)* function(LLVMAttributeRef A, uint *Length)", 
-		                             "+", "3", "9", "0"],
-	"LLVMIsEnumAttribute" : ["LLVMBool function(LLVMAttributeRef A)", 
-		                     "+", "3", "9", "0"],
-	"LLVMIsStringAttribute" : ["LLVMBool function(LLVMAttributeRef A)", 
-		                       "+", "3", "9", "0"],
-
-	"LLVMContextSetDiagnosticHandler" :  ["void function (LLVMContextRef C, LLVMDiagnosticHandler Handler, void *DiagnosticContext)",
-										  "+", "3", "5", "0"],
-
-	"LLVMContextGetDiagnosticHandler" : ["LLVMDiagnosticHandler function(LLVMContextRef C)",
-		                                 "+", "3", "9", "0"],
-	"LLVMContextGetDiagnosticContext" : ["void* function(LLVMContextRef C)", 
-		                                 "+", "3", "9", "0"],
-
-	"LLVMGetDiagInfoDescription" : ["char* function(LLVMDiagnosticInfoRef DI)",
-								   "+", "3", "5", "0"],
-
-	"LLVMGetDiagInfoSeverity" : ["LLVMDiagnosticSeverity function(LLVMDiagnosticInfoRef DI)",
-								"+", "3", "5", "0"],
-	"LLVMContextSetYieldCallback" : ["void function(LLVMContextRef C, LLVMYieldCallback Callback, void *OpaqueHandle)",
-									 "+", "3", "5", "0"],
-
-	/++ Modules ++/
-
-	"LLVMModuleCreateWithName" : ["LLVMModuleRef function(const(char)* ModuleID)"],
-	"LLVMModuleCreateWithNameInContext" : ["LLVMModuleRef function(const(char)* ModuleID, LLVMContextRef C)"],
-	"LLLVMCloneModule" : ["LLVMModuleRef function(LLVMModuleRef M)",
-					      "+", "3", "6", "0"],
-	"LLVMDisposeModule" : ["void function(LLVMModuleRef M)"],
-
-	"LLVMGetModuleIdentifier" : ["const(char)* function(LLVMModuleRef M, size_t *Len)",
-		                         "+", "3", "9", "0"],
-	"LLVMSetModuleIdentifier" : ["void function(LLVMModuleRef M, const(char)* Ident, size_t Len)",
-		                         "+", "3", "9", "0"],
-
-	"LLVMGetDataLayout" : ["const(char)* function(LLVMModuleRef M)"],
-
-	"LLVMGetDataLayoutStr" : ["const(char)* function(LLVMModuleRef M)",
-		                      "+", "3", "9", "0"],
-
-	"LLVMSetDataLayout" : ["void function(LLVMModuleRef M, const(char)* Triple)"],
-	"LLVMGetTarget" : ["const(char)* function(LLVMModuleRef M)"],
-	"LLVMSetTarget" : ["void function(LLVMModuleRef M, const(char)* Triple)"],
-	"LLVMDumpModule" : ["void function(LLVMModuleRef M)"],
-	"LLVMPrintModuleToFile" : ["LLVMBool function(LLVMModuleRef M, const(char)* Filename, char** ErrorMessage)",
-	                           "+", "3", "2", "0"],
-	"LLVMPrintModuleToString" : ["char* function(LLVMModuleRef M)",
-								 "+", "3", "4", "0"],
-	"LLVMSetModuleInlineAsm" : ["void function(LLVMModuleRef M, const(char)* Asm)"],
-	"LLVMGetModuleContext" : ["LLVMContextRef function(LLVMModuleRef M)"],
-	"LLVMGetTypeByName" : ["LLVMTypeRef function(LLVMModuleRef M, const(char)* Name)"],
-	"LLVMGetNamedMetadataNumOperands" : ["uint function(LLVMModuleRef M, const(char)* name)"],
-	"LLVMGetNamedMetadataOperands" : ["void function(LLVMModuleRef M, const(char)* name, LLVMValueRef *Dest)"],
-	"LLVMAddNamedMetadataOperand" : ["void function(LLVMModuleRef M, const(char)* name, LLVMValueRef Val)"],
-	"LLVMAddFunction" : ["LLVMValueRef function(LLVMModuleRef M, const(char)* Name, LLVMTypeRef FunctionTy)"],
-	"LLVMGetNamedFunction" : ["LLVMValueRef function(LLVMModuleRef M, const(char)* Name)"],
-	"LLVMGetFirstFunction" : ["LLVMValueRef function(LLVMModuleRef M)"],
-	"LLVMGetLastFunction" : ["LLVMValueRef function(LLVMModuleRef M)"],
-	"LLVMGetNextFunction" : ["LLVMValueRef function(LLVMValueRef Fn)"],
-	"LLVMGetPreviousFunction" : ["LLVMValueRef function(LLVMValueRef Fn)"],
-
-	/++ Types ++/
-
-	"LLVMGetTypeKind" : ["LLVMTypeKind function(LLVMTypeRef Ty)"],
-	"LLVMTypeIsSized" : ["LLVMBool function(LLVMTypeRef Ty)"],
-	"LLVMGetTypeContext" : ["LLVMContextRef function(LLVMTypeRef Ty)"],
-	"LLVMDumpType" : ["void function(LLVMTypeRef Val)",
-					  "+", "3", "4", "0"],
-	"LLVMPrintTypeToString" : ["char* function(LLVMTypeRef Val)",
-							   "+", "3", "4", "0"],
-
-	/+++ Integer Types +++/
-
-	"LLVMInt1TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMInt8TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMInt16TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMInt32TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMInt64TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMInt128TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)",
-	                             "+", "3", "8", "0"],
-	"LLVMIntTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C, uint NumBits)"],
-	"LLVMInt1Type" : ["LLVMTypeRef function()"],
-	"LLVMInt8Type" : ["LLVMTypeRef function()"],
-	"LLVMInt16Type" : ["LLVMTypeRef function()"],
-	"LLVMInt32Type" : ["LLVMTypeRef function()"],
-	"LLVMInt64Type" : ["LLVMTypeRef function()"],
-	"LLVMInt128Type" : ["LLVMTypeRef function()",
-	                    "+", "3", "8", "0"],
-	"LLVMIntType" : ["LLVMTypeRef function(uint NumBits)"],
-	"LLVMGetIntTypeWidth" : ["uint function(LLVMTypeRef IntegerTy)"],
-
-	/+++ Floating Point Types +++/
-
-	"LLVMHalfTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMFloatTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMDoubleTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMX86FP80TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMFP128TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMPPCFP128TypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMHalfType" : ["LLVMTypeRef function()"],
-	"LLVMFloatType" : ["LLVMTypeRef function()"],
-	"LLVMDoubleType" : ["LLVMTypeRef function()"],
-	"LLVMX86FP80Type" : ["LLVMTypeRef function()"],
-	"LLVMFP128Type" : ["LLVMTypeRef function()"],
-	"LLVMPPCFP128Type" : ["LLVMTypeRef function()"],
-
-	/+++ Function Types +++/
-
-	"LLVMFunctionType" : ["LLVMTypeRef function(LLVMTypeRef ReturnType, LLVMTypeRef* ParamTypes, uint ParamCount, LLVMBool IsVarArg)"],
-	"LLVMIsFunctionVarArg" : ["LLVMBool function(LLVMTypeRef FunctionTy)"],
-	"LLVMGetReturnType" : ["LLVMTypeRef function(LLVMTypeRef FunctionTy)"],
-	"LLVMCountParamTypes" : ["uint function(LLVMTypeRef FunctionTy)"],
-	"LLVMGetParamTypes" : ["void function(LLVMTypeRef FunctionTy, LLVMTypeRef* Dest)"],
-
-	/+++ Structure Types +++/
-
-	"LLVMStructTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C, LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed)"],
-	"LLVMStructType" : ["LLVMTypeRef function(LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed)"],
-	"LLVMStructCreateNamed" : ["LLVMTypeRef function(LLVMContextRef C, const(char)* Name)"],
-	"LLVMGetStructName" : ["const(char)* function(LLVMTypeRef Ty)"],
-	"LLVMStructSetBody" : ["void function(LLVMTypeRef StructTy, LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed)"],
-	"LLVMCountStructElementTypes" : ["uint function(LLVMTypeRef StructTy)"],
-	"LLVMGetStructElementTypes" : ["void function(LLVMTypeRef StructTy, LLVMTypeRef* Dest)"],
-	"LLVMStructGetTypeAtIndex" : ["LLVMTypeRef function(LLVMTypeRef StructTy, uint i)",
-								 "+", "3", "7", "0"],
-	"LLVMIsPackedStruct" : ["LLVMBool function(LLVMTypeRef StructTy)"],
-	"LLVMIsOpaqueStruct" : ["LLVMBool function(LLVMTypeRef StructTy)"],
-
-	/+++ Sequential Types +++/
-
-	"LLVMGetElementType" : ["LLVMTypeRef function(LLVMTypeRef Ty)"],
-	"LLVMArrayType" : ["LLVMTypeRef function(LLVMTypeRef ElementType, uint ElementCount)"],
-	"LLVMGetArrayLength" : ["uint function(LLVMTypeRef ArrayTy)"],
-	"LLVMPointerType" : ["LLVMTypeRef function(LLVMTypeRef ElementType, uint AddressSpace)"],
-	"LLVMGetPointerAddressSpace" : ["uint function(LLVMTypeRef PointerTy)"],
-	"LLVMVectorType" : ["LLVMTypeRef function(LLVMTypeRef ElementType, uint ElementCount)"],
-	"LLVMGetVectorSize" : ["uint function(LLVMTypeRef VectorTy)"],
-
-	/+++ Other Types +++/
-
-	"LLVMVoidTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMLabelTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMX86MMXTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C)"],
-	"LLVMVoidType" : ["LLVMTypeRef function()"],
-	"LLVMLabelType" : ["LLVMTypeRef function()"],
-	"LLVMX86MMXType" : ["LLVMTypeRef function()"],
-
-	/++ Values ++/
-
-	/+++ General APIs +++/
-
-	"LLVMTypeOf" : ["LLVMTypeRef function(LLVMValueRef Val)"],
-	"LLVMGetValueKind" : ["LLVMValueKind function(LLVMValueRef Val)",
-		                  "+", "3", "9", "0"],
-	"LLVMGetValueName" : ["const(char)* function(LLVMValueRef Val)"],
-	"LLVMSetValueName" : ["void function(LLVMValueRef Val, const(char )*Name)"],
-	"LLVMDumpValue" : ["void function(LLVMValueRef Val)"],
-	"LLVMPrintValueToString" : ["char* function(LLVMValueRef Val)",
-								"+", "3", "4", "0"],
-	"LLVMReplaceAllUsesWith" : ["void function(LLVMValueRef OldVal, LLVMValueRef NewVal)"],
-	"LLVMIsConstant" : ["LLVMBool function(LLVMValueRef Val)"],
-	"LLVMIsUndef" : ["LLVMBool function(LLVMValueRef Val)"],
-
-	"LLVMIsAAllocaInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAArgument" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsABasicBlock" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsABinaryOperator" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsABitCastInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsABlockAddress" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsABranchInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsACallInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsACastInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAAddrSpaceCastInst" : ["LLVMValueRef function(LLVMValueRef Val)",
-								  "+", "3", "4", "0"],
-	"LLVMIsACmpInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantAggregateZero" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantArray" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantDataSequential" : ["LLVMValueRef function(LLVMValueRef Val)",
-		  "+", "3", "4", "0"],
-	"LLVMIsAConstantDataArray" : ["LLVMValueRef function(LLVMValueRef Val)",
-		  "+", "3", "4", "0"],
-	"LLVMIsAConstantDataVector" : ["LLVMValueRef function(LLVMValueRef Val)",
-		  "+", "3", "4", "0"],
-
-	"LLVMIsAConstantExpr" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantFP" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantInt" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstant" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantPointerNull" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantStruct" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAConstantTokenNone" : ["LLVMValueRef function(LLVMValueRef Val)",
-	                              "+", "3", "8", "0"],
-	"LLVMIsAConstantVector" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsADbgDeclareInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsADbgInfoIntrinsic" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAExtractElementInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAExtractValueInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFCmpInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFPExtInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFPToSIInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFPToUIInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFPTruncInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAGetElementPtrInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAGlobalValue" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAGlobalAlias" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAGlobalObject" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAFunction" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAGlobalVariable" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAICmpInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAIndirectBrInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAInlineAsm" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAInsertElementInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAInsertValueInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAInstruction" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAIntrinsicInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAIntToPtrInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAInvokeInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsALandingPadInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsALoadInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAMDNode" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAMDString" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAMemCpyInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAMemIntrinsic" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAMemMoveInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAMemSetInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAPHINode" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAPtrToIntInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAResumeInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsACleanupReturnInst" : ["LLVMValueRef function(LLVMValueRef Val)",
-	                              "+", "3", "8", "0"],
-	"LLVMIsACatchReturnInst" : ["LLVMValueRef function(LLVMValueRef Val)",
-	                            "+", "3", "8", "0"],
-	"LLVMIsAFuncletPadInst" : ["LLVMValueRef function(LLVMValueRef Val)",
-	                           "+", "3", "8", "0"],
-	"LLVMIsACatchPadInst" : ["LLVMValueRef function(LLVMValueRef Val)",
-	                         "+", "3", "8", "0"],
-	"LLVMIsACleanupPadInst" : ["LLVMValueRef function(LLVMValueRef Val)",
-	                           "+", "3", "8", "0"],
-	"LLVMIsAReturnInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsASelectInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsASExtInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAShuffleVectorInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsASIToFPInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAStoreInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsASwitchInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsATerminatorInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsATruncInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAUIToFPInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAUnaryInstruction" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAUndefValue" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAUnreachableInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAUser" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAVAArgInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-	"LLVMIsAZExtInst" : ["LLVMValueRef function(LLVMValueRef Val)"],
-
-	/+++ Usage +++/
-
-	"LLVMGetFirstUse" : ["LLVMUseRef function(LLVMValueRef Val)"],
-	"LLVMGetNextUse" : ["LLVMUseRef function(LLVMUseRef U)"],
-	"LLVMGetUser" : ["LLVMValueRef function(LLVMUseRef U)"],
-	"LLVMGetUsedValue" : ["LLVMValueRef function(LLVMUseRef U)"],
-
-	/+++ User value +++/
-
-	"LLVMGetOperand" : ["LLVMValueRef function(LLVMValueRef Val, uint Index)"],
-	"LLVMGetOperandUse" : ["LLVMUseRef function(LLVMValueRef Val, uint Index)",
-						  "+", "3", "6", "0"],
-	"LLVMSetOperand" : ["void function(LLVMValueRef User, uint Index, LLVMValueRef Val)"],
-	"LLVMGetNumOperands" : ["int function(LLVMValueRef Val)"],
-
-	/+++ Constants +++/
-
-	"LLVMConstNull" : ["LLVMValueRef function(LLVMTypeRef Ty)"],
-	"LLVMConstAllOnes" : ["LLVMValueRef function(LLVMTypeRef Ty)"],
-	"LLVMGetUndef" : ["LLVMValueRef function(LLVMTypeRef Ty)"],
-	"LLVMIsNull" : ["LLVMBool function(LLVMValueRef Val)"],
-	"LLVMConstPointerNull" : ["LLVMValueRef function(LLVMTypeRef Ty)"],
-
-	/++++ Scalar constants ++++/
-
-	"LLVMConstInt" : ["LLVMValueRef function(LLVMTypeRef IntTy, ulong N, LLVMBool SignExtend)"],
-	"LLVMConstIntOfArbitraryPrecision" : ["LLVMValueRef function(LLVMTypeRef IntTy, uint NumWords, const(ulong)* Words)"],
-	"LLVMConstIntOfString" : ["LLVMValueRef function(LLVMTypeRef IntTy, const(char)* Text, ubyte Radix)"],
-	"LLVMConstIntOfStringAndSize" : ["LLVMValueRef function(LLVMTypeRef IntTy, const(char)* Text, uint SLen, ubyte Radix)"],
-	"LLVMConstReal" : ["LLVMValueRef function(LLVMTypeRef RealTy, double N)"],
-	"LLVMConstRealOfString" : ["LLVMValueRef function(LLVMTypeRef RealTy, const(char)* Text)"],
-	"LLVMConstRealOfStringAndSize" : ["LLVMValueRef function(LLVMTypeRef RealTy, const(char)* Text, uint SLen)"],
-	"LLVMConstIntGetZExtValue" : ["ulong function(LLVMValueRef ConstantVal)"],
-	"LLVMConstIntGetSExtValue" : ["long function(LLVMValueRef ConstantVal)"],
-	"LLVMConstRealGetDouble" : ["double function(LLVMValueRef ConstantVal, LLVMBool *losesInfo)",
-							   "+", "3", "6", "0"],
-
-	/++++ Composite Constants ++++/
-
-	"LLVMConstStringInContext" : ["LLVMValueRef function(LLVMContextRef C, const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
-	"LLVMConstString" : ["LLVMValueRef function(const(char)* Str, uint Length, LLVMBool DontNullTerminate)"],
-	"LLVMIsConstantString" : ["LLVMBool function(LLVMValueRef c)",
-							 "+", "3", "6", "0"],
-	"LLVMGetAsString" : ["const(char*) function(LLVMValueRef c, size_t* Length)",
-						"+", "3", "6", "0"],
-	"LLVMConstStructInContext" : ["LLVMValueRef function(LLVMContextRef C, LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
-	"LLVMConstStruct" : ["LLVMValueRef function(LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed)"],
-	"LLVMConstArray" : ["LLVMValueRef function(LLVMTypeRef ElementTy, LLVMValueRef* ConstantVals, uint Length)"],
-	"LLVMConstNamedStruct" : ["LLVMValueRef function(LLVMTypeRef StructTy, LLVMValueRef* ConstantVals, uint Count)"],
-	"LLVMGetElementAsConstant" : ["LLVMValueRef function(LLVMValueRef c, uint idx)",
-								 "+", "3", "6", "0"],
-	"LLVMConstVector" : ["LLVMValueRef function(LLVMValueRef* ScalarConstantVals, uint Size)"],
-
-	/++++ Constant Expressions ++++/
-
-	"LLVMGetConstOpcode" : ["LLVMOpcode function(LLVMValueRef ConstantVal)"],
-	"LLVMAlignOf" : ["LLVMValueRef function(LLVMTypeRef Ty)"],
-	"LLVMSizeOf" : ["LLVMValueRef function(LLVMTypeRef Ty)"],
-	"LLVMConstNeg" : ["LLVMValueRef function(LLVMValueRef ConstantVal)"],
-	"LLVMConstNSWNeg" : ["LLVMValueRef function(LLVMValueRef ConstantVal)"],
-	"LLVMConstNUWNeg" : ["LLVMValueRef function(LLVMValueRef ConstantVal)"],
-	"LLVMConstFNeg" : ["LLVMValueRef function(LLVMValueRef ConstantVal)"],
-	"LLVMConstNot" : ["LLVMValueRef function(LLVMValueRef ConstantVal)"],
-	"LLVMConstAdd" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstNSWAdd" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstNUWAdd" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstFAdd" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstSub" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstNSWSub" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstNUWSub" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstFSub" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstMul" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstNSWMul" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstNUWMul" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstFMul" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstUDiv" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstSDiv" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstExactSDiv" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstFDiv" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstURem" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstSRem" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstFRem" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstAnd" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstOr" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstXor" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstICmp" : ["LLVMValueRef function(LLVMIntPredicate Predicate, LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstFCmp" : ["LLVMValueRef function(LLVMRealPredicate Predicate, LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstShl" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstLShr" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstAShr" : ["LLVMValueRef function(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)"],
-	"LLVMConstGEP" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMValueRef* ConstantIndices, uint NumIndices)"],
-	"LLVMConstInBoundsGEP" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMValueRef* ConstantIndices, uint NumIndices)"],
-	"LLVMConstTrunc" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstSExt" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstZExt" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstFPTrunc" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstFPExt" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstUIToFP" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstSIToFP" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstFPToUI" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstFPToSI" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstPtrToInt" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstIntToPtr" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstBitCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstAddrSpaceCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)",
-								"+", "3", "4", "0"],
-	"LLVMConstZExtOrBitCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstSExtOrBitCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstTruncOrBitCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstPointerCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstIntCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType, LLVMBool isSigned)"],
-	"LLVMConstFPCast" : ["LLVMValueRef function(LLVMValueRef ConstantVal, LLVMTypeRef ToType)"],
-	"LLVMConstSelect" : ["LLVMValueRef function(LLVMValueRef ConstantCondition, LLVMValueRef ConstantIfTrue, LLVMValueRef ConstantIfFalse)"],
-	"LLVMConstExtractElement" : ["LLVMValueRef function(LLVMValueRef VectorConstant, LLVMValueRef IndexConstant)"],
-	"LLVMConstInsertElement" : ["LLVMValueRef function(LLVMValueRef VectorConstant, LLVMValueRef ElementValueConstant, LLVMValueRef IndexConstant)"],
-	"LLVMConstShuffleVector" : ["LLVMValueRef function(LLVMValueRef VectorAConstant, LLVMValueRef VectorBConstant, LLVMValueRef MaskConstant)"],
-	"LLVMConstExtractValue" : ["LLVMValueRef function(LLVMValueRef AggConstant, uint* IdxList, uint NumIdx)"],
-	"LLVMConstInsertValue" : ["LLVMValueRef function(LLVMValueRef AggConstant, LLVMValueRef ElementValueConstant, uint* IdxList, uint NumIdx)"],
-	"LLVMConstInlineAsm" : ["LLVMValueRef function(LLVMTypeRef Ty, const(char)* AsmString, const(char)* Constraints, LLVMBool HasSideEffects, LLVMBool IsAlignStack)"],
-	"LLVMBlockAddress" : ["LLVMValueRef function(LLVMValueRef F, LLVMBasicBlockRef BB)"],
-
-	/++++ Global Values ++++/
-
-	"LLVMGetGlobalParent" : ["LLVMModuleRef function(LLVMValueRef Global)"],
-	"LLVMIsDeclaration" : ["LLVMBool function(LLVMValueRef Global)"],
-	"LLVMGetLinkage" : ["LLVMLinkage function(LLVMValueRef Global)"],
-	"LLVMSetLinkage" : ["void function(LLVMValueRef Global, LLVMLinkage Linkage)"],
-	"LLVMGetSection" : ["const(char)* function(LLVMValueRef Global)"],
-	"LLVMSetSection" : ["void function(LLVMValueRef Global, const(char)* Section)"],
-	"LLVMGetVisibility" : ["LLVMVisibility function(LLVMValueRef Global)"],
-	"LLVMSetVisibility" : ["void function(LLVMValueRef Global, LLVMVisibility Viz)"],
-	"LLVMGetDLLStorageClass" : ["LLVMDLLStorageClass function(LLVMValueRef Global)",
-							   "+", "3", "5", "0"],
-	"LLVMSetDLLStorageClass" : ["void function(LLVMValueRef Global, LLVMDLLStorageClass Class)",
-							   "+", "3", "5", "0"],
-	"LLVMHasUnnamedAddr" : ["LLVMBool function(LLVMValueRef Global)",
-						   "+", "3", "5", "0"],
-	"LLVMSetUnnamedAddr" : ["void function(LLVMValueRef Global, LLVMBool HasUnnamedAddr)",
-						   "+", "3", "5", "0"],
-	"LLVMGetAlignment" : ["uint function(LLVMValueRef Global)"],
-	"LLVMSetAlignment" : ["void function(LLVMValueRef Global, uint Bytes)"],
-
-	/+++++ Global Variables +++++/
-
-	"LLVMAddGlobal" : ["LLVMValueRef function(LLVMModuleRef M, LLVMTypeRef Ty, const(char)* Name)"],
-	"LLVMAddGlobalInAddressSpace" : ["LLVMValueRef function(LLVMModuleRef M, LLVMTypeRef Ty, const(char)* Name, uint AddressSpace)"],
-	"LLVMGetNamedGlobal" : ["LLVMValueRef function(LLVMModuleRef M, const(char)* Name)"],
-	"LLVMGetFirstGlobal" : ["LLVMValueRef function(LLVMModuleRef M)"],
-	"LLVMGetLastGlobal" : ["LLVMValueRef function(LLVMModuleRef M)"],
-	"LLVMGetNextGlobal" : ["LLVMValueRef function(LLVMValueRef GlobalVar)"],
-	"LLVMGetPreviousGlobal" : ["LLVMValueRef function(LLVMValueRef GlobalVar)"],
-	"LLVMDeleteGlobal" : ["void function(LLVMValueRef GlobalVar)"],
-	"LLVMGetInitializer" : ["LLVMValueRef function(LLVMValueRef GlobalVar)"],
-	"LLVMSetInitializer" : ["void function(LLVMValueRef GlobalVar, LLVMValueRef ConstantVal)"],
-	"LLVMIsThreadLocal" : ["LLVMBool function(LLVMValueRef GlobalVar)"],
-	"LLVMSetThreadLocal" : ["void function(LLVMValueRef GlobalVar, LLVMBool IsThreadLocal)"],
-	"LLVMIsGlobalConstant" : ["LLVMBool function(LLVMValueRef GlobalVar)"],
-	"LLVMSetGlobalConstant" : ["void function(LLVMValueRef GlobalVar, LLVMBool IsConstant)"],
-	"LLVMGetThreadLocalMode" : ["LLVMThreadLocalMode function(LLVMValueRef GlobalVar)",
-	                                  "+", "3", "3", "0"],
-	"LLVMSetThreadLocalMode" : ["void function(LLVMValueRef GlobalVar, LLVMThreadLocalMode Mode)",
-	                            "+", "3", "3", "0"],
-	"LLVMIsExternallyInitialized" : ["LLVMBool function(LLVMValueRef GlobalVar)",
-	                                 "+", "3", "3", "0"],
-	"LLVMSetExternallyInitialized" : ["void function(LLVMValueRef GlobalVar, LLVMBool IsExtInit)",
-	                                  "+", "3", "3", "0"],
-
-	/+++++ Global Aliases +++++/
-
-	"LLVMAddAlias" : ["LLVMValueRef function(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee, const(char)* Name)"],
-
-	/+++++ Function values +++++/
-
-	"LLVMDeleteFunction" : ["void function(LLVMValueRef Fn)"],
-	"LLVMHasPersonalityFn" : ["LLVMBool function(LLVMValueRef Fn)",
-		                      "+", "3", "9", "0"],
-	"LLVMGetPersonalityFn" : ["LLVMValueRef function(LLVMValueRef Fn)",
-							 "+", "3", "7", "0"],
-	"LLVMSetPersonalityFn" : ["void function(LLVMValueRef Fn, LLVMValueRef PersonalityFn)",
-							 "+", "3", "7", "0"],
-	"LLVMGetIntrinsicID" : ["uint function(LLVMValueRef Fn)"],
-	"LLVMGetFunctionCallConv" : ["uint function(LLVMValueRef Fn)"],
-	"LLVMSetFunctionCallConv" : ["void function(LLVMValueRef Fn, uint CC)"],
-	"LLVMGetGC" : ["const(char)* function(LLVMValueRef Fn)"],
-	"LLVMSetGC" : ["void function(LLVMValueRef Fn, const(char)* Name)"],
-	"LLVMAddFunctionAttr" : ["void function(LLVMValueRef Fn, LLVMAttribute PA)"],
-
-
-	"LLVMAddAttributeAtIndex" : ["void function(LLVMValueRef F, LLVMAttributeIndex Idx, LLVMAttributeRef A)",
-		                         "+", "3", "9", "0"],
-	"LLVMGetAttributeCountAtIndex" : ["uint function(LLVMValueRef F, LLVMAttributeIndex Idx)",
-		                              "+", "3", "9", "0"],
-	"LLVMGetAttributesAtIndex" : ["void function(LLVMValueRef F, LLVMAttributeIndex Idx, LLVMAttributeRef *Attrs)",
-		                          "+", "3", "9", "0"],
-	"LLVMGetEnumAttributeAtIndex" : ["LLVMAttributeRef function(LLVMValueRef F, LLVMAttributeIndex Idx, uint KindID)",
-		                             "+", "3", "9", "0"],
-	"LLVMGetStringAttributeAtIndex" : ["LLVMAttributeRef function(LLVMValueRef F, LLVMAttributeIndex Idx, const(char)* K, uint KLen)",
-		                               "+", "3", "9", "0"],
-	"LLVMRemoveEnumAttributeAtIndex" : ["void function(LLVMValueRef F, LLVMAttributeIndex Idx, uint KindID)",
-		                                "+", "3", "9", "0"],
-	"LLVMRemoveStringAttributeAtIndex" : ["void function(LLVMValueRef F, LLVMAttributeIndex Idx, const(char)* K, uint KLen)",
-		                                  "+", "3", "9", "0"],
-
-
-
-	"LLVMAddTargetDependentFunctionAttr" : ["void function(LLVMValueRef Fn, const(char)* A, const(char)* V)",
-	                                        "+", "3", "3", "0"],
-	"LLVMGetFunctionAttr" : ["LLVMAttribute function(LLVMValueRef Fn)"],
-	"LLVMRemoveFunctionAttr" : ["void function(LLVMValueRef Fn, LLVMAttribute PA)"],
-
-	/++++++ Function Parameters ++++++/
-
-	"LLVMCountParams" : ["uint function(LLVMValueRef Fn)"],
-	"LLVMGetParams" : ["void function(LLVMValueRef Fn, LLVMValueRef* Params)"],
-	"LLVMGetParam" : ["LLVMValueRef function(LLVMValueRef Fn, uint Index)"],
-	"LLVMGetParamParent" : ["LLVMValueRef function(LLVMValueRef Inst)"],
-	"LLVMGetFirstParam" : ["LLVMValueRef function(LLVMValueRef Fn)"],
-	"LLVMGetLastParam" : ["LLVMValueRef function(LLVMValueRef Fn)"],
-	"LLVMGetNextParam" : ["LLVMValueRef function(LLVMValueRef Arg)"],
-	"LLVMGetPreviousParam" : ["LLVMValueRef function(LLVMValueRef Arg)"],
-	"LLVMAddAttribute" : ["void function(LLVMValueRef Arg, LLVMAttribute PA)"],
-	"LLVMRemoveAttribute" : ["void function(LLVMValueRef Arg, LLVMAttribute PA)"],
-	"LLVMGetAttribute" : ["LLVMAttribute function(LLVMValueRef Arg)"],
-	"LLVMSetParamAlignment" : ["void function(LLVMValueRef Arg, uint Align)"],
-
-	/+++ Metadata +++/
-
-	"LLVMMDStringInContext" : ["LLVMValueRef function(LLVMContextRef C, const(char)* Str, uint SLen)"],
-	"LLVMMDString" : ["LLVMValueRef function(const(char)* Str, uint SLen)"],
-	"LLVMMDNodeInContext" : ["LLVMValueRef function(LLVMContextRef C, LLVMValueRef* Vals, uint Count)"],
-	"LLVMMDNode" : ["LLVMValueRef function(LLVMValueRef* Vals, uint Count)"],
-	"LLVMGetMDString" : ["const(char)* function(LLVMValueRef V, uint* Len)"],
-	"LLVMGetMDNodeNumOperands" : ["uint function(LLVMValueRef V)",
-	                              "+", "3", "2", "0"],
-	"LLVMGetMDNodeOperands" : ["void function(LLVMValueRef V, LLVMValueRef *Dest)",
-	                           "+", "3", "2", "0"],
-
-	/+++ Basic Block +++/
-
-	"LLVMBasicBlockAsValue" : ["LLVMValueRef function(LLVMBasicBlockRef BB)"],
-	"LLVMValueIsBasicBlock" : ["LLVMBool function(LLVMValueRef Val)"],
-	"LLVMValueAsBasicBlock" : ["LLVMBasicBlockRef function(LLVMValueRef Val)"],
-	"LLVMGetBasicBlockName" : ["const(char)* function(LLVMBasicBlockRef BB)",
-		"+", "3", "9", "0"],
-	"LLVMGetBasicBlockParent" : ["LLVMValueRef function(LLVMBasicBlockRef BB)"],
-	"LLVMGetBasicBlockTerminator" : ["LLVMValueRef function(LLVMBasicBlockRef BB)"],
-	"LLVMCountBasicBlocks" : ["uint function(LLVMValueRef Fn)"],
-	"LLVMGetBasicBlocks" : ["void function(LLVMValueRef Fn, LLVMBasicBlockRef* BasicBlocks)"],
-	"LLVMGetFirstBasicBlock" : ["LLVMBasicBlockRef function(LLVMValueRef Fn)"],
-	"LLVMGetLastBasicBlock" : ["LLVMBasicBlockRef function(LLVMValueRef Fn)"],
-	"LLVMGetNextBasicBlock" : ["LLVMBasicBlockRef function(LLVMBasicBlockRef BB)"],
-	"LLVMGetPreviousBasicBlock" : ["LLVMBasicBlockRef function(LLVMBasicBlockRef BB)"],
-	"LLVMGetEntryBasicBlock" : ["LLVMBasicBlockRef function(LLVMValueRef Fn)"],
-	"LLVMAppendBasicBlockInContext" : ["LLVMBasicBlockRef function(LLVMContextRef C, LLVMValueRef Fn, const(char)* Name)"],
-	"LLVMAppendBasicBlock" : ["LLVMBasicBlockRef function(LLVMValueRef Fn, const(char)* Name)"],
-	"LLVMInsertBasicBlockInContext" : ["LLVMBasicBlockRef function(LLVMContextRef C, LLVMBasicBlockRef BB, const(char)* Name)"],
-	"LLVMInsertBasicBlock" : ["LLVMBasicBlockRef function(LLVMBasicBlockRef InsertBeforeBB, const(char)* Name)"],
-	"LLVMDeleteBasicBlock" : ["void function(LLVMBasicBlockRef BB)"],
-	"LLVMRemoveBasicBlockFromParent" : ["void function(LLVMBasicBlockRef BB)"],
-	"LLVMMoveBasicBlockBefore" : ["void function(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos)"],
-	"LLVMMoveBasicBlockAfter" : ["void function(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos)"],
-	"LLVMGetFirstInstruction" : ["LLVMValueRef function(LLVMBasicBlockRef BB)"],
-	"LLVMGetLastInstruction" : ["LLVMValueRef function(LLVMBasicBlockRef BB)"],
-
-	/+++ Instructions +++/
-
-	"LLVMHasMetadata" : ["int function(LLVMValueRef Val)"],
-	"LLVMGetMetadata" : ["LLVMValueRef function(LLVMValueRef Val, uint KindID)"],
-	"LLVMSetMetadata" : ["void function(LLVMValueRef Val, uint KindID, LLVMValueRef Node)"],
-	"LLVMGetInstructionParent" : ["LLVMBasicBlockRef function(LLVMValueRef Inst)"],
-	"LLVMGetNextInstruction" : ["LLVMValueRef function(LLVMValueRef Inst)"],
-	"LLVMGetPreviousInstruction" : ["LLVMValueRef function(LLVMValueRef Inst)"],
-	"LLVMInstructionRemoveFromParent" : ["void function(LLVMValueRef Inst)",
-		                                 "+", "3", "9", "0"],
-	"LLVMInstructionEraseFromParent" : ["void function(LLVMValueRef Inst)"],
-	"LLVMGetInstructionOpcode" : ["LLVMOpcode function(LLVMValueRef Inst)"],
-	"LLVMGetICmpPredicate" : ["LLVMIntPredicate function(LLVMValueRef Inst)"],
-	"LLVMGetFCmpPredicate" : ["LLVMRealPredicate function(LLVMValueRef Inst)",
-							 "+", "3", "6", "0"],
-	"LLVMInstructionClone" : ["LLVMValueRef function(LLVMValueRef Inst)",
-							 "+", "3", "6", "0"],
-	"LLVMGetSwitchDefaultDest" : ["LLVMBasicBlockRef function(LLVMValueRef SwitchInstr)"],
-
-
-	"LLVMGetAllocatedType" : ["LLVMTypeRef function(LLVMValueRef Alloca)",
-		                      "+", "3", "9", "0"],
-	"LLVMIsInBounds" : ["LLVMBool function(LLVMValueRef GEP)",
-		                "+", "3", "9", "0"],
-	"LLVMSetIsInBounds" : ["void function(LLVMValueRef GEP, LLVMBool InBounds)",
-		                   "+", "3", "9", "0"],
-
-	/++++ Call Sites and Invocations ++++/
-
-	"LLVMGetNumArgOperands" : ["uint function(LLVMValueRef Instr)",
-		                       "+", "3", "9", "0"],
-	"LLVMSetInstructionCallConv" : ["void function(LLVMValueRef Instr, uint CC)"],
-	"LLVMGetInstructionCallConv" : ["uint function(LLVMValueRef Instr)"],
-	"LLVMAddInstrAttribute" : ["void function(LLVMValueRef Instr, uint index, LLVMAttribute)"],
-	"LLVMRemoveInstrAttribute" : ["void function(LLVMValueRef Instr, uint index, LLVMAttribute)"],
-	"LLVMSetInstrParamAlignment" : ["void function(LLVMValueRef Instr, uint index, uint Align)"],
-
-	"LLVMAddCallSiteAttribute" : ["void function(LLVMValueRef C, LLVMAttributeIndex Idx, LLVMAttributeRef A)",
-		                          "+", "3", "9", "0"],
-	"LLVMGetCallSiteAttributeCount" : ["uint function(LLVMValueRef C, LLVMAttributeIndex Idx)",
-		                               "+", "3", "9", "0"],
-	"LLVMGetCallSiteAttributes" : ["void function(LLVMValueRef C, LLVMAttributeIndex Idx, LLVMAttributeRef *Attrs)",
-		                           "+", "3", "9", "0"],
-	"LLVMGetCallSiteEnumAttribute" : ["LLVMAttributeRef function(LLVMValueRef C, LLVMAttributeIndex Idx, uint KindID)",
-		                              "+", "3", "9", "0"],
-	"LLVMGetCallSiteStringAttribute" : ["LLVMAttributeRef function(LLVMValueRef C, LLVMAttributeIndex Idx, const(char)* K, uint KLen)",
-		                                "+", "3", "9", "0"],
-	"LLVMRemoveCallSiteEnumAttribute" : ["void function(LLVMValueRef C, LLVMAttributeIndex Idx, uint KindID)",
-		                                 "+", "3", "9", "0"],
-	"LLVMRemoveCallSiteStringAttribute" : ["void function(LLVMValueRef C, LLVMAttributeIndex Idx, const(char)* K, uint KLen)",
-		                                   "+", "3", "9", "0"],
-
-	"LLVMGetCalledValue" : ["LLVMValueRef function(LLVMValueRef Instr)",
-		                    "+", "3", "9", "0"],
-
-	"LLVMIsTailCall" : ["LLVMBool function(LLVMValueRef CallInst)"],
-
-	"LLVMGetNormalDest" : ["LLVMBasicBlockRef function(LLVMValueRef InvokeInst)",
-		                   "+", "3", "9", "0"],
-	"LLVMGetUnwindDest" : ["LLVMBasicBlockRef function(LLVMValueRef InvokeInst)",
-		                   "+", "3", "9", "0"],
-	"LLVMSetNormalDest" : ["void function(LLVMValueRef InvokeInst, LLVMBasicBlockRef B)",
-		                   "+", "3", "9", "0"],
-	"LLVMSetUnwindDest" : ["void function(LLVMValueRef InvokeInst, LLVMBasicBlockRef B)",
-		                   "+", "3", "9", "0"],
-
-	"LLVMSetTailCall" : ["void function(LLVMValueRef CallInst, LLVMBool IsTailCall)"],
-	"LLVMGetNumSuccessors" : ["uint function(LLVMValueRef Term)",
-							 "+", "3", "6", "0"],
-	"LLVMGetSuccessor" : ["LLVMBasicBlockRef function(LLVMValueRef Term, uint i)",
-						 "+", "3", "6", "0"],
-	"LLVMSetSuccessor" : ["void function(LLVMValueRef Term, uint i, LLVMBasicBlockRef block)",
-						 "+", "3", "6", "0"],
-	"LLVMIsConditional" : ["LLVMBool function(LLVMValueRef Branch)",
-						  "+", "3", "6", "0"],
-	"LLVMGetCondition" : ["LLVMValueRef function(LLVMValueRef Branch)",
-						 "+", "3", "6", "0"],
-	"LLVMSetCondition" : ["void function(LLVMValueRef Branch, LLVMValueRef Cond)",
-						 "+", "3", "6", "0"],
-
-	/++++ PHI Nodes ++++/
-
-	"LLVMAddIncoming" : ["void function(LLVMValueRef PhiNode, LLVMValueRef* IncomingValues, LLVMBasicBlockRef* IncomingBlocks, uint Count)"],
-	"LLVMCountIncoming" : ["uint function(LLVMValueRef PhiNode)"],
-	"LLVMGetIncomingValue" : ["LLVMValueRef function(LLVMValueRef PhiNode, uint Index)"],
-	"LLVMGetIncomingBlock" : ["LLVMBasicBlockRef function(LLVMValueRef PhiNode, uint Index)"],
-
-
-
-	"LLVMGetNumIndices" : ["uint function(LLVMValueRef Inst)",
-		"+", "3", "9", "0"],
-	"LLVMGetIndices" : ["const(uint)* function(LLVMValueRef Inst)",
-		"+", "3", "9", "0"],
-
-	/++ Instruction Builders ++/
-
-	"LLVMCreateBuilderInContext" : ["LLVMBuilderRef function(LLVMContextRef C)"],
-	"LLVMCreateBuilder" : ["LLVMBuilderRef function()"],
-	"LLVMPositionBuilder" : ["void function(LLVMBuilderRef Builder, LLVMBasicBlockRef Block, LLVMValueRef Instr)"],
-	"LLVMPositionBuilderBefore" : ["void function(LLVMBuilderRef Builder, LLVMValueRef Instr)"],
-	"LLVMPositionBuilderAtEnd" : ["void function(LLVMBuilderRef Builder, LLVMBasicBlockRef Block)"],
-	"LLVMGetInsertBlock" : ["LLVMBasicBlockRef function(LLVMBuilderRef Builder)"],
-	"LLVMClearInsertionPosition" : ["void function(LLVMBuilderRef Builder)"],
-	"LLVMInsertIntoBuilder" : ["void function(LLVMBuilderRef Builder, LLVMValueRef Instr)"],
-	"LLVMInsertIntoBuilderWithName" : ["void function(LLVMBuilderRef Builder, LLVMValueRef Instr, const(char)* Name)"],
-	"LLVMDisposeBuilder" : ["void function(LLVMBuilderRef Builder)"],
-	"LLVMSetCurrentDebugLocation" : ["void function(LLVMBuilderRef Builder, LLVMValueRef L)"],
-	"LLVMGetCurrentDebugLocation" : ["LLVMValueRef function(LLVMBuilderRef Builder)"],
-	"LLVMSetInstDebugLocation" : ["void function(LLVMBuilderRef Builder, LLVMValueRef Inst)"],
-	"LLVMBuildRetVoid" : ["LLVMValueRef function(LLVMBuilderRef)"],
-	"LLVMBuildRet" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V)"],
-	"LLVMBuildAggregateRet" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef* RetVals, uint N)"],
-	"LLVMBuildBr" : ["LLVMValueRef function(LLVMBuilderRef, LLVMBasicBlockRef Dest)"],
-	"LLVMBuildCondBr" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef If, LLVMBasicBlockRef Then, LLVMBasicBlockRef Else)"],
-	"LLVMBuildSwitch" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V, LLVMBasicBlockRef Else, uint NumCases)"],
-	"LLVMBuildIndirectBr" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Addr, uint NumDests)"],
-	"LLVMBuildInvoke" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Fn, LLVMValueRef* Args, uint NumArgs, LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, const(char)* Name)"],
-	"LLVMBuildLandingPad" : (LLVM_Version >= 3.7) ?
-			["LLVMValueRef function(LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef PersFn, uint NumClauses, const(char)* Name)"] :
-			["LLVMValueRef function(LLVMBuilderRef B, LLVMTypeRef Ty, uint NumClauses, const(char)* Name)"],
-	"LLVMBuildResume" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Exn)"],
-	"LLVMBuildUnreachable" : ["LLVMValueRef function(LLVMBuilderRef)"],
-	"LLVMAddCase" : ["void function(LLVMValueRef Switch, LLVMValueRef OnVal, LLVMBasicBlockRef Dest)"],
-	"LLVMAddDestination" : ["void function(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest)"],
-
-	"LLVMGetNumClauses" : ["uint function(LLVMValueRef LandingPad)",
-		"+", "3", "9", "0"],
-	"LLVMGetClause" : ["LLVMValueRef function(LLVMValueRef LandingPad, uint Idx)",
-		"+", "3", "9", "0"],
-	"LLVMIsCleanup" : ["LLVMBool function(LLVMValueRef LandingPad)",
-		"+", "3", "9", "0"],
-
-	"LLVMAddClause" : ["void function(LLVMValueRef LandingPad, LLVMValueRef ClauseVal)"],
-	"LLVMSetCleanup" : ["void function(LLVMValueRef LandingPad, LLVMBool Val)"],
-	"LLVMBuildAdd" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNSWAdd" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNUWAdd" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildFAdd" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildSub" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNSWSub" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNUWSub" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildFSub" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildMul" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNSWMul" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNUWMul" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildFMul" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildUDiv" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildSDiv" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildExactSDiv" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildFDiv" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildURem" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildSRem" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildFRem" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildShl" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildLShr" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildAShr" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildAnd" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildOr" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildXor" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildBinOp" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMOpcode Op, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildNeg" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V, const(char)* Name)"],
-	"LLVMBuildNSWNeg" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef V, const(char)* Name)"],
-	"LLVMBuildNUWNeg" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef V, const(char)* Name)"],
-	"LLVMBuildFNeg" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V, const(char)* Name)"],
-	"LLVMBuildNot" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V, const(char)* Name)"],
-	"LLVMBuildMalloc" : ["LLVMValueRef function(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name)"],
-	"LLVMBuildArrayMalloc" : ["LLVMValueRef function(LLVMBuilderRef, LLVMTypeRef Ty, LLVMValueRef Val, const(char)* Name)"],
-	"LLVMBuildAlloca" : ["LLVMValueRef function(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name)"],
-	"LLVMBuildArrayAlloca" : ["LLVMValueRef function(LLVMBuilderRef, LLVMTypeRef Ty, LLVMValueRef Val, const(char)* Name)"],
-	"LLVMBuildFree" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef PointerVal)"],
-	"LLVMBuildLoad" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef PointerVal, const(char)* Name)"],
-	"LLVMBuildStore" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMValueRef Ptr)"],
-	"LLVMBuildGEP" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Pointer, LLVMValueRef* Indices, uint NumIndices, const(char)* Name)"],
-	"LLVMBuildInBoundsGEP" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Pointer, LLVMValueRef* Indices, uint NumIndices, const(char)* Name)"],
-	"LLVMBuildStructGEP" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Pointer, uint Idx, const(char)* Name)"],
-	"LLVMBuildGlobalString" : ["LLVMValueRef function(LLVMBuilderRef B, const(char)* Str, const(char)* Name)"],
-	"LLVMBuildGlobalStringPtr" : ["LLVMValueRef function(LLVMBuilderRef B, const(char)* Str, const(char)* Name)"],
-	"LLVMGetVolatile" : ["LLVMBool function(LLVMValueRef MemoryAccessInst)"],
-	"LLVMSetVolatile" : ["void function(LLVMValueRef MemoryAccessInst, LLVMBool IsVolatile)"],
-	"LLVMGetOrdering" : ["LLVMAtomicOrdering function(LLVMValueRef MemoryAccessInst)",
-	                     "+", "3", "8", "0"],
-	"LLVMSetOrdering" : ["void function(LLVMValueRef MemoryAccessInst, LLVMAtomicOrdering Ordering)",
-	                     "+", "3", "8", "0"],
-	"LLVMBuildTrunc" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildZExt" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildSExt" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildFPToUI" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildFPToSI" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildUIToFP" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildSIToFP" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildFPTrunc" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildFPExt" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildPtrToInt" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildIntToPtr" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildBitCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildAddrSpaceCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)",
-								"+", "3", "4", "0"],
-	"LLVMBuildZExtOrBitCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildSExtOrBitCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildTruncOrBitCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildCast" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildPointerCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildIntCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildFPCast" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name)"],
-	"LLVMBuildICmp" : ["LLVMValueRef function(LLVMBuilderRef, LLVMIntPredicate Op, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildFCmp" : ["LLVMValueRef function(LLVMBuilderRef, LLVMRealPredicate Op, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildPhi" : ["LLVMValueRef function(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name)"],
-	"LLVMBuildCall" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Fn, LLVMValueRef* Args, uint NumArgs, const(char)* Name)"],
-	"LLVMBuildSelect" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef If, LLVMValueRef Then, LLVMValueRef Else, const(char)* Name)"],
-	"LLVMBuildVAArg" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef List, LLVMTypeRef Ty, const(char)* Name)"],
-	"LLVMBuildExtractElement" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef VecVal, LLVMValueRef Index, const(char)* Name)"],
-	"LLVMBuildInsertElement" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef VecVal, LLVMValueRef EltVal, LLVMValueRef Index, const(char)* Name)"],
-	"LLVMBuildShuffleVector" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef V1, LLVMValueRef V2, LLVMValueRef Mask, const(char)* Name)"],
-	"LLVMBuildExtractValue" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef AggVal, uint Index, const(char)* Name)"],
-	"LLVMBuildInsertValue" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef AggVal, LLVMValueRef EltVal, uint Index, const(char)* Name)"],
-	"LLVMBuildIsNull" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name)"],
-	"LLVMBuildIsNotNull" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name)"],
-	"LLVMBuildPtrDiff" : ["LLVMValueRef function(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name)"],
-	"LLVMBuildAtomicRMW" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMAtomicRMWBinOp op, LLVMValueRef PTR, LLVMValueRef Val, LLVMAtomicOrdering ordering, LLVMBool singleThread)",
-	                        "+", "3", "3", "0"],
-
-	"LLVMBuildAtomicCmpXchg" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMValueRef Ptr, LLVMValueRef Cmp, LLVMValueRef New, LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering, LLVMBool SingleThread)",
-		                        "+", "3", "9", "0"],
-	"LLVMIsAtomicSingleThread" : ["LLVMBool function(LLVMValueRef AtomicInst)",
-		                          "+", "3", "9", "0"],
-	"LLVMSetAtomicSingleThread" : ["void function(LLVMValueRef AtomicInst, LLVMBool SingleThread)",
-		                           "+", "3", "9", "0"],
-	"LLVMGetCmpXchgSuccessOrdering" : ["LLVMAtomicOrdering function(LLVMValueRef CmpXchgInst)",
-		                               "+", "3", "9", "0"],
-	"LLVMSetCmpXchgSuccessOrdering" : ["void function(LLVMValueRef CmpXchgInst, LLVMAtomicOrdering Ordering)",
-		                               "+", "3", "9", "0"],
-	"LLVMGetCmpXchgFailureOrdering" : ["LLVMAtomicOrdering function(LLVMValueRef CmpXchgInst)",
-		                               "+", "3", "9", "0"],
-	"LLVMSetCmpXchgFailureOrdering" : ["void function(LLVMValueRef CmpXchgInst, LLVMAtomicOrdering Ordering)",
-		                               "+", "3", "9", "0"],
-
-	"LLVMBuildFence" : ["LLVMValueRef function(LLVMBuilderRef B, LLVMAtomicOrdering ordering, LLVMBool singleThread, const(char)*Name)",
-					   "+", "3", "5", "0"],
-
-	/++ Module Providers ++/
-
-	"LLVMCreateModuleProviderForExistingModule" : ["LLVMModuleProviderRef function(LLVMModuleRef M)"],
-	"LLVMDisposeModuleProvider" : ["void function(LLVMModuleProviderRef M)"],
-
-	/++ Memory Buffers ++/
-
-	"LLVMCreateMemoryBufferWithContentsOfFile" : ["LLVMBool function(const(char)* Path, LLVMMemoryBufferRef* OutMemBuf, char** OutMessage)"],
-	"LLVMCreateMemoryBufferWithSTDIN" : ["LLVMBool function(LLVMMemoryBufferRef* OutMemBuf, char** OutMessage)"],
-	"LLVMCreateMemoryBufferWithMemoryRange" : ["LLVMMemoryBufferRef function(const(char)* InputData, size_t InputDataLength, const(char)* BufferName, LLVMBool RequiresNullTerminator)",
-	                                           "+", "3", "3", "0"],
-	"LLVMCreateMemoryBufferWithMemoryRangeCopy" : ["LLVMMemoryBufferRef function(const(char)* InputData, size_t InputDataLength, const(char)* BufferName)",
-	                                               "+", "3", "3", "0"],
-	"LLVMGetBufferStart" : ["const(char)* function(LLVMMemoryBufferRef MemBuf)",
-	                        "+", "3", "3", "0"],
-	"LLVMGetBufferSize" : ["size_t function(LLVMMemoryBufferRef MemBuf)",
-	                       "+", "3", "3", "0"],
-	"LLVMDisposeMemoryBuffer" : ["void function(LLVMMemoryBufferRef MemBuf)"],
-
-	/++ Pass Registry ++/
-
-	"LLVMGetGlobalPassRegistry" : ["LLVMPassRegistryRef function()"],
-
-	/++ Pass Managers ++/
-
-	"LLVMCreatePassManager" : ["LLVMPassManagerRef function()"],
-	"LLVMCreateFunctionPassManagerForModule" : ["LLVMPassManagerRef function(LLVMModuleRef M)"],
-	"LLVMCreateFunctionPassManager" : ["LLVMPassManagerRef function(LLVMModuleProviderRef MP)"],
-	"LLVMRunPassManager" : ["LLVMBool function(LLVMPassManagerRef PM, LLVMModuleRef M)"],
-	"LLVMInitializeFunctionPassManager" : ["LLVMBool function(LLVMPassManagerRef FPM)"],
-	"LLVMRunFunctionPassManager" : ["LLVMBool function(LLVMPassManagerRef FPM, LLVMValueRef F)"],
-	"LLVMFinalizeFunctionPassManager" : ["LLVMBool function(LLVMPassManagerRef FPM)"],
-	"LLVMDisposePassManager" : ["void function(LLVMPassManagerRef PM)"],
-
-	/++ Threading ++/
-
-	"LLVMStartMultithreaded" : ["LLVMBool function()",
-	                            "+", "3", "3", "0", "-", "3", "5", "0"],
-	"LLVMStopMultithreaded" : ["void function()",
-	                            "+", "3", "3", "0", "-", "3", "5", "0"],
-	"LLVMIsMultithreaded" : ["LLVMBool function()",
-	                            "+", "3", "3", "0"],
-
-	/+ Disassembler +/
-
-	"LLVMCreateDisasm" : ["LLVMDisasmContextRef function(const(char)* TripleName, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)"],
-	"LLVMCreateDisasmCPU" : ["LLVMDisasmContextRef function(const(char)* Triple, const(char)* CPU, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)",
-	                         "+", "3", "3", "0"],
-	"LLVMCreateDisasmCPUFeatures" : ["LLVMDisasmContextRef function(const(char)* Triple, const(char)* CPU, const(char)* Features, void *DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp)",
-									"+", "3", "6", "0"],
-	"LLVMSetDisasmOptions" : ["int function(LLVMDisasmContextRef DC, ulong Options)",
-	                          "+", "3", "2", "0"],
-	"LLVMDisasmDispose" : ["void function(LLVMDisasmContextRef DC)"],
-	"LLVMDisasmInstruction" : ["size_t function(LLVMDisasmContextRef DC, ubyte* Bytes, ulong BytesSize, ulong PC, char* OutString, size_t OutStringSize)"],
-
-	/+ Enhanced Disassembly +/
-
-	"EDGetDisassembler" : ["int function(EDDisassemblerRef* disassembler, const(char)* triple, EDAssemblySyntax_t syntax)",
-	                       "-", "3", "3", "0"],
-	"EDGetRegisterName" : ["int function(const(char)** regName, EDDisassemblerRef disassembler, uint regID)",
-	                       "-", "3", "3", "0"],
-	"EDRegisterIsStackPointer" : ["int function(EDDisassemblerRef disassembler, uint regID)",
-	                              "-", "3", "3", "0"],
-	"EDRegisterIsProgramCounter" : ["int function(EDDisassemblerRef disassembler, uint regID)",
-	                                "-", "3", "3", "0"],
-	"EDCreateInsts" : ["uint function(EDInstRef* insts, uint count, EDDisassemblerRef disassembler, EDByteReaderCallback byteReader, ulong address, void* arg)",
-	                   "-", "3", "3", "0"],
-	"EDReleaseInst" : ["void function(EDInstRef inst)",
-	                   "-", "3", "3", "0"],
-	"EDInstByteSize" : ["int function(EDInstRef inst)",
-	                    "-", "3", "3", "0"],
-	"EDGetInstString" : ["int function(const(char)** buf, EDInstRef inst)",
-	                     "-", "3", "3", "0"],
-	"EDInstID" : ["int function(uint* instID, EDInstRef inst)",
-	              "-", "3", "3", "0"],
-	"EDInstIsBranch" : ["int function(EDInstRef inst)",
-	                    "-", "3", "3", "0"],
-	"EDInstIsMove" : ["int function(EDInstRef inst)",
-	                  "-", "3", "3", "0"],
-	"EDBranchTargetID" : ["int function(EDInstRef inst)",
-	                      "-", "3", "3", "0"],
-	"EDMoveSourceID" : ["int function(EDInstRef inst)",
-	                    "-", "3", "3", "0"],
-	"EDMoveTargetID" : ["int function(EDInstRef inst)",
-	                    "-", "3", "3", "0"],
-	"EDNumTokens" : ["int function(EDInstRef inst)",
-	                 "-", "3", "3", "0"],
-	"EDGetToken" : ["int function(EDTokenRef* token, EDInstRef inst, int index)",
-	                "-", "3", "3", "0"],
-	"EDGetTokenString" : ["int function(const(char)** buf, EDTokenRef token)",
-	                      "-", "3", "3", "0"],
-	"EDOperandIndexForToken" : ["int function(EDTokenRef token)",
-	                            "-", "3", "3", "0"],
-	"EDTokenIsWhitespace" : ["int function(EDTokenRef token)",
-	                         "-", "3", "3", "0"],
-	"EDTokenIsPunctuation" : ["int function(EDTokenRef token)",
-	                          "-", "3", "3", "0"],
-	"EDTokenIsOpcode" : ["int function(EDTokenRef token)",
-	                     "-", "3", "3", "0"],
-	"EDTokenIsLiteral" : ["int function(EDTokenRef token)",
-	                      "-", "3", "3", "0"],
-	"EDTokenIsRegister" : ["int function(EDTokenRef token)",
-	                       "-", "3", "3", "0"],
-	"EDTokenIsNegativeLiteral" : ["int function(EDTokenRef token)",
-	                              "-", "3", "3", "0"],
-	"EDLiteralTokenAbsoluteValue" : ["int function(ulong* value, EDTokenRef token)",
-	                                 "-", "3", "3", "0"],
-	"EDRegisterTokenValue" : ["int function(uint* registerID, EDTokenRef token)",
-	                          "-", "3", "3", "0"],
-	"EDNumOperands" : ["int function(EDInstRef inst)",
-	                   "-", "3", "3", "0"],
-	"EDGetOperand" : ["int function(EDOperandRef* operand, EDInstRef inst, int index)",
-	                  "-", "3", "3", "0"],
-	"EDOperandIsRegister" : ["int function(EDOperandRef operand)",
-	                         "-", "3", "3", "0"],
-	"EDOperandIsImmediate" : ["int function(EDOperandRef operand)",
-	                          "-", "3", "3", "0"],
-	"EDOperandIsMemory" : ["int function(EDOperandRef operand)",
-	                       "-", "3", "3", "0"],
-	"EDRegisterOperandValue" : ["int function(uint* value, EDOperandRef operand)",
-	                            "-", "3", "3", "0"],
-	"EDImmediateOperandValue" : ["int function(ulong* value, EDOperandRef operand)",
-	                             "-", "3", "3", "0"],
-	"EDEvaluateOperand" : ["int function(ulong* result, EDOperandRef operand, EDRegisterReaderCallback regReader, void* arg)",
-	                       "-", "3", "3", "0"],
-	"EDBlockCreateInsts" : ["uint function(EDInstRef* insts, int count, EDDisassemblerRef disassembler, EDByteBlock_t byteBlock, ulong address)",
-	                        "-", "3", "3", "0"],
-	"EDBlockEvaluateOperand" : ["int function(ulong* result, EDOperandRef operand, EDRegisterBlock_t regBlock)",
-	                            "-", "3", "3", "0"],
-	"EDBlockVisitTokens" : ["int function(EDInstRef inst, EDTokenVisitor_t visitor)",
-	                        "-", "3", "3", "0"],
-
-	/+ Execution Engine +/
-
-	"LLVMCreateGenericValueOfInt" : ["LLVMGenericValueRef function(LLVMTypeRef Ty, ulong N, LLVMBool IsSigned)"],
-	"LLVMCreateGenericValueOfPointer" : ["LLVMGenericValueRef function(void* P)"],
-	"LLVMCreateGenericValueOfFloat" : ["LLVMGenericValueRef function(LLVMTypeRef Ty, double N)"],
-	"LLVMGenericValueIntWidth" : ["uint function(LLVMGenericValueRef GenValRef)"],
-	"LLVMGenericValueToInt" : ["ulong function(LLVMGenericValueRef GenVal, LLVMBool IsSigned)"],
-	"LLVMGenericValueToPointer" : ["void* function(LLVMGenericValueRef GenVal)"],
-	"LLVMGenericValueToFloat" : ["double function(LLVMTypeRef TyRef, LLVMGenericValueRef GenVal)"],
-	"LLVMDisposeGenericValue" : ["void function(LLVMGenericValueRef GenVal)"],
-	"LLVMCreateExecutionEngineForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutEE, LLVMModuleRef M, char** OutError)"],
-	"LLVMCreateInterpreterForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutInterp, LLVMModuleRef M, char** OutError)"],
-	"LLVMCreateJITCompilerForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutJIT, LLVMModuleRef M, uint OptLevel, char** OutError)"],
-	"LLVMInitializeMCJITCompilerOptions" : ["void function(LLVMMCJITCompilerOptions* Options, size_t SizeOfOptions)",
-	                                        "+", "3", "3", "0"],
-	"LLVMCreateMCJITCompilerForModule" : ["LLVMBool function(LLVMExecutionEngineRef* OutJIT, LLVMModuleRef M, LLVMMCJITCompilerOptions* Options, size_t SizeOfOptions, char** OutError)",
-	                                      "+", "3", "3", "0"],
-	"LLVMCreateExecutionEngine" : ["LLVMBool function(LLVMExecutionEngineRef* OutEE, LLVMModuleProviderRef MP, char** OutError)",
-	                               "-", "3", "8", "0"],
-	"LLVMCreateInterpreter" : ["LLVMBool function(LLVMExecutionEngineRef* OutInterp, LLVMModuleProviderRef MP, char** OutError)",
-	                           "-", "3", "8", "0"],
-	"LLVMCreateJITCompiler" : ["LLVMBool function(LLVMExecutionEngineRef* OutJIT, LLVMModuleProviderRef MP, uint OptLevel, char** OutError)",
-	                           "-", "3", "8", "0"],
-	"LLVMDisposeExecutionEngine" : ["void function(LLVMExecutionEngineRef EE)"],
-	"LLVMRunStaticConstructors" : ["void function(LLVMExecutionEngineRef EE)"],
-	"LLVMRunStaticDestructors" : ["void function(LLVMExecutionEngineRef EE)"],
-	"LLVMRunFunctionAsMain" : ["int function(LLVMExecutionEngineRef EE, LLVMValueRef F, uint ArgC, const(char*)* ArgV, const(char*)* EnvP)"],
-	"LLVMRunFunction" : ["LLVMGenericValueRef function(LLVMExecutionEngineRef EE, LLVMValueRef F, uint NumArgs, LLVMGenericValueRef* Args)"],
-	"LLVMFreeMachineCodeForFunction" : ["void function(LLVMExecutionEngineRef EE, LLVMValueRef F)"],
-	"LLVMAddModule" : ["void function(LLVMExecutionEngineRef EE, LLVMModuleRef M)"],
-	"LLVMAddModuleProvider" : ["void function(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP)",
-	                           "-", "3", "8", "0"],
-	"LLVMRemoveModule" : ["LLVMBool function(LLVMExecutionEngineRef EE, LLVMModuleRef M, LLVMModuleRef* OutMod, char** OutError)"],
-	"LLVMRemoveModuleProvider" : ["LLVMBool function(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP, LLVMModuleRef* OutMod, char** OutError)",
-	                              "-", "3", "8", "0"],
-	"LLVMFindFunction" : ["LLVMBool function(LLVMExecutionEngineRef EE, const(char)* Name, LLVMValueRef* OutFn)"],
-	"LLVMRecompileAndRelinkFunction" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Fn)"],
-	"LLVMGetExecutionEngineTargetData" : ["LLVMTargetDataRef function(LLVMExecutionEngineRef EE)"],
-	"LLVMGetExecutionEngineTargetMachine" : ["LLVMTargetMachineRef function(LLVMExecutionEngineRef EE)",
-											"+", "3", "5", "0"],
-	"LLVMAddGlobalMapping" : ["void function(LLVMExecutionEngineRef EE, LLVMValueRef Global, void* Addr)"],
-	"LLVMGetPointerToGlobal" : ["void* function(LLVMExecutionEngineRef EE, LLVMValueRef Global)"],
-	"LLVMGetGlobalValueAddress" : ["ulong function(LLVMExecutionEngineRef EE, const(char)*Name)",
-								  "+", "3", "6", "0"],
-	"LLVMGetFunctionAddress" : ["ulong function(LLVMExecutionEngineRef EE, const(char)*Name)",
-							   "+", "3", "6", "0"],
-	"LLVMCreateSimpleMCJITMemoryManager" : ["LLVMMCJITMemoryManagerRef function(void* Opaque, LLVMMemoryManagerAllocateCodeSectionCallback AllocateCodeSection, LLVMMemoryManagerAllocateDataSectionCallback AllocateDataSection, LLVMMemoryManagerFinalizeMemoryCallback FinalizeMemory, LLVMMemoryManagerDestroyCallback Destroy)",
-											"+", "3", "4", "0"],
-	"LLVMDisposeMCJITMemoryManager" : ["void function(LLVMMCJITMemoryManagerRef MM)",
-									   "+", "3", "4", "0"],
-
-	/+ Initialization Routines +/
-
-	"LLVMInitializeCore" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeTransformUtils" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeScalarOpts" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeObjCARCOpts" : ["void function(LLVMPassRegistryRef R)",
-	                               "+", "3", "3", "0"],
-	"LLVMInitializeVectorization" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeInstCombine" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeIPO" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeInstrumentation" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeAnalysis" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeIPA" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeCodeGen" : ["void function(LLVMPassRegistryRef R)"],
-	"LLVMInitializeTarget" : ["void function(LLVMPassRegistryRef R)"],
-
-	/+ Linker +/
-
-	"LLVMLinkModules" : ["LLVMBool function(LLVMModuleRef Dest, LLVMModuleRef Src, LLVMLinkerMode Mode, char** OutMessage)",
-		                 "+", "3", "2", "0", "-", "3", "9", "0"],
-	"LLVMLinkModules2" : ["LLVMBool function(LLVMModuleRef Dest, LLVMModuleRef Src)",
-		                  "+", "3", "8", "0"],
-
-	/+ Link Time Optimization +/
-
-	"llvm_create_optimizer" : ["llvm_lto_t function()"],
-	"llvm_destroy_optimizer" : ["void function(llvm_lto_t lto)"],
-	"llvm_read_object_file" : ["llvm_lto_status_t function(llvm_lto_t lto, const(char)* input_filename)"],
-	"llvm_optimize_modules" : ["llvm_lto_status_t function(llvm_lto_t lto, const(char)* output_filename)"],
-
-	/+ LTO +/
-
-	"lto_get_version" : ["const(char)* function()"],
-	"lto_get_error_message" : ["const(char)* function()"],
-	"lto_module_is_object_file" : ["bool function(const(char)* path)"],
-	"lto_module_is_object_file_for_target" : ["bool function(const(char)* path, const(char)* target_triple_prefix)"],
-	"lto_module_has_objc_category" : ["lto_bool_t function(const(void)* mem, size_t length)",
-		                              "+", "3", "9", "0"],
-	"lto_module_is_object_file_in_memory" : ["bool function(const(void)* mem, size_t length)"],
-	"lto_module_is_object_file_in_memory_for_target" : ["bool function(const(void)* mem, size_t length, const(char)* target_triple_prefix)"],
-	"lto_module_create" : ["lto_module_t function(const(char)* path)"],
-	"lto_module_create_from_memory" : ["lto_module_t function(const(void)* mem, size_t length)"],
-	"lto_module_create_from_memory_with_path" : ["lto_module_t function(const(void)* mem, size_t length, const(char)*path)",
-												"+", "3", "5", "0"],
-
-	"lto_module_create_in_local_context" : ["lto_module_t function(const void *mem, size_t length, const(char)*path)",
-										   "+", "3", "6", "0"],
-	"lto_module_create_in_codegen_context" : ["lto_module_t function(const void *mem, size_t length, const(char)*path, lto_code_gen_t cg)",
-											 "+", "3", "6", "0"],
-	"lto_module_create_from_fd" : ["lto_module_t function(int fd, const(char)* path, size_t file_size)"],
-	/+ "offset" is originally of type "off_t", which is 64 bit on 64 bit machines,
-	 + but can be 32 bit or 64 bit on 32 bit machines depending on compilation.
-	 + Since there is no way to be sure how LLVM was compiled, the type "size_t"
-	 + is used instead as a compromise, which is 64 bit on 64 bit machines and
-	 + 32 bit on 32 bit machines. On 32 bit machines you will thus lose the extra
-	 + 32 bit if LLVM was compiled with off_t as 64 bit, but it seems to be
-	 + a reasonable tradeoff for the sake of compatibility at this time. +/
-	"lto_module_create_from_fd_at_offset" : ["lto_module_t function(int fd, const(char)* path, size_t file_size, size_t map_size, size_t offset)"],
-	"lto_module_dispose" : ["void function(lto_module_t mod)"],
-	"lto_module_get_target_triple" : ["const(char)* function(lto_module_t mod)"],
-	"lto_module_set_target_triple" : ["void function(lto_module_t mod, const(char)* triple)"],
-	"lto_module_get_num_symbols" : ["uint function(lto_module_t mod)"],
-	"lto_module_get_symbol_name" : ["const(char)* function(lto_module_t mod, uint index)"],
-	"lto_module_get_symbol_attribute" : ["lto_symbol_attributes function(lto_module_t mod, uint index)"],
-	"lto_module_get_num_deplibs" : ["uint function(lto_module_t mod)",
-								   "+", "3", "5", "0", "-", "3", "7", "0"],
-	"lto_module_get_deplib" : ["const(char)* function(lto_module_t mod, uint index)",
-							  "+", "3", "5", "0", "-", "3", "7", "0"],
-	"lto_module_get_num_linkeropts" : ["uint function(lto_module_t mod)",
-									  "+", "3", "5", "0", "-", "3", "7", "0"],
-	"lto_module_get_linkeropt" : ["const(char)* function(lto_module_t mod, uint index)",
-								  "+", "3", "5", "0", "-", "3", "7", "0"],
-	"lto_module_get_linkeropts" : ["const(char)* function(lto_module_t mod)",
-								   "+", "3", "7", "0"],
-	"lto_codegen_set_diagnostic_handler" : ["void function(lto_code_gen_t, lto_diagnostic_handler_t, void *)",
-											"+", "3", "5", "0"],
-	"lto_codegen_create" : ["lto_code_gen_t function()"],
-	"lto_codegen_create_in_local_context" : ["lto_code_gen_t function()",
-											"+", "3", "6", "0"],
-	"lto_codegen_dispose" : ["void function(lto_code_gen_t)"],
-	"lto_codegen_add_module" : ["bool function(lto_code_gen_t cg, lto_module_t mod)"],
-	"lto_codegen_add_module" : ["void function(lto_code_gen_t cg, lto_module_t mod)",
-								"+", "3", "7", "0"],
-	"lto_codegen_set_debug_model" : ["bool function(lto_code_gen_t cg, lto_debug_model)"],
-	"lto_codegen_set_pic_model" : ["bool function(lto_code_gen_t cg, lto_codegen_model)"],
-	"lto_codegen_set_cpu" : ["void function(lto_code_gen_t cg, const(char)* cpu)"],
-	"lto_codegen_set_assembler_path" : ["void function(lto_code_gen_t cg, const(char)* path)"],
-	"lto_codegen_set_assembler_args" : ["void function(lto_code_gen_t cg, const(char)** args, int nargs)"],
-	"lto_codegen_add_must_preserve_symbol" : ["void function(lto_code_gen_t cg, const(char)* symbol)"],
-	"lto_codegen_write_merged_modules" : ["bool function(lto_code_gen_t cg, const(char)* path)"],
-	"lto_codegen_compile" : ["const(void)* function(lto_code_gen_t cg, size_t* length)"],
-	"lto_codegen_compile_to_file" : ["bool function(lto_code_gen_t cg, const(char)** name)"],
-	"lto_codegen_optimize" : ["bool function(lto_code_gen_t cg)",
-							  "+", "3", "7", "0"],
-	"lto_codegen_compile_optimized" : ["const(void)* function(lto_code_gen_t cg, size_t* length)",
-									   "+", "3", "7", "0"],
-	"lto_api_version" : ["uint function()",
-						 "+", "3", "7", "0"],
-	"lto_codegen_debug_options" : ["void function(lto_code_gen_t cg, const(char)* )"],
-	"lto_initialize_disassembler" : ["void function()",
-	                                 "+", "3", "3", "0"],
-	"lto_codegen_set_should_internalize" : ["void function(lto_code_gen_t cg, bool ShouldInternalize)",
-											"+", "3", "7", "0"],
-	"lto_codegen_set_should_embed_uselists" : ["void function(lto_code_gen_t cg, bool ShouldEmbedUselists)",
-											   "+", "3", "7", "0"],
-
-	"thinlto_create_codegen" : ["thinlto_code_gen_t function()",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_dispose" : ["void function(thinlto_code_gen_t cg)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_add_module" : ["void function(thinlto_code_gen_t cg, const(char)* identifier, const(char)* data, int length)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_process" : ["void function(thinlto_code_gen_t cg)",
-		"+", "3", "9", "0"],
-	"thinlto_module_get_num_objects" : ["uint function(thinlto_code_gen_t cg)",
-		"+", "3", "9", "0"],
-	"thinlto_module_get_object" : ["LTOObjectBuffer function(thinlto_code_gen_t cg, uint index)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_pic_model" : ["lto_bool_t function(thinlto_code_gen_t cg, lto_codegen_model)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_cache_dir" : ["void function(thinlto_code_gen_t cg, const(char)* cache_dir)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_cache_pruning_interval" : ["void function(thinlto_code_gen_t cg, int interval)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_final_cache_size_relative_to_available_space" : ["void function(thinlto_code_gen_t cg, uint percentage)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_cache_entry_expiration" : ["void function(thinlto_code_gen_t cg, uint expiration)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_savetemps_dir" : ["void function(thinlto_code_gen_t cg, const(char)* save_temps_dir)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_cpu" : ["void function(thinlto_code_gen_t cg, const(char)* cpu)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_disable_codegen" : ["void function(thinlto_code_gen_t cg, lto_bool_t disable)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_set_codegen_only" : ["void function(thinlto_code_gen_t cg, lto_bool_t codegen_only)",
-		"+", "3", "9", "0"],
-	"thinlto_debug_options" : ["void function(const(char*) *options, int number)",
-		"+", "3", "9", "0"],
-	"lto_module_is_thinlto" : ["lto_bool_t function(lto_module_t mod)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_add_must_preserve_symbol" : ["void function(thinlto_code_gen_t cg, const(char)* name, int length)",
-		"+", "3", "9", "0"],
-	"thinlto_codegen_add_cross_referenced_symbol" : ["void function(thinlto_code_gen_t cg, const(char)* name, int length)",
-		"+", "3", "9", "0"],
-	/+ Object file reading and writing +/
-
-	"LLVMCreateObjectFile" : ["LLVMObjectFileRef function(LLVMMemoryBufferRef MemBuf)"],
-	"LLVMDisposeObjectFile" : ["void function(LLVMObjectFileRef ObjectFile)"],
-	"LLVMGetSections" : ["LLVMSectionIteratorRef function(LLVMObjectFileRef ObjectFile)"],
-	"LLVMDisposeSectionIterator" : ["void function(LLVMSectionIteratorRef SI)"],
-	"LLVMIsSectionIteratorAtEnd" : ["LLVMBool function(LLVMObjectFileRef ObjectFile, LLVMSectionIteratorRef SI)"],
-	"LLVMMoveToNextSection" : ["void function(LLVMSectionIteratorRef SI)"],
-	"LLVMMoveToContainingSection" : ["void function(LLVMSectionIteratorRef Sect, LLVMSymbolIteratorRef Sym)"],
-	"LLVMGetSymbols" : ["LLVMSymbolIteratorRef function(LLVMObjectFileRef ObjectFile)"],
-	"LLVMDisposeSymbolIterator" : ["void function(LLVMSymbolIteratorRef SI)"],
-	"LLVMIsSymbolIteratorAtEnd" : ["LLVMBool function(LLVMObjectFileRef ObjectFile, LLVMSymbolIteratorRef SI)"],
-	"LLVMMoveToNextSymbol" : ["void function(LLVMSymbolIteratorRef SI)"],
-	"LLVMGetSectionName" : ["const(char)* function(LLVMSectionIteratorRef SI)"],
-	"LLVMGetSectionSize" : ["ulong function(LLVMSectionIteratorRef SI)"],
-	"LLVMGetSectionContents" : ["const(char)* function(LLVMSectionIteratorRef SI)"],
-	"LLVMGetSectionAddress" : ["ulong function(LLVMSectionIteratorRef SI)"],
-	"LLVMGetSectionContainsSymbol" : ["LLVMBool function(LLVMSectionIteratorRef SI, LLVMSymbolIteratorRef Sym)"],
-	"LLVMGetRelocations" : ["LLVMRelocationIteratorRef function(LLVMSectionIteratorRef Section)"],
-	"LLVMDisposeRelocationIterator" : ["void function(LLVMRelocationIteratorRef RI)"],
-	"LLVMIsRelocationIteratorAtEnd" : ["LLVMBool function(LLVMSectionIteratorRef Section, LLVMRelocationIteratorRef RI)"],
-	"LLVMMoveToNextRelocation" : ["void function(LLVMRelocationIteratorRef RI)"],
-	"LLVMGetSymbolName" : ["const(char)* function(LLVMSymbolIteratorRef SI)"],
-	"LLVMGetSymbolAddress" : ["ulong function(LLVMSymbolIteratorRef SI)"],
-	"LLVMGetSymbolFileOffset" : ["ulong function(LLVMSymbolIteratorRef SI)",
-								 "-", "3", "5", "0"],
-	"LLVMGetSymbolSize" : ["ulong function(LLVMSymbolIteratorRef SI)"],
-	"LLVMGetRelocationAddress" : ["ulong function(LLVMRelocationIteratorRef RI)",
-								  "-", "3", "7", "0"],
-	"LLVMGetRelocationOffset" : ["ulong function(LLVMRelocationIteratorRef RI)"],
-	"LLVMGetRelocationSymbol" : ["LLVMSymbolIteratorRef function(LLVMRelocationIteratorRef RI)"],
-	"LLVMGetRelocationType" : ["ulong function(LLVMRelocationIteratorRef RI)"],
-	"LLVMGetRelocationTypeName" : ["const(char)* function(LLVMRelocationIteratorRef RI)"],
-	"LLVMGetRelocationValueString" : ["const(char)* function(LLVMRelocationIteratorRef RI)"],
-
-	/+ Target information +/
-
-	/+
-	 + These are all inline functions, meaning their bodies are
-	 + defined in the C headers, so currently they do not get exported
-	 + and are not loadable from LLVM's dynamic library.
-	 + The functions they themselves call, however, are, even though
-	 + they are not in the official llvm-c documentation - because
-	 + they are split across LLVMs target libraries.
-	 + That is why these functions are loaded instead and then used
-	 + further down in appropriate reimplementations of these
-	 + inline functions.
-	 + The list of targets is:
-	 + AArch64
-	 + ARM
-	 + CppBackend
-	 + Hexagon
-	 + MBlaze
-	 + MSP430
-	 + Mips
-	 + NVPTX
-	 + PowerPC
-	 + Sparc
-	 + X86
-	 + XCore
-	 +
-	 +
-	 "LLVMInitializeAllTargetInfos" : ["static void function()"],
-	 "LLVMInitializeAllTargets" : ["static void function()"],
-	 "LLVMInitializeAllTargetMCs" : ["static void function()"],
-	 "LLVMInitializeAllAsmPrinters" : ["static void function()"],
-	 "LLVMInitializeAllAsmParsers" : ["static void function()"],
-	 "LLVMInitializeAllDisassemblers" : ["static void function()"],
-	 "LLVMInitializeNativeTarget" : ["static LLVMBool function()"],
-	 Added in LLVM 3.4:
-	 "LLVMInitializeNativeAsmParser" : ["static LLVMBool function()"],
-	 "LLVMInitializeNativeAsmPrinter" : ["static LLVMBool function()"],
-	 "LLVMInitializeNativeDisassembler" : ["static LLVMBool function()"], +/
-	"LLVMInitializeAArch64TargetInfo" : ["void function()"],
-	"LLVMInitializeAArch64Target" : ["void function()"],
-	"LLVMInitializeAArch64TargetMC" : ["void function()"],
-	"LLVMInitializeAArch64AsmPrinter" : ["void function()"],
-	"LLVMInitializeAArch64AsmParser" : ["void function()"],
-	"LLVMInitializeAArch64Disassembler" : ["void function()"],
-
-	"LLVMInitializeARMTargetInfo" : ["void function()"],
-	"LLVMInitializeARMTarget" : ["void function()"],
-	"LLVMInitializeARMTargetMC" : ["void function()"],
-	"LLVMInitializeARMAsmPrinter" : ["void function()"],
-	"LLVMInitializeARMAsmParser" : ["void function()"],
-	"LLVMInitializeARMDisassembler" : ["void function()"],
-
-	"LLVMInitializeCellSPUTargetInfo" : ["void function()"],
-	"LLVMInitializeCellSPUTarget" : ["void function()"],
-	"LLVMInitializeCellSPUTargetMC" : ["void function()"],
-
-	"LLVMInitializeCppBackendTargetInfo" : ["void function()"],
-	"LLVMInitializeCppBackendTarget" : ["void function()"],
-	"LLVMInitializeCppBackendTargetMC" : ["void function()"],
-
-	"LLVMInitializeHexagonTargetInfo" : ["void function()"],
-	"LLVMInitializeHexagonTarget" : ["void function()"],
-	"LLVMInitializeHexagonTargetMC" : ["void function()"],
-	"LLVMInitializeHexagonAsmPrinter" : ["void function()"],
-
-	"LLVMInitializeMBlazeTargetInfo" : ["void function()"],
-	"LLVMInitializeMBlazeTarget" : ["void function()"],
-	"LLVMInitializeMBlazeTargetMC" : ["void function()"],
-	"LLVMInitializeMBlazeAsmPrinter" : ["void function()"],
-	"LLVMInitializeMBlazeAsmParser" : ["void function()"],
-	"LLVMInitializeMBlazeDisassembler" : ["void function()"],
-
-	"LLVMInitializeMSP430TargetInfo" : ["void function()"],
-	"LLVMInitializeMSP430Target" : ["void function()"],
-	"LLVMInitializeMSP430TargetMC" : ["void function()"],
-	"LLVMInitializeMSP430AsmPrinter" : ["void function()"],
-
-	"LLVMInitializeMipsTargetInfo" : ["void function()"],
-	"LLVMInitializeMipsTarget" : ["void function()"],
-	"LLVMInitializeMipsTargetMC" : ["void function()"],
-	"LLVMInitializeMipsAsmPrinter" : ["void function()"],
-	"LLVMInitializeMipsAsmParser" : ["void function()"],
-	"LLVMInitializeMipsDisassembler" : ["void function()"],
-
-	"LLVMInitializeNVPTXTargetInfo" : ["void function()"],
-	"LLVMInitializeNVPTXTarget" : ["void function()"],
-	"LLVMInitializeNVPTXTargetMC" : ["void function()"],
-	"LLVMInitializeNVPTXAsmPrinter" : ["void function()"],
-
-	"LLVMInitializePTXTargetInfo" : ["void function()"],
-	"LLVMInitializePTXTarget" : ["void function()"],
-	"LLVMInitializePTXTargetMC" : ["void function()"],
-	"LLVMInitializePTXAsmPrinter" : ["void function()"],
-
-	"LLVMInitializePowerPCTargetInfo" : ["void function()"],
-	"LLVMInitializePowerPCTarget" : ["void function()"],
-	"LLVMInitializePowerPCTargetMC" : ["void function()"],
-	"LLVMInitializePowerPCAsmPrinter" : ["void function()"],
-
-	"LLVMInitializeSparcTargetInfo" : ["void function()"],
-	"LLVMInitializeSparcTarget" : ["void function()"],
-	"LLVMInitializeSparcTargetMC" : ["void function()"],
-	"LLVMInitializeSparcAsmPrinter" : ["void function()"],
-
-	"LLVMInitializeX86TargetInfo" : ["void function()"],
-	"LLVMInitializeX86Target" : ["void function()"],
-	"LLVMInitializeX86TargetMC" : ["void function()"],
-	"LLVMInitializeX86AsmPrinter" : ["void function()"],
-	"LLVMInitializeX86AsmParser" : ["void function()"],
-	"LLVMInitializeX86Disassembler" : ["void function()"],
-
-	"LLVMInitializeXCoreTargetInfo" : ["void function()"],
-	"LLVMInitializeXCoreTarget" : ["void function()"],
-	"LLVMInitializeXCoreTargetMC" : ["void function()"],
-	"LLVMInitializeXCoreAsmPrinter" : ["void function()"],
-	"LLVMInitializeXCoreDisassembler" : ["void function()"],
-
-	"LLVMGetModuleDataLayout" : ["LLVMTargetDataRef function(LLVMModuleRef M)",
-		                         "+", "3", "9", "0"],
-	"LLVMSetModuleDataLayout" : ["void function(LLVMModuleRef M, LLVMTargetDataRef DL)",
-		                         "+", "3", "9", "0"],
-	"LLVMCreateTargetData" : ["LLVMTargetDataRef function(const(char)* StringRep)"],
-	"LLVMAddTargetData" : ["void function(LLVMTargetDataRef TD, LLVMPassManagerRef PM)",
-		                   "-", "3", "9", "0"],
-	"LLVMAddTargetLibraryInfo" : ["void function(LLVMTargetLibraryInfoRef TLI, LLVMPassManagerRef PM)"],
-	"LLVMCopyStringRepOfTargetData" : ["char* function(LLVMTargetDataRef TD)"],
-	"LLVMByteOrder" : ["enum LLVMByteOrdering function(LLVMTargetDataRef TD)"],
-	"LLVMPointerSize" : ["uint function(LLVMTargetDataRef TD)"],
-	"LLVMPointerSizeForAS" : ["uint function(LLVMTargetDataRef TD, uint AS)",
-	                          "+", "3", "2", "0"],
-	"LLVMIntPtrType" : ["LLVMTypeRef function(LLVMTargetDataRef TD)"],
-	"LLVMIntPtrTypeForAS" : ["LLVMTypeRef function(LLVMTargetDataRef TD, uint AS)",
-	                         "+", "3", "2", "0"],
-	"LLVMIntPtrTypeInContext" : ["LLVMTypeRef function(LLVMContextRef C, LLVMTargetDataRef TD)",
-								 "+", "3", "4", "0"],
-	"LLVMIntPtrTypeForASInContext" : ["LLVMTypeRef function(LLVMContextRef C, LLVMTargetDataRef TD, uint AS)",
-									  "+", "3", "4", "0"],
-	"LLVMSizeOfTypeInBits" : ["ulong function(LLVMTargetDataRef TD, LLVMTypeRef Ty)"],
-	"LLVMStoreSizeOfType" : ["ulong function(LLVMTargetDataRef TD, LLVMTypeRef Ty)"],
-	"LLVMABISizeOfType" : ["ulong function(LLVMTargetDataRef TD, LLVMTypeRef Ty)"],
-	"LLVMABIAlignmentOfType" : ["uint function(LLVMTargetDataRef TD, LLVMTypeRef Ty)"],
-	"LLVMCallFrameAlignmentOfType" : ["uint function(LLVMTargetDataRef TD, LLVMTypeRef Ty)"],
-	"LLVMPreferredAlignmentOfType" : ["uint function(LLVMTargetDataRef TD, LLVMTypeRef Ty)"],
-	"LLVMPreferredAlignmentOfGlobal" : ["uint function(LLVMTargetDataRef TD, LLVMValueRef GlobalVar)"],
-	"LLVMElementAtOffset" : ["uint function(LLVMTargetDataRef TD, LLVMTypeRef StructTy, ulong Offset)"],
-	"LLVMOffsetOfElement" : ["ulong function(LLVMTargetDataRef TD, LLVMTypeRef StructTy, uint Element)"],
-	"LLVMDisposeTargetData" : ["void function(LLVMTargetDataRef TD)"],
-
-	/+ Target machine +/
-
-	"LLVMGetFirstTarget" : ["LLVMTargetRef function()"],
-	"LLVMGetNextTarget" :  ["LLVMTargetRef function(LLVMTargetRef T)"],
-	"LLVMGetTargetFromName" : ["LLVMTargetRef function(const(char)* Name)",
-							   "+", "3", "4", "0"],
-	"LLVMGetTargetFromTriple" : ["LLVMBool function(const(char)* Triple, LLVMTargetRef* T, char** ErrorMessage)",
-								 "+", "3", "4", "0"],
-	"LLVMGetTargetName" : ["const(char)* function(LLVMTargetRef T)"],
-	"LLVMGetTargetDescription" : ["const(char)* function(LLVMTargetRef T)"],
-	"LLVMTargetHasJIT" : ["LLVMBool function(LLVMTargetRef T)"],
-	"LLVMTargetHasTargetMachine" : ["LLVMBool function(LLVMTargetRef T)"],
-	"LLVMTargetHasAsmBackend" : ["LLVMBool function(LLVMTargetRef T)"],
-	"LLVMCreateTargetMachine" : ["LLVMTargetMachineRef function(LLVMTargetRef T, const(char)* Triple,  const(char)* CPU, const(char)* Features, LLVMCodeGenOptLevel Level, LLVMRelocMode Reloc, LLVMCodeModel CodeModel)"],
-	"LLVMDisposeTargetMachine" : ["void function(LLVMTargetMachineRef T)"],
-	"LLVMGetTargetMachineTarget" : ["LLVMTargetRef function(LLVMTargetMachineRef T)"],
-	"LLVMGetTargetMachineTriple" : ["char* function(LLVMTargetMachineRef T)"],
-	"LLVMGetTargetMachineCPU" : ["char* function(LLVMTargetMachineRef T)"],
-	"LLVMGetTargetMachineFeatureString" : ["char* function(LLVMTargetMachineRef T)"],
-	"LLVMGetTargetMachineData" : ["LLVMTargetDataRef function(LLVMTargetMachineRef T)",
-		                          "-", "3", "7", "0"],
-	"LLVMCreateTargetDataLayout" : ["LLVMTargetDataRef function(LLVMTargetMachineRef T)",
-		                            "+", "3", "9", "0"],
-	"LLVMSetTargetMachineAsmVerbosity" : ["void function(LLVMTargetMachineRef T, LLVMBool VerboseAsm)",
-		                                  "+", "3", "4", "0"],
-	"LLVMTargetMachineEmitToFile" : ["LLVMBool function(LLVMTargetMachineRef T, LLVMModuleRef M,  char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage)"],
-	"LLVMTargetMachineEmitToMemoryBuffer" : ["LLVMBool function(LLVMTargetMachineRef T, LLVMModuleRef M, LLVMCodeGenFileType codegen, char** ErrorMessage, LLVMMemoryBufferRef* OutMemBuf)",
-											 "+", "3", "3", "0"],
-	"LLVMGetDefaultTargetTriple" : ["char* function()",
-									"+", "3", "4", "0"],
-	"LLVMAddAnalysisPasses" : ["void function(LLVMTargetMachineRef T, LLVMPassManagerRef PM)",
-							  "+", "3", "5", "0"],
-
-	/+ Support +/
-	"LLVMLoadLibraryPermanently" : ["LLVMBool function(const(char)* Filename)",
-									"+", "3", "4", "0"],
-	"LLVMParseCommandLineOptions" : ["void function(int argc, const(char*)* argv, const(char)* Overview)",
-									"+", "3", "6", "0"],
-	"LLVMSearchForAddressOfSymbol" : ["void* function(const(char)* symbolName)",
-									  "+", "3", "7", "0"],
-	"LLVMAddSymbol" : ["void function(const(char) *symbolName, void *symbolValue)",
-					   "+", "3", "7", "0"],
-
-	/+ IRReader +/
-	"LLVMParseIRInContext" : ["LLVMBool function(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage)",
-							  "+", "3", "4", "0"],
-
-	/+ JIT compilation of LLVM IR +/
-	"LLVMOrcCreateInstance" : ["LLVMOrcJITStackRef function(LLVMTargetMachineRef TM)",
-	                           "+", "3", "8", "0"],
-	"LLVMOrcGetErrorMsg" : ["const(char)* function(LLVMOrcJITStackRef JITStack)",
-		                       "+", "3", "9", "0"],
-	"LLVMOrcGetMangledSymbol" : ["void function(LLVMOrcJITStackRef JITStack, char** MangledSymbol, const(char)* Symbol)",
-	                             "+", "3", "8", "0"],
-	"LLVMOrcDisposeMangledSymbol" : ["void function(char* MangledSymbol)",
-	                                 "+", "3", "8", "0"],
-	"LLVMOrcCreateLazyCompileCallback" : ["LLVMOrcTargetAddress function(LLVMOrcJITStackRef JITStack, LLVMOrcLazyCompileCallbackFn Callback, void* CallbackCtx)",
-	                                      "+", "3", "8", "0"],
-	"LLVMOrcCreateIndirectStub" : ["void function(LLVMOrcJITStackRef JITStack, const(char)* StubName, LLVMOrcTargetAddress InitAddr)",
-	                               "+", "3", "8", "0"],
-	"LLVMOrcSetIndirectStubPointer" : ["void function(LLVMOrcJITStackRef JITStack, const(char)* StubName, LLVMOrcTargetAddress NewAddr)",
-	                                   "+", "3", "8", "0"],
-	"LLVMOrcAddEagerlyCompiledIR" : ["LLVMOrcModuleHandle function(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx)",
-	                                 "+", "3", "8", "0"],
-	"LLVMOrcAddLazilyCompiledIR" : ["LLVMOrcModuleHandle function(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx)",
-	                                "+", "3", "8", "0"],
-	"LLVMOrcAddObjectFile" : ["LLVMOrcModuleHandle function(LLVMOrcJITStackRef JITStack, LLVMObjectFileRef Obj, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx)",
-	                          "+", "3", "8", "0"],
-	"LLVMOrcRemoveModule" : ["void function(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle H)",
-	                         "+", "3", "8", "0"],
-	"LLVMOrcGetSymbolAddress" : ["LLVMOrcTargetAddress function(LLVMOrcJITStackRef JITStack, const(char)* SymbolName)",
-	                             "+", "3", "8", "0"],
-	"LLVMOrcDisposeInstance" : ["void function(LLVMOrcJITStackRef JITStack)",
-	                            "+", "3", "8", "0"],
-	];
+__gshared extern(System) nothrow:
+
+mixin(LLVM_Targets.map!(t => "void LLVMInitialize" ~ t ~ "TargetInfo();").joiner.array);
+mixin(LLVM_Targets.map!(t => "void LLVMInitialize" ~ t ~ "Target();").joiner.array);
+mixin(LLVM_Targets.map!(t => "void LLVMInitialize" ~ t ~ "TargetMC();").joiner.array);
+mixin(LLVM_AsmPrinters.map!(t => "void LLVMInitialize" ~ t ~ "AsmPrinter();").joiner.array);
+mixin(LLVM_AsmParsers.map!(t => "void LLVMInitialize" ~ t ~ "AsmParser();").joiner.array);
+mixin(LLVM_Disassemblers.map!(t => "void LLVMInitialize" ~ t ~ "Disassembler();").joiner.array);
+
+@nogc:
+
+/+ Analysis +/
+
+LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action, char** OutMessage);
+LLVMBool LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action);
+void LLVMViewFunctionCFG(LLVMValueRef Fn);
+void LLVMViewFunctionCFGOnly(LLVMValueRef Fn);
+
+/+ Bit Reader +/
+
+static if(LLVM_Version < LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMParseBitcode(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule, char** OutMessage);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMParseBitcode2(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule);
+}
+
+static if(LLVM_Version < LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule, char** OutMessage);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMParseBitcodeInContext2(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutModule);
+}
+
+static if(LLVM_Version < LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMGetBitcodeModuleInContext2(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM);
+}
+
+static if(LLVM_Version < LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMGetBitcodeModule(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMGetBitcodeModule2(LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM);
+}
+
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleProviderRef* OutMP, char** OutMessage);
+}
+
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf, LLVMModuleProviderRef* OutMP, char** OutMessage);
+}
+
+/+ Bit Writer +/
+
+int LLVMWriteBitcodeToFile(LLVMModuleRef M, const(char)* Path);
+int LLVMWriteBitcodeToFD(LLVMModuleRef M, int FD, int ShouldClose, int Unbuffered);
+int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int Handle);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMMemoryBufferRef LLLVMWriteBitcodeToMemoryBuffer(LLVMModuleRef M);
+}
+
+/+ Transforms +/
+
+/++ Interprocedural transformations ++/
+
+void LLVMAddArgumentPromotionPass(LLVMPassManagerRef PM);
+void LLVMAddConstantMergePass(LLVMPassManagerRef PM);
+void LLVMAddDeadArgEliminationPass(LLVMPassManagerRef PM);
+void LLVMAddFunctionAttrsPass(LLVMPassManagerRef PM);
+void LLVMAddFunctionInliningPass(LLVMPassManagerRef PM);
+void LLVMAddAlwaysInlinerPass(LLVMPassManagerRef PM);
+void LLVMAddGlobalDCEPass(LLVMPassManagerRef PM);
+void LLVMAddGlobalOptimizerPass(LLVMPassManagerRef PM);
+void LLVMAddIPConstantPropagationPass(LLVMPassManagerRef PM);
+void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
+void LLVMAddIPSCCPPass(LLVMPassManagerRef PM);
+void LLVMAddInternalizePass(LLVMPassManagerRef, uint AllButMain);
+void LLVMAddStripDeadPrototypesPass(LLVMPassManagerRef PM);
+void LLVMAddStripSymbolsPass(LLVMPassManagerRef PM);
+
+/++ Pass manager builder ++/
+
+LLVMPassManagerBuilderRef LLVMPassManagerBuilderCreate();
+void LLVMPassManagerBuilderDispose(LLVMPassManagerBuilderRef PMB);
+void LLVMPassManagerBuilderSetOptLevel(LLVMPassManagerBuilderRef PMB, uint OptLevel);
+void LLVMPassManagerBuilderSetSizeLevel(LLVMPassManagerBuilderRef PMB, uint SizeLevel);
+void LLVMPassManagerBuilderSetDisableUnitAtATime(LLVMPassManagerBuilderRef PMB, LLVMBool Value);
+void LLVMPassManagerBuilderSetDisableUnrollLoops(LLVMPassManagerBuilderRef PMB, LLVMBool Value);
+void LLVMPassManagerBuilderSetDisableSimplifyLibCalls(LLVMPassManagerBuilderRef PMB, LLVMBool Value);
+void LLVMPassManagerBuilderUseInlinerWithThreshold(LLVMPassManagerBuilderRef PMB, uint Threshold);
+void LLVMPassManagerBuilderPopulateFunctionPassManager(LLVMPassManagerBuilderRef PMB, LLVMPassManagerRef PM);
+void LLVMPassManagerBuilderPopulateModulePassManager(LLVMPassManagerBuilderRef PMB, LLVMPassManagerRef PM);
+void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB, LLVMPassManagerRef PM, LLVMBool Internalize, LLVMBool RunInliner);
+
+/++ Scalar transformations ++/
+
+void LLVMAddAggressiveDCEPass(LLVMPassManagerRef PM);
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void LLVMAddBitTrackingDCEPass(LLVMPassManagerRef PM);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    void LLVMAddAlignmentFromAssumptionsPass(LLVMPassManagerRef PM);
+}
+void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
+void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM);
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMAddScalarizerPass(LLVMPassManagerRef PM);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMAddMergedLoadStoreMotionPass(LLVMPassManagerRef PM);
+}
+void LLVMAddGVNPass(LLVMPassManagerRef PM);
+void LLVMAddIndVarSimplifyPass(LLVMPassManagerRef PM);
+void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
+void LLVMAddJumpThreadingPass(LLVMPassManagerRef PM);
+void LLVMAddLICMPass(LLVMPassManagerRef PM);
+void LLVMAddLoopDeletionPass(LLVMPassManagerRef PM);
+void LLVMAddLoopIdiomPass(LLVMPassManagerRef PM);
+void LLVMAddLoopRotatePass(LLVMPassManagerRef PM);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMAddLoopRerollPass(LLVMPassManagerRef PM);
+}
+void LLVMAddLoopUnrollPass(LLVMPassManagerRef PM);
+void LLVMAddLoopUnswitchPass(LLVMPassManagerRef PM);
+void LLVMAddMemCpyOptPass(LLVMPassManagerRef PM);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMAddPartiallyInlineLibCallsPass(LLVMPassManagerRef PM);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    void LLVMAddLowerSwitchPass(LLVMPassManagerRef PM);
+}
+void LLVMAddPromoteMemoryToRegisterPass(LLVMPassManagerRef PM);
+void LLVMAddReassociatePass(LLVMPassManagerRef PM);
+void LLVMAddSCCPPass(LLVMPassManagerRef PM);
+void LLVMAddScalarReplAggregatesPass(LLVMPassManagerRef PM);
+void LLVMAddScalarReplAggregatesPassSSA(LLVMPassManagerRef PM);
+void LLVMAddScalarReplAggregatesPassWithThreshold(LLVMPassManagerRef PM, int Threshold);
+void LLVMAddSimplifyLibCallsPass(LLVMPassManagerRef PM);
+void LLVMAddTailCallEliminationPass(LLVMPassManagerRef PM);
+void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM);
+void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
+void LLVMAddVerifierPass(LLVMPassManagerRef PM);
+void LLVMAddCorrelatedValuePropagationPass(LLVMPassManagerRef PM);
+void LLVMAddEarlyCSEPass(LLVMPassManagerRef PM);
+void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM);
+void LLVMAddTypeBasedAliasAnalysisPass(LLVMPassManagerRef PM);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    void LLVMAddScopedNoAliasAAPass(LLVMPassManagerRef PM);
+}
+void LLVMAddBasicAliasAnalysisPass(LLVMPassManagerRef PM);
+
+/++ Vectorization transformations ++/
+
+void LLVMAddBBVectorizePass(LLVMPassManagerRef PM);
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM);
+}
+
+/+ Core +/
+
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void LLVMShutdown();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    char* LLVMCreateMessage(const(char)* Message);
+}
+void LLVMDisposeMessage(char* Message);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMInstallFatalErrorHandler(LLVMFatalErrorHandler Handler);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMResetFatalErrorHandler();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMEnablePrettyStackTrace();
+}
+
+/++ Contexts ++/
+
+LLVMContextRef LLVMContextCreate();
+LLVMContextRef LLVMGetGlobalContext();
+void LLVMContextDispose(LLVMContextRef C);
+uint LLVMGetMDKindIDInContext(LLVMContextRef C, const(char)* Name, uint SLen);
+uint LLVMGetMDKindID(const(char)* Name, uint SLen);
+
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetEnumAttributeKindForName(const(char)*Name, size_t SLen);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetLastEnumAttributeKind();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAttributeRef LLVMCreateEnumAttribute(LLVMContextRef C, uint KindID, ulong Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetEnumAttributeKind(LLVMAttributeRef A);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    ulong LLVMGetEnumAttributeValue(LLVMAttributeRef A);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAttributeRef LLVMCreateStringAttribute(LLVMContextRef C, const(char)*K, uint KLength, const(char)*V, uint VLength);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(char)* LLVMGetStringAttributeKind(LLVMAttributeRef A, uint *Length);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(char)* LLVMGetStringAttributeValue(LLVMAttributeRef A, uint *Length);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMIsEnumAttribute(LLVMAttributeRef A);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMIsStringAttribute(LLVMAttributeRef A);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMContextSetDiagnosticHandler (LLVMContextRef C, LLVMDiagnosticHandler Handler, void *DiagnosticContext);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMDiagnosticHandler LLVMContextGetDiagnosticHandler(LLVMContextRef C);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void* LLVMContextGetDiagnosticContext(LLVMContextRef C);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    char* LLVMGetDiagInfoDescription(LLVMDiagnosticInfoRef DI);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    LLVMDiagnosticSeverity LLVMGetDiagInfoSeverity(LLVMDiagnosticInfoRef DI);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMContextSetYieldCallback(LLVMContextRef C, LLVMYieldCallback Callback, void *OpaqueHandle);
+}
+
+/++ Modules ++/
+
+LLVMModuleRef LLVMModuleCreateWithName(const(char)* ModuleID);
+LLVMModuleRef LLVMModuleCreateWithNameInContext(const(char)* ModuleID, LLVMContextRef C);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMModuleRef LLLVMCloneModule(LLVMModuleRef M);
+}
+void LLVMDisposeModule(LLVMModuleRef M);
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(char)* LLVMGetModuleIdentifier(LLVMModuleRef M, size_t *Len);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetModuleIdentifier(LLVMModuleRef M, const(char)* Ident, size_t Len);
+}
+
+const(char)* LLVMGetDataLayout(LLVMModuleRef M);
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(char)* LLVMGetDataLayoutStr(LLVMModuleRef M);
+}
+
+void LLVMSetDataLayout(LLVMModuleRef M, const(char)* Triple);
+const(char)* LLVMGetTarget(LLVMModuleRef M);
+void LLVMSetTarget(LLVMModuleRef M, const(char)* Triple);
+void LLVMDumpModule(LLVMModuleRef M);
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    LLVMBool LLVMPrintModuleToFile(LLVMModuleRef M, const(char)* Filename, char** ErrorMessage);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    char* LLVMPrintModuleToString(LLVMModuleRef M);
+}
+void LLVMSetModuleInlineAsm(LLVMModuleRef M, const(char)* Asm);
+LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
+LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const(char)* Name);
+uint LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const(char)* name);
+void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const(char)* name, LLVMValueRef *Dest);
+void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const(char)* name, LLVMValueRef Val);
+LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const(char)* Name, LLVMTypeRef FunctionTy);
+LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const(char)* Name);
+LLVMValueRef LLVMGetFirstFunction(LLVMModuleRef M);
+LLVMValueRef LLVMGetLastFunction(LLVMModuleRef M);
+LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn);
+LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn);
+
+/++ Types ++/
+
+LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
+LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty);
+LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMDumpType(LLVMTypeRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    char* LLVMPrintTypeToString(LLVMTypeRef Val);
+}
+
+/+++ Integer Types +++/
+
+LLVMTypeRef LLVMInt1TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt8TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt16TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt32TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt64TypeInContext(LLVMContextRef C);
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMTypeRef LLVMInt128TypeInContext(LLVMContextRef C);
+}
+LLVMTypeRef LLVMIntTypeInContext(LLVMContextRef C, uint NumBits);
+LLVMTypeRef LLVMInt1Type();
+LLVMTypeRef LLVMInt8Type();
+LLVMTypeRef LLVMInt16Type();
+LLVMTypeRef LLVMInt32Type();
+LLVMTypeRef LLVMInt64Type();
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMTypeRef LLVMInt128Type();
+}
+LLVMTypeRef LLVMIntType(uint NumBits);
+uint LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
+
+/+++ Floating Point Types +++/
+
+LLVMTypeRef LLVMHalfTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMDoubleTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMX86FP80TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMFP128TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMHalfType();
+LLVMTypeRef LLVMFloatType();
+LLVMTypeRef LLVMDoubleType();
+LLVMTypeRef LLVMX86FP80Type();
+LLVMTypeRef LLVMFP128Type();
+LLVMTypeRef LLVMPPCFP128Type();
+
+/+++ Function Types +++/
+
+LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType, LLVMTypeRef* ParamTypes, uint ParamCount, LLVMBool IsVarArg);
+LLVMBool LLVMIsFunctionVarArg(LLVMTypeRef FunctionTy);
+LLVMTypeRef LLVMGetReturnType(LLVMTypeRef FunctionTy);
+uint LLVMCountParamTypes(LLVMTypeRef FunctionTy);
+void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef* Dest);
+
+/+++ Structure Types +++/
+
+LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef C, LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed);
+LLVMTypeRef LLVMStructType(LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed);
+LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const(char)* Name);
+const(char)* LLVMGetStructName(LLVMTypeRef Ty);
+void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef* ElementTypes, uint ElementCount, LLVMBool Packed);
+uint LLVMCountStructElementTypes(LLVMTypeRef StructTy);
+void LLVMGetStructElementTypes(LLVMTypeRef StructTy, LLVMTypeRef* Dest);
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    LLVMTypeRef LLVMStructGetTypeAtIndex(LLVMTypeRef StructTy, uint i);
+}
+LLVMBool LLVMIsPackedStruct(LLVMTypeRef StructTy);
+LLVMBool LLVMIsOpaqueStruct(LLVMTypeRef StructTy);
+
+/+++ Sequential Types +++/
+
+LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty);
+LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, uint ElementCount);
+uint LLVMGetArrayLength(LLVMTypeRef ArrayTy);
+LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType, uint AddressSpace);
+uint LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
+LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, uint ElementCount);
+uint LLVMGetVectorSize(LLVMTypeRef VectorTy);
+
+/+++ Other Types +++/
+
+LLVMTypeRef LLVMVoidTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMVoidType();
+LLVMTypeRef LLVMLabelType();
+LLVMTypeRef LLVMX86MMXType();
+
+/++ Values ++/
+
+/+++ General APIs +++/
+
+LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMValueKind LLVMGetValueKind(LLVMValueRef Val);
+}
+const(char)* LLVMGetValueName(LLVMValueRef Val);
+void LLVMSetValueName(LLVMValueRef Val, const(char )*Name);
+void LLVMDumpValue(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    char* LLVMPrintValueToString(LLVMValueRef Val);
+}
+void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal);
+LLVMBool LLVMIsConstant(LLVMValueRef Val);
+LLVMBool LLVMIsUndef(LLVMValueRef Val);
+
+LLVMValueRef LLVMIsAAllocaInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAArgument(LLVMValueRef Val);
+LLVMValueRef LLVMIsABasicBlock(LLVMValueRef Val);
+LLVMValueRef LLVMIsABinaryOperator(LLVMValueRef Val);
+LLVMValueRef LLVMIsABitCastInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsABlockAddress(LLVMValueRef Val);
+LLVMValueRef LLVMIsABranchInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsACallInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsACastInst(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMValueRef LLVMIsAAddrSpaceCastInst(LLVMValueRef Val);
+}
+LLVMValueRef LLVMIsACmpInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstantAggregateZero(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstantArray(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMValueRef LLVMIsAConstantDataSequential(LLVMValueRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMValueRef LLVMIsAConstantDataArray(LLVMValueRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMValueRef LLVMIsAConstantDataVector(LLVMValueRef Val);
+}
+
+LLVMValueRef LLVMIsAConstantExpr(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstantFP(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstantInt(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstant(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstantPointerNull(LLVMValueRef Val);
+LLVMValueRef LLVMIsAConstantStruct(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMValueRef LLVMIsAConstantTokenNone(LLVMValueRef Val);
+}
+LLVMValueRef LLVMIsAConstantVector(LLVMValueRef Val);
+LLVMValueRef LLVMIsADbgDeclareInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsADbgInfoIntrinsic(LLVMValueRef Val);
+LLVMValueRef LLVMIsAExtractElementInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAExtractValueInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAFCmpInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAFPExtInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAFPToSIInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAFPToUIInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAFPTruncInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAGetElementPtrInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAGlobalValue(LLVMValueRef Val);
+LLVMValueRef LLVMIsAGlobalAlias(LLVMValueRef Val);
+LLVMValueRef LLVMIsAGlobalObject(LLVMValueRef Val);
+LLVMValueRef LLVMIsAFunction(LLVMValueRef Val);
+LLVMValueRef LLVMIsAGlobalVariable(LLVMValueRef Val);
+LLVMValueRef LLVMIsAICmpInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAIndirectBrInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAInlineAsm(LLVMValueRef Val);
+LLVMValueRef LLVMIsAInsertElementInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAInsertValueInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAInstruction(LLVMValueRef Val);
+LLVMValueRef LLVMIsAIntrinsicInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAIntToPtrInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAInvokeInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsALandingPadInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsALoadInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMDNode(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMDString(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMemCpyInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMemIntrinsic(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMemMoveInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAMemSetInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAPHINode(LLVMValueRef Val);
+LLVMValueRef LLVMIsAPtrToIntInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAResumeInst(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMValueRef LLVMIsACleanupReturnInst(LLVMValueRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMValueRef LLVMIsACatchReturnInst(LLVMValueRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMValueRef LLVMIsAFuncletPadInst(LLVMValueRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMValueRef LLVMIsACatchPadInst(LLVMValueRef Val);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMValueRef LLVMIsACleanupPadInst(LLVMValueRef Val);
+}
+LLVMValueRef LLVMIsAReturnInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsASelectInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsASExtInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAShuffleVectorInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsASIToFPInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAStoreInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsASwitchInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsATerminatorInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsATruncInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAUIToFPInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAUnaryInstruction(LLVMValueRef Val);
+LLVMValueRef LLVMIsAUndefValue(LLVMValueRef Val);
+LLVMValueRef LLVMIsAUnreachableInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAUser(LLVMValueRef Val);
+LLVMValueRef LLVMIsAVAArgInst(LLVMValueRef Val);
+LLVMValueRef LLVMIsAZExtInst(LLVMValueRef Val);
+
+/+++ Usage +++/
+
+LLVMUseRef LLVMGetFirstUse(LLVMValueRef Val);
+LLVMUseRef LLVMGetNextUse(LLVMUseRef U);
+LLVMValueRef LLVMGetUser(LLVMUseRef U);
+LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
+
+/+++ User value +++/
+
+LLVMValueRef LLVMGetOperand(LLVMValueRef Val, uint Index);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMUseRef LLVMGetOperandUse(LLVMValueRef Val, uint Index);
+}
+void LLVMSetOperand(LLVMValueRef User, uint Index, LLVMValueRef Val);
+int LLVMGetNumOperands(LLVMValueRef Val);
+
+/+++ Constants +++/
+
+LLVMValueRef LLVMConstNull(LLVMTypeRef Ty);
+LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty);
+LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty);
+LLVMBool LLVMIsNull(LLVMValueRef Val);
+LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty);
+
+/++++ Scalar constants ++++/
+
+LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, ulong N, LLVMBool SignExtend);
+LLVMValueRef LLVMConstIntOfArbitraryPrecision(LLVMTypeRef IntTy, uint NumWords, const(ulong)* Words);
+LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const(char)* Text, ubyte Radix);
+LLVMValueRef LLVMConstIntOfStringAndSize(LLVMTypeRef IntTy, const(char)* Text, uint SLen, ubyte Radix);
+LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N);
+LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const(char)* Text);
+LLVMValueRef LLVMConstRealOfStringAndSize(LLVMTypeRef RealTy, const(char)* Text, uint SLen);
+ulong LLVMConstIntGetZExtValue(LLVMValueRef ConstantVal);
+long LLVMConstIntGetSExtValue(LLVMValueRef ConstantVal);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    double LLVMConstRealGetDouble(LLVMValueRef ConstantVal, LLVMBool *losesInfo);
+}
+
+/++++ Composite Constants ++++/
+
+LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const(char)* Str, uint Length, LLVMBool DontNullTerminate);
+LLVMValueRef LLVMConstString(const(char)* Str, uint Length, LLVMBool DontNullTerminate);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMBool LLVMIsConstantString(LLVMValueRef c);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    const(char*) LLVMGetAsString(LLVMValueRef c, size_t* Length);
+}
+LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed);
+LLVMValueRef LLVMConstStruct(LLVMValueRef* ConstantVals, uint Count, LLVMBool Packed);
+LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy, LLVMValueRef* ConstantVals, uint Length);
+LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef StructTy, LLVMValueRef* ConstantVals, uint Count);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMValueRef LLVMGetElementAsConstant(LLVMValueRef c, uint idx);
+}
+LLVMValueRef LLVMConstVector(LLVMValueRef* ScalarConstantVals, uint Size);
+
+/++++ Constant Expressions ++++/
+
+LLVMOpcode LLVMGetConstOpcode(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty);
+LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty);
+LLVMValueRef LLVMConstNeg(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstNSWNeg(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstNUWNeg(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstFNeg(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstNot(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstNSWAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstNUWAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstNSWSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstNUWSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstNSWMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstNUWMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstUDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstExactSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstURem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstSRem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFRem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstAnd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstOr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstXor(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstICmp(LLVMIntPredicate Predicate, LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFCmp(LLVMRealPredicate Predicate, LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstShl(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstLShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstAShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal, LLVMValueRef* ConstantIndices, uint NumIndices);
+LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef ConstantVal, LLVMValueRef* ConstantIndices, uint NumIndices);
+LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstZExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstUIToFP(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSIToFP(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPToUI(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPToSI(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstPtrToInt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstIntToPtr(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMValueRef LLVMConstAddrSpaceCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+}
+LLVMValueRef LLVMConstZExtOrBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSExtOrBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstTruncOrBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstPointerCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstIntCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType, LLVMBool isSigned);
+LLVMValueRef LLVMConstFPCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSelect(LLVMValueRef ConstantCondition, LLVMValueRef ConstantIfTrue, LLVMValueRef ConstantIfFalse);
+LLVMValueRef LLVMConstExtractElement(LLVMValueRef VectorConstant, LLVMValueRef IndexConstant);
+LLVMValueRef LLVMConstInsertElement(LLVMValueRef VectorConstant, LLVMValueRef ElementValueConstant, LLVMValueRef IndexConstant);
+LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant, LLVMValueRef VectorBConstant, LLVMValueRef MaskConstant);
+LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, uint* IdxList, uint NumIdx);
+LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant, LLVMValueRef ElementValueConstant, uint* IdxList, uint NumIdx);
+LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const(char)* AsmString, const(char)* Constraints, LLVMBool HasSideEffects, LLVMBool IsAlignStack);
+LLVMValueRef LLVMBlockAddress(LLVMValueRef F, LLVMBasicBlockRef BB);
+
+/++++ Global Values ++++/
+
+LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global);
+LLVMBool LLVMIsDeclaration(LLVMValueRef Global);
+LLVMLinkage LLVMGetLinkage(LLVMValueRef Global);
+void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage);
+const(char)* LLVMGetSection(LLVMValueRef Global);
+void LLVMSetSection(LLVMValueRef Global, const(char)* Section);
+LLVMVisibility LLVMGetVisibility(LLVMValueRef Global);
+void LLVMSetVisibility(LLVMValueRef Global, LLVMVisibility Viz);
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    LLVMDLLStorageClass LLVMGetDLLStorageClass(LLVMValueRef Global);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMSetDLLStorageClass(LLVMValueRef Global, LLVMDLLStorageClass Class);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    LLVMBool LLVMHasUnnamedAddr(LLVMValueRef Global);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMSetUnnamedAddr(LLVMValueRef Global, LLVMBool HasUnnamedAddr);
+}
+uint LLVMGetAlignment(LLVMValueRef Global);
+void LLVMSetAlignment(LLVMValueRef Global, uint Bytes);
+
+/+++++ Global Variables +++++/
+
+LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const(char)* Name);
+LLVMValueRef LLVMAddGlobalInAddressSpace(LLVMModuleRef M, LLVMTypeRef Ty, const(char)* Name, uint AddressSpace);
+LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const(char)* Name);
+LLVMValueRef LLVMGetFirstGlobal(LLVMModuleRef M);
+LLVMValueRef LLVMGetLastGlobal(LLVMModuleRef M);
+LLVMValueRef LLVMGetNextGlobal(LLVMValueRef GlobalVar);
+LLVMValueRef LLVMGetPreviousGlobal(LLVMValueRef GlobalVar);
+void LLVMDeleteGlobal(LLVMValueRef GlobalVar);
+LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar);
+void LLVMSetInitializer(LLVMValueRef GlobalVar, LLVMValueRef ConstantVal);
+LLVMBool LLVMIsThreadLocal(LLVMValueRef GlobalVar);
+void LLVMSetThreadLocal(LLVMValueRef GlobalVar, LLVMBool IsThreadLocal);
+LLVMBool LLVMIsGlobalConstant(LLVMValueRef GlobalVar);
+void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, LLVMBool IsConstant);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMThreadLocalMode LLVMGetThreadLocalMode(LLVMValueRef GlobalVar);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void LLVMSetThreadLocalMode(LLVMValueRef GlobalVar, LLVMThreadLocalMode Mode);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMBool LLVMIsExternallyInitialized(LLVMValueRef GlobalVar);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void LLVMSetExternallyInitialized(LLVMValueRef GlobalVar, LLVMBool IsExtInit);
+}
+
+/+++++ Global Aliases +++++/
+
+LLVMValueRef LLVMAddAlias(LLVMModuleRef M, LLVMTypeRef Ty, LLVMValueRef Aliasee, const(char)* Name);
+
+/+++++ Function values +++++/
+
+void LLVMDeleteFunction(LLVMValueRef Fn);
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMHasPersonalityFn(LLVMValueRef Fn);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    LLVMValueRef LLVMGetPersonalityFn(LLVMValueRef Fn);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void LLVMSetPersonalityFn(LLVMValueRef Fn, LLVMValueRef PersonalityFn);
+}
+uint LLVMGetIntrinsicID(LLVMValueRef Fn);
+uint LLVMGetFunctionCallConv(LLVMValueRef Fn);
+void LLVMSetFunctionCallConv(LLVMValueRef Fn, uint CC);
+const(char)* LLVMGetGC(LLVMValueRef Fn);
+void LLVMSetGC(LLVMValueRef Fn, const(char)* Name);
+void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
+
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMAddAttributeAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, LLVMAttributeRef A);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetAttributeCountAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMGetAttributesAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, LLVMAttributeRef *Attrs);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAttributeRef LLVMGetEnumAttributeAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, uint KindID);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAttributeRef LLVMGetStringAttributeAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, const(char)* K, uint KLen);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMRemoveEnumAttributeAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, uint KindID);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMRemoveStringAttributeAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, const(char)* K, uint KLen);
+}
+
+
+
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void LLVMAddTargetDependentFunctionAttr(LLVMValueRef Fn, const(char)* A, const(char)* V);
+}
+LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn);
+void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
+
+/++++++ Function Parameters ++++++/
+
+uint LLVMCountParams(LLVMValueRef Fn);
+void LLVMGetParams(LLVMValueRef Fn, LLVMValueRef* Params);
+LLVMValueRef LLVMGetParam(LLVMValueRef Fn, uint Index);
+LLVMValueRef LLVMGetParamParent(LLVMValueRef Inst);
+LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn);
+LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
+LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg);
+LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg);
+void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg);
+void LLVMSetParamAlignment(LLVMValueRef Arg, uint Align);
+
+/+++ Metadata +++/
+
+LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const(char)* Str, uint SLen);
+LLVMValueRef LLVMMDString(const(char)* Str, uint SLen);
+LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef* Vals, uint Count);
+LLVMValueRef LLVMMDNode(LLVMValueRef* Vals, uint Count);
+const(char)* LLVMGetMDString(LLVMValueRef V, uint* Len);
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    uint LLVMGetMDNodeNumOperands(LLVMValueRef V);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    void LLVMGetMDNodeOperands(LLVMValueRef V, LLVMValueRef *Dest);
+}
+
+/+++ Basic Block +++/
+
+LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB);
+LLVMBool LLVMValueIsBasicBlock(LLVMValueRef Val);
+LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(char)* LLVMGetBasicBlockName(LLVMBasicBlockRef BB);
+}
+LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB);
+LLVMValueRef LLVMGetBasicBlockTerminator(LLVMBasicBlockRef BB);
+uint LLVMCountBasicBlocks(LLVMValueRef Fn);
+void LLVMGetBasicBlocks(LLVMValueRef Fn, LLVMBasicBlockRef* BasicBlocks);
+LLVMBasicBlockRef LLVMGetFirstBasicBlock(LLVMValueRef Fn);
+LLVMBasicBlockRef LLVMGetLastBasicBlock(LLVMValueRef Fn);
+LLVMBasicBlockRef LLVMGetNextBasicBlock(LLVMBasicBlockRef BB);
+LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB);
+LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn);
+LLVMBasicBlockRef LLVMAppendBasicBlockInContext(LLVMContextRef C, LLVMValueRef Fn, const(char)* Name);
+LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const(char)* Name);
+LLVMBasicBlockRef LLVMInsertBasicBlockInContext(LLVMContextRef C, LLVMBasicBlockRef BB, const(char)* Name);
+LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB, const(char)* Name);
+void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
+void LLVMRemoveBasicBlockFromParent(LLVMBasicBlockRef BB);
+void LLVMMoveBasicBlockBefore(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos);
+void LLVMMoveBasicBlockAfter(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos);
+LLVMValueRef LLVMGetFirstInstruction(LLVMBasicBlockRef BB);
+LLVMValueRef LLVMGetLastInstruction(LLVMBasicBlockRef BB);
+
+/+++ Instructions +++/
+
+int LLVMHasMetadata(LLVMValueRef Val);
+LLVMValueRef LLVMGetMetadata(LLVMValueRef Val, uint KindID);
+void LLVMSetMetadata(LLVMValueRef Val, uint KindID, LLVMValueRef Node);
+LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
+LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst);
+LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMInstructionRemoveFromParent(LLVMValueRef Inst);
+}
+void LLVMInstructionEraseFromParent(LLVMValueRef Inst);
+LLVMOpcode LLVMGetInstructionOpcode(LLVMValueRef Inst);
+LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMRealPredicate LLVMGetFCmpPredicate(LLVMValueRef Inst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMValueRef LLVMInstructionClone(LLVMValueRef Inst);
+}
+LLVMBasicBlockRef LLVMGetSwitchDefaultDest(LLVMValueRef SwitchInstr);
+
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMTypeRef LLVMGetAllocatedType(LLVMValueRef Alloca);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMIsInBounds(LLVMValueRef GEP);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetIsInBounds(LLVMValueRef GEP, LLVMBool InBounds);
+}
+
+/++++ Call Sites and Invocations ++++/
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetNumArgOperands(LLVMValueRef Instr);
+}
+void LLVMSetInstructionCallConv(LLVMValueRef Instr, uint CC);
+uint LLVMGetInstructionCallConv(LLVMValueRef Instr);
+void LLVMAddInstrAttribute(LLVMValueRef Instr, uint index, LLVMAttribute);
+void LLVMRemoveInstrAttribute(LLVMValueRef Instr, uint index, LLVMAttribute);
+void LLVMSetInstrParamAlignment(LLVMValueRef Instr, uint index, uint Align);
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMAddCallSiteAttribute(LLVMValueRef C, LLVMAttributeIndex Idx, LLVMAttributeRef A);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetCallSiteAttributeCount(LLVMValueRef C, LLVMAttributeIndex Idx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMGetCallSiteAttributes(LLVMValueRef C, LLVMAttributeIndex Idx, LLVMAttributeRef *Attrs);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAttributeRef LLVMGetCallSiteEnumAttribute(LLVMValueRef C, LLVMAttributeIndex Idx, uint KindID);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAttributeRef LLVMGetCallSiteStringAttribute(LLVMValueRef C, LLVMAttributeIndex Idx, const(char)* K, uint KLen);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMRemoveCallSiteEnumAttribute(LLVMValueRef C, LLVMAttributeIndex Idx, uint KindID);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMRemoveCallSiteStringAttribute(LLVMValueRef C, LLVMAttributeIndex Idx, const(char)* K, uint KLen);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMValueRef LLVMGetCalledValue(LLVMValueRef Instr);
+}
+
+LLVMBool LLVMIsTailCall(LLVMValueRef CallInst);
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBasicBlockRef LLVMGetNormalDest(LLVMValueRef InvokeInst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBasicBlockRef LLVMGetUnwindDest(LLVMValueRef InvokeInst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetNormalDest(LLVMValueRef InvokeInst, LLVMBasicBlockRef B);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetUnwindDest(LLVMValueRef InvokeInst, LLVMBasicBlockRef B);
+}
+
+void LLVMSetTailCall(LLVMValueRef CallInst, LLVMBool IsTailCall);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    uint LLVMGetNumSuccessors(LLVMValueRef Term);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMBasicBlockRef LLVMGetSuccessor(LLVMValueRef Term, uint i);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    void LLVMSetSuccessor(LLVMValueRef Term, uint i, LLVMBasicBlockRef block);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMBool LLVMIsConditional(LLVMValueRef Branch);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMValueRef LLVMGetCondition(LLVMValueRef Branch);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    void LLVMSetCondition(LLVMValueRef Branch, LLVMValueRef Cond);
+}
+
+/++++ PHI Nodes ++++/
+
+void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef* IncomingValues, LLVMBasicBlockRef* IncomingBlocks, uint Count);
+uint LLVMCountIncoming(LLVMValueRef PhiNode);
+LLVMValueRef LLVMGetIncomingValue(LLVMValueRef PhiNode, uint Index);
+LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, uint Index);
+
+
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetNumIndices(LLVMValueRef Inst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(uint)* LLVMGetIndices(LLVMValueRef Inst);
+}
+
+/++ Instruction Builders ++/
+
+LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef C);
+LLVMBuilderRef LLVMCreateBuilder();
+void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block, LLVMValueRef Instr);
+void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr);
+void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block);
+LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder);
+void LLVMClearInsertionPosition(LLVMBuilderRef Builder);
+void LLVMInsertIntoBuilder(LLVMBuilderRef Builder, LLVMValueRef Instr);
+void LLVMInsertIntoBuilderWithName(LLVMBuilderRef Builder, LLVMValueRef Instr, const(char)* Name);
+void LLVMDisposeBuilder(LLVMBuilderRef Builder);
+void LLVMSetCurrentDebugLocation(LLVMBuilderRef Builder, LLVMValueRef L);
+LLVMValueRef LLVMGetCurrentDebugLocation(LLVMBuilderRef Builder);
+void LLVMSetInstDebugLocation(LLVMBuilderRef Builder, LLVMValueRef Inst);
+LLVMValueRef LLVMBuildRetVoid(LLVMBuilderRef);
+LLVMValueRef LLVMBuildRet(LLVMBuilderRef, LLVMValueRef V);
+LLVMValueRef LLVMBuildAggregateRet(LLVMBuilderRef, LLVMValueRef* RetVals, uint N);
+LLVMValueRef LLVMBuildBr(LLVMBuilderRef, LLVMBasicBlockRef Dest);
+LLVMValueRef LLVMBuildCondBr(LLVMBuilderRef, LLVMValueRef If, LLVMBasicBlockRef Then, LLVMBasicBlockRef Else);
+LLVMValueRef LLVMBuildSwitch(LLVMBuilderRef, LLVMValueRef V, LLVMBasicBlockRef Else, uint NumCases);
+LLVMValueRef LLVMBuildIndirectBr(LLVMBuilderRef B, LLVMValueRef Addr, uint NumDests);
+LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn, LLVMValueRef* Args, uint NumArgs, LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, const(char)* Name);
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+	LLVMValueRef LLVMBuildLandingPad(LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef PersFn, uint NumClauses, const(char)* Name);
+} else {
+	LLVMValueRef LLVMBuildLandingPad(LLVMBuilderRef B, LLVMTypeRef Ty, uint NumClauses, const(char)* Name);
+}
+LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn);
+LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
+void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal, LLVMBasicBlockRef Dest);
+void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint LLVMGetNumClauses(LLVMValueRef LandingPad);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMValueRef LLVMGetClause(LLVMValueRef LandingPad, uint Idx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMIsCleanup(LLVMValueRef LandingPad);
+}
+
+void LLVMAddClause(LLVMValueRef LandingPad, LLVMValueRef ClauseVal);
+void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val);
+LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNSWAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNUWAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildFAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildSub(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNSWSub(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNUWSub(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildFSub(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNSWMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNUWMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildFMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildUDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildSDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildExactSDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildFDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildURem(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildSRem(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildFRem(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildShl(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildLShr(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildAShr(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildAnd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildOr(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildXor(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildBinOp(LLVMBuilderRef B, LLVMOpcode Op, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildNeg(LLVMBuilderRef, LLVMValueRef V, const(char)* Name);
+LLVMValueRef LLVMBuildNSWNeg(LLVMBuilderRef B, LLVMValueRef V, const(char)* Name);
+LLVMValueRef LLVMBuildNUWNeg(LLVMBuilderRef B, LLVMValueRef V, const(char)* Name);
+LLVMValueRef LLVMBuildFNeg(LLVMBuilderRef, LLVMValueRef V, const(char)* Name);
+LLVMValueRef LLVMBuildNot(LLVMBuilderRef, LLVMValueRef V, const(char)* Name);
+LLVMValueRef LLVMBuildMalloc(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name);
+LLVMValueRef LLVMBuildArrayMalloc(LLVMBuilderRef, LLVMTypeRef Ty, LLVMValueRef Val, const(char)* Name);
+LLVMValueRef LLVMBuildAlloca(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name);
+LLVMValueRef LLVMBuildArrayAlloca(LLVMBuilderRef, LLVMTypeRef Ty, LLVMValueRef Val, const(char)* Name);
+LLVMValueRef LLVMBuildFree(LLVMBuilderRef, LLVMValueRef PointerVal);
+LLVMValueRef LLVMBuildLoad(LLVMBuilderRef, LLVMValueRef PointerVal, const(char)* Name);
+LLVMValueRef LLVMBuildStore(LLVMBuilderRef, LLVMValueRef Val, LLVMValueRef Ptr);
+LLVMValueRef LLVMBuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer, LLVMValueRef* Indices, uint NumIndices, const(char)* Name);
+LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer, LLVMValueRef* Indices, uint NumIndices, const(char)* Name);
+LLVMValueRef LLVMBuildStructGEP(LLVMBuilderRef B, LLVMValueRef Pointer, uint Idx, const(char)* Name);
+LLVMValueRef LLVMBuildGlobalString(LLVMBuilderRef B, const(char)* Str, const(char)* Name);
+LLVMValueRef LLVMBuildGlobalStringPtr(LLVMBuilderRef B, const(char)* Str, const(char)* Name);
+LLVMBool LLVMGetVolatile(LLVMValueRef MemoryAccessInst);
+void LLVMSetVolatile(LLVMValueRef MemoryAccessInst, LLVMBool IsVolatile);
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMAtomicOrdering LLVMGetOrdering(LLVMValueRef MemoryAccessInst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMSetOrdering(LLVMValueRef MemoryAccessInst, LLVMAtomicOrdering Ordering);
+}
+LLVMValueRef LLVMBuildTrunc(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildZExt(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildSExt(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildFPToUI(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildFPToSI(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildUIToFP(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildSIToFP(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildFPTrunc(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildFPExt(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildPtrToInt(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildIntToPtr(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildBitCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMValueRef LLVMBuildAddrSpaceCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+}
+LLVMValueRef LLVMBuildZExtOrBitCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildSExtOrBitCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildTruncOrBitCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildCast(LLVMBuilderRef B, LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildPointerCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildIntCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildFPCast(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
+LLVMValueRef LLVMBuildICmp(LLVMBuilderRef, LLVMIntPredicate Op, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildFCmp(LLVMBuilderRef, LLVMRealPredicate Op, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+LLVMValueRef LLVMBuildPhi(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name);
+LLVMValueRef LLVMBuildCall(LLVMBuilderRef, LLVMValueRef Fn, LLVMValueRef* Args, uint NumArgs, const(char)* Name);
+LLVMValueRef LLVMBuildSelect(LLVMBuilderRef, LLVMValueRef If, LLVMValueRef Then, LLVMValueRef Else, const(char)* Name);
+LLVMValueRef LLVMBuildVAArg(LLVMBuilderRef, LLVMValueRef List, LLVMTypeRef Ty, const(char)* Name);
+LLVMValueRef LLVMBuildExtractElement(LLVMBuilderRef, LLVMValueRef VecVal, LLVMValueRef Index, const(char)* Name);
+LLVMValueRef LLVMBuildInsertElement(LLVMBuilderRef, LLVMValueRef VecVal, LLVMValueRef EltVal, LLVMValueRef Index, const(char)* Name);
+LLVMValueRef LLVMBuildShuffleVector(LLVMBuilderRef, LLVMValueRef V1, LLVMValueRef V2, LLVMValueRef Mask, const(char)* Name);
+LLVMValueRef LLVMBuildExtractValue(LLVMBuilderRef, LLVMValueRef AggVal, uint Index, const(char)* Name);
+LLVMValueRef LLVMBuildInsertValue(LLVMBuilderRef, LLVMValueRef AggVal, LLVMValueRef EltVal, uint Index, const(char)* Name);
+LLVMValueRef LLVMBuildIsNull(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name);
+LLVMValueRef LLVMBuildIsNotNull(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name);
+LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B, LLVMAtomicRMWBinOp op, LLVMValueRef PTR, LLVMValueRef Val, LLVMAtomicOrdering ordering, LLVMBool singleThread);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMValueRef LLVMBuildAtomicCmpXchg(LLVMBuilderRef B, LLVMValueRef Ptr, LLVMValueRef Cmp, LLVMValueRef New, LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering, LLVMBool SingleThread);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMIsAtomicSingleThread(LLVMValueRef AtomicInst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetAtomicSingleThread(LLVMValueRef AtomicInst, LLVMBool SingleThread);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAtomicOrdering LLVMGetCmpXchgSuccessOrdering(LLVMValueRef CmpXchgInst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetCmpXchgSuccessOrdering(LLVMValueRef CmpXchgInst, LLVMAtomicOrdering Ordering);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMAtomicOrdering LLVMGetCmpXchgFailureOrdering(LLVMValueRef CmpXchgInst);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetCmpXchgFailureOrdering(LLVMValueRef CmpXchgInst, LLVMAtomicOrdering Ordering);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    LLVMValueRef LLVMBuildFence(LLVMBuilderRef B, LLVMAtomicOrdering ordering, LLVMBool singleThread, const(char)*Name);
+}
+
+/++ Module Providers ++/
+
+LLVMModuleProviderRef LLVMCreateModuleProviderForExistingModule(LLVMModuleRef M);
+void LLVMDisposeModuleProvider(LLVMModuleProviderRef M);
+
+/++ Memory Buffers ++/
+
+LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(const(char)* Path, LLVMMemoryBufferRef* OutMemBuf, char** OutMessage);
+LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef* OutMemBuf, char** OutMessage);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(const(char)* InputData, size_t InputDataLength, const(char)* BufferName, LLVMBool RequiresNullTerminator);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(const(char)* InputData, size_t InputDataLength, const(char)* BufferName);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    const(char)* LLVMGetBufferStart(LLVMMemoryBufferRef MemBuf);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    size_t LLVMGetBufferSize(LLVMMemoryBufferRef MemBuf);
+}
+void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
+
+/++ Pass Registry ++/
+
+LLVMPassRegistryRef LLVMGetGlobalPassRegistry();
+
+/++ Pass Managers ++/
+
+LLVMPassManagerRef LLVMCreatePassManager();
+LLVMPassManagerRef LLVMCreateFunctionPassManagerForModule(LLVMModuleRef M);
+LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef MP);
+LLVMBool LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M);
+LLVMBool LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM);
+LLVMBool LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F);
+LLVMBool LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM);
+void LLVMDisposePassManager(LLVMPassManagerRef PM);
+
+/++ Threading ++/
+
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0) && LLVM_Version < LLVMDVersion(3, 5, 0)) {
+    LLVMBool LLVMStartMultithreaded();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0) && LLVM_Version < LLVMDVersion(3, 5, 0)) {
+    void LLVMStopMultithreaded();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMBool LLVMIsMultithreaded();
+}
+
+/+ Disassembler +/
+
+LLVMDisasmContextRef LLVMCreateDisasm(const(char)* TripleName, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMDisasmContextRef LLVMCreateDisasmCPU(const(char)* Triple, const(char)* CPU, void* DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    LLVMDisasmContextRef LLVMCreateDisasmCPUFeatures(const(char)* Triple, const(char)* CPU, const(char)* Features, void *DisInfo, int TagType, LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, ulong Options);
+}
+void LLVMDisasmDispose(LLVMDisasmContextRef DC);
+size_t LLVMDisasmInstruction(LLVMDisasmContextRef DC, ubyte* Bytes, ulong BytesSize, ulong PC, char* OutString, size_t OutStringSize);
+
+/+ Enhanced Disassembly +/
+
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDGetDisassembler(EDDisassemblerRef* disassembler, const(char)* triple, EDAssemblySyntax_t syntax);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDGetRegisterName(const(char)** regName, EDDisassemblerRef disassembler, uint regID);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDRegisterIsStackPointer(EDDisassemblerRef disassembler, uint regID);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDRegisterIsProgramCounter(EDDisassemblerRef disassembler, uint regID);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    uint EDCreateInsts(EDInstRef* insts, uint count, EDDisassemblerRef disassembler, EDByteReaderCallback byteReader, ulong address, void* arg);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    void EDReleaseInst(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDInstByteSize(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDGetInstString(const(char)** buf, EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDInstID(uint* instID, EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDInstIsBranch(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDInstIsMove(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDBranchTargetID(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDMoveSourceID(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDMoveTargetID(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDNumTokens(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDGetToken(EDTokenRef* token, EDInstRef inst, int index);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDGetTokenString(const(char)** buf, EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDOperandIndexForToken(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDTokenIsWhitespace(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDTokenIsPunctuation(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDTokenIsOpcode(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDTokenIsLiteral(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDTokenIsRegister(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDTokenIsNegativeLiteral(EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDLiteralTokenAbsoluteValue(ulong* value, EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDRegisterTokenValue(uint* registerID, EDTokenRef token);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDNumOperands(EDInstRef inst);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDGetOperand(EDOperandRef* operand, EDInstRef inst, int index);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDOperandIsRegister(EDOperandRef operand);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDOperandIsImmediate(EDOperandRef operand);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDOperandIsMemory(EDOperandRef operand);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDRegisterOperandValue(uint* value, EDOperandRef operand);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDImmediateOperandValue(ulong* value, EDOperandRef operand);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDEvaluateOperand(ulong* result, EDOperandRef operand, EDRegisterReaderCallback regReader, void* arg);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    uint EDBlockCreateInsts(EDInstRef* insts, int count, EDDisassemblerRef disassembler, EDByteBlock_t byteBlock, ulong address);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDBlockEvaluateOperand(ulong* result, EDOperandRef operand, EDRegisterBlock_t regBlock);
+}
+static if(LLVM_Version < LLVMDVersion(3, 3, 0)) {
+    int EDBlockVisitTokens(EDInstRef inst, EDTokenVisitor_t visitor);
+}
+
+/+ Execution Engine +/
+
+LLVMGenericValueRef LLVMCreateGenericValueOfInt(LLVMTypeRef Ty, ulong N, LLVMBool IsSigned);
+LLVMGenericValueRef LLVMCreateGenericValueOfPointer(void* P);
+LLVMGenericValueRef LLVMCreateGenericValueOfFloat(LLVMTypeRef Ty, double N);
+uint LLVMGenericValueIntWidth(LLVMGenericValueRef GenValRef);
+ulong LLVMGenericValueToInt(LLVMGenericValueRef GenVal, LLVMBool IsSigned);
+void* LLVMGenericValueToPointer(LLVMGenericValueRef GenVal);
+double LLVMGenericValueToFloat(LLVMTypeRef TyRef, LLVMGenericValueRef GenVal);
+void LLVMDisposeGenericValue(LLVMGenericValueRef GenVal);
+LLVMBool LLVMCreateExecutionEngineForModule(LLVMExecutionEngineRef* OutEE, LLVMModuleRef M, char** OutError);
+LLVMBool LLVMCreateInterpreterForModule(LLVMExecutionEngineRef* OutInterp, LLVMModuleRef M, char** OutError);
+LLVMBool LLVMCreateJITCompilerForModule(LLVMExecutionEngineRef* OutJIT, LLVMModuleRef M, uint OptLevel, char** OutError);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void LLVMInitializeMCJITCompilerOptions(LLVMMCJITCompilerOptions* Options, size_t SizeOfOptions);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMBool LLVMCreateMCJITCompilerForModule(LLVMExecutionEngineRef* OutJIT, LLVMModuleRef M, LLVMMCJITCompilerOptions* Options, size_t SizeOfOptions, char** OutError);
+}
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMCreateExecutionEngine(LLVMExecutionEngineRef* OutEE, LLVMModuleProviderRef MP, char** OutError);
+}
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMCreateInterpreter(LLVMExecutionEngineRef* OutInterp, LLVMModuleProviderRef MP, char** OutError);
+}
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMCreateJITCompiler(LLVMExecutionEngineRef* OutJIT, LLVMModuleProviderRef MP, uint OptLevel, char** OutError);
+}
+void LLVMDisposeExecutionEngine(LLVMExecutionEngineRef EE);
+void LLVMRunStaticConstructors(LLVMExecutionEngineRef EE);
+void LLVMRunStaticDestructors(LLVMExecutionEngineRef EE);
+int LLVMRunFunctionAsMain(LLVMExecutionEngineRef EE, LLVMValueRef F, uint ArgC, const(char*)* ArgV, const(char*)* EnvP);
+LLVMGenericValueRef LLVMRunFunction(LLVMExecutionEngineRef EE, LLVMValueRef F, uint NumArgs, LLVMGenericValueRef* Args);
+void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F);
+void LLVMAddModule(LLVMExecutionEngineRef EE, LLVMModuleRef M);
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    void LLVMAddModuleProvider(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP);
+}
+LLVMBool LLVMRemoveModule(LLVMExecutionEngineRef EE, LLVMModuleRef M, LLVMModuleRef* OutMod, char** OutError);
+static if(LLVM_Version < LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMRemoveModuleProvider(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP, LLVMModuleRef* OutMod, char** OutError);
+}
+LLVMBool LLVMFindFunction(LLVMExecutionEngineRef EE, const(char)* Name, LLVMValueRef* OutFn);
+void* LLVMRecompileAndRelinkFunction(LLVMExecutionEngineRef EE, LLVMValueRef Fn);
+LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE);
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    LLVMTargetMachineRef LLVMGetExecutionEngineTargetMachine(LLVMExecutionEngineRef EE);
+}
+void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global, void* Addr);
+void* LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    ulong LLVMGetGlobalValueAddress(LLVMExecutionEngineRef EE, const(char)*Name);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    ulong LLVMGetFunctionAddress(LLVMExecutionEngineRef EE, const(char)*Name);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMMCJITMemoryManagerRef LLVMCreateSimpleMCJITMemoryManager(void* Opaque, LLVMMemoryManagerAllocateCodeSectionCallback AllocateCodeSection, LLVMMemoryManagerAllocateDataSectionCallback AllocateDataSection, LLVMMemoryManagerFinalizeMemoryCallback FinalizeMemory, LLVMMemoryManagerDestroyCallback Destroy);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMDisposeMCJITMemoryManager(LLVMMCJITMemoryManagerRef MM);
+}
+
+/+ Initialization Routines +/
+
+void LLVMInitializeCore(LLVMPassRegistryRef R);
+void LLVMInitializeTransformUtils(LLVMPassRegistryRef R);
+void LLVMInitializeScalarOpts(LLVMPassRegistryRef R);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void LLVMInitializeObjCARCOpts(LLVMPassRegistryRef R);
+}
+void LLVMInitializeVectorization(LLVMPassRegistryRef R);
+void LLVMInitializeInstCombine(LLVMPassRegistryRef R);
+void LLVMInitializeIPO(LLVMPassRegistryRef R);
+void LLVMInitializeInstrumentation(LLVMPassRegistryRef R);
+void LLVMInitializeAnalysis(LLVMPassRegistryRef R);
+void LLVMInitializeIPA(LLVMPassRegistryRef R);
+void LLVMInitializeCodeGen(LLVMPassRegistryRef R);
+void LLVMInitializeTarget(LLVMPassRegistryRef R);
+
+/+ Linker +/
+
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0) && LLVM_Version < LLVMDVersion(3, 9, 0)) {
+    LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src, LLVMLinkerMode Mode, char** OutMessage);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMBool LLVMLinkModules2(LLVMModuleRef Dest, LLVMModuleRef Src);
+}
+
+/+ Link Time Optimization +/
+
+llvm_lto_t llvm_create_optimizer();
+void llvm_destroy_optimizer(llvm_lto_t lto);
+llvm_lto_status_t llvm_read_object_file(llvm_lto_t lto, const(char)* input_filename);
+llvm_lto_status_t llvm_optimize_modules(llvm_lto_t lto, const(char)* output_filename);
+
+/+ LTO +/
+
+const(char)* lto_get_version();
+const(char)* lto_get_error_message();
+bool lto_module_is_object_file(const(char)* path);
+bool lto_module_is_object_file_for_target(const(char)* path, const(char)* target_triple_prefix);
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    lto_bool_t lto_module_has_objc_category(const(void)* mem, size_t length);
+}
+bool lto_module_is_object_file_in_memory(const(void)* mem, size_t length);
+bool lto_module_is_object_file_in_memory_for_target(const(void)* mem, size_t length, const(char)* target_triple_prefix);
+lto_module_t lto_module_create(const(char)* path);
+lto_module_t lto_module_create_from_memory(const(void)* mem, size_t length);
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    lto_module_t lto_module_create_from_memory_with_path(const(void)* mem, size_t length, const(char)*path);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    lto_module_t lto_module_create_in_local_context(const void *mem, size_t length, const(char)*path);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    lto_module_t lto_module_create_in_codegen_context(const void *mem, size_t length, const(char)*path, lto_code_gen_t cg);
+}
+lto_module_t lto_module_create_from_fd(int fd, const(char)* path, size_t file_size);
+lto_module_t lto_module_create_from_fd_at_offset(int fd, const(char)* path, size_t file_size, size_t map_size, size_t offset);
+void lto_module_dispose(lto_module_t mod);
+const(char)* lto_module_get_target_triple(lto_module_t mod);
+void lto_module_set_target_triple(lto_module_t mod, const(char)* triple);
+uint lto_module_get_num_symbols(lto_module_t mod);
+const(char)* lto_module_get_symbol_name(lto_module_t mod, uint index);
+lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod, uint index);
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0) && LLVM_Version < LLVMDVersion(3, 7, 0)) {
+    uint lto_module_get_num_deplibs(lto_module_t mod);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0) && LLVM_Version < LLVMDVersion(3, 7, 0)) {
+    const(char)* lto_module_get_deplib(lto_module_t mod, uint index);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0) && LLVM_Version < LLVMDVersion(3, 7, 0)) {
+    uint lto_module_get_num_linkeropts(lto_module_t mod);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0) && LLVM_Version < LLVMDVersion(3, 7, 0)) {
+    const(char)* lto_module_get_linkeropt(lto_module_t mod, uint index);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    const(char)* lto_module_get_linkeropts(lto_module_t mod);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void lto_codegen_set_diagnostic_handler(lto_code_gen_t, lto_diagnostic_handler_t, void *);
+}
+lto_code_gen_t lto_codegen_create();
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    lto_code_gen_t lto_codegen_create_in_local_context();
+}
+void lto_codegen_dispose(lto_code_gen_t);
+bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
+}
+bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model);
+bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model);
+void lto_codegen_set_cpu(lto_code_gen_t cg, const(char)* cpu);
+void lto_codegen_set_assembler_path(lto_code_gen_t cg, const(char)* path);
+void lto_codegen_set_assembler_args(lto_code_gen_t cg, const(char)** args, int nargs);
+void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg, const(char)* symbol);
+bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const(char)* path);
+const(void)* lto_codegen_compile(lto_code_gen_t cg, size_t* length);
+bool lto_codegen_compile_to_file(lto_code_gen_t cg, const(char)** name);
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    bool lto_codegen_optimize(lto_code_gen_t cg);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    const(void)* lto_codegen_compile_optimized(lto_code_gen_t cg, size_t* length);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    uint lto_api_version();
+}
+void lto_codegen_debug_options(lto_code_gen_t cg, const(char)* );
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    void lto_initialize_disassembler();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void lto_codegen_set_should_internalize(lto_code_gen_t cg, bool ShouldInternalize);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void lto_codegen_set_should_embed_uselists(lto_code_gen_t cg, bool ShouldEmbedUselists);
+}
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    thinlto_code_gen_t thinlto_create_codegen();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_dispose(thinlto_code_gen_t cg);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_add_module(thinlto_code_gen_t cg, const(char)* identifier, const(char)* data, int length);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_process(thinlto_code_gen_t cg);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    uint thinlto_module_get_num_objects(thinlto_code_gen_t cg);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LTOObjectBuffer thinlto_module_get_object(thinlto_code_gen_t cg, uint index);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    lto_bool_t thinlto_codegen_set_pic_model(thinlto_code_gen_t cg, lto_codegen_model);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_cache_dir(thinlto_code_gen_t cg, const(char)* cache_dir);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_cache_pruning_interval(thinlto_code_gen_t cg, int interval);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_final_cache_size_relative_to_available_space(thinlto_code_gen_t cg, uint percentage);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_cache_entry_expiration(thinlto_code_gen_t cg, uint expiration);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_savetemps_dir(thinlto_code_gen_t cg, const(char)* save_temps_dir);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_cpu(thinlto_code_gen_t cg, const(char)* cpu);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_disable_codegen(thinlto_code_gen_t cg, lto_bool_t disable);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_set_codegen_only(thinlto_code_gen_t cg, lto_bool_t codegen_only);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_debug_options(const(char*) *options, int number);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    lto_bool_t lto_module_is_thinlto(lto_module_t mod);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_add_must_preserve_symbol(thinlto_code_gen_t cg, const(char)* name, int length);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void thinlto_codegen_add_cross_referenced_symbol(thinlto_code_gen_t cg, const(char)* name, int length);
+}
+/+ Object file reading and writing +/
+
+LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf);
+void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile);
+LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef ObjectFile);
+void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI);
+LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile, LLVMSectionIteratorRef SI);
+void LLVMMoveToNextSection(LLVMSectionIteratorRef SI);
+void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect, LLVMSymbolIteratorRef Sym);
+LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile);
+void LLVMDisposeSymbolIterator(LLVMSymbolIteratorRef SI);
+LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef ObjectFile, LLVMSymbolIteratorRef SI);
+void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI);
+const(char)* LLVMGetSectionName(LLVMSectionIteratorRef SI);
+ulong LLVMGetSectionSize(LLVMSectionIteratorRef SI);
+const(char)* LLVMGetSectionContents(LLVMSectionIteratorRef SI);
+ulong LLVMGetSectionAddress(LLVMSectionIteratorRef SI);
+LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI, LLVMSymbolIteratorRef Sym);
+LLVMRelocationIteratorRef LLVMGetRelocations(LLVMSectionIteratorRef Section);
+void LLVMDisposeRelocationIterator(LLVMRelocationIteratorRef RI);
+LLVMBool LLVMIsRelocationIteratorAtEnd(LLVMSectionIteratorRef Section, LLVMRelocationIteratorRef RI);
+void LLVMMoveToNextRelocation(LLVMRelocationIteratorRef RI);
+const(char)* LLVMGetSymbolName(LLVMSymbolIteratorRef SI);
+ulong LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI);
+static if(LLVM_Version < LLVMDVersion(3, 5, 0)) {
+    ulong LLVMGetSymbolFileOffset(LLVMSymbolIteratorRef SI);
+}
+ulong LLVMGetSymbolSize(LLVMSymbolIteratorRef SI);
+static if(LLVM_Version < LLVMDVersion(3, 7, 0)) {
+    ulong LLVMGetRelocationAddress(LLVMRelocationIteratorRef RI);
+}
+ulong LLVMGetRelocationOffset(LLVMRelocationIteratorRef RI);
+LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI);
+ulong LLVMGetRelocationType(LLVMRelocationIteratorRef RI);
+const(char)* LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI);
+const(char)* LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
+
+/+ Target information +/
+
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMTargetDataRef LLVMGetModuleDataLayout(LLVMModuleRef M);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    void LLVMSetModuleDataLayout(LLVMModuleRef M, LLVMTargetDataRef DL);
+}
+LLVMTargetDataRef LLVMCreateTargetData(const(char)* StringRep);
+static if(LLVM_Version < LLVMDVersion(3, 9, 0)) {
+    void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM);
+}
+void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef TLI, LLVMPassManagerRef PM);
+char* LLVMCopyStringRepOfTargetData(LLVMTargetDataRef TD);
+LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef TD);
+uint LLVMPointerSize(LLVMTargetDataRef TD);
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    uint LLVMPointerSizeForAS(LLVMTargetDataRef TD, uint AS);
+}
+LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef TD);
+static if(LLVM_Version >= LLVMDVersion(3, 2, 0)) {
+    LLVMTypeRef LLVMIntPtrTypeForAS(LLVMTargetDataRef TD, uint AS);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMTypeRef LLVMIntPtrTypeInContext(LLVMContextRef C, LLVMTargetDataRef TD);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMTypeRef LLVMIntPtrTypeForASInContext(LLVMContextRef C, LLVMTargetDataRef TD, uint AS);
+}
+ulong LLVMSizeOfTypeInBits(LLVMTargetDataRef TD, LLVMTypeRef Ty);
+ulong LLVMStoreSizeOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
+ulong LLVMABISizeOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
+uint LLVMABIAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
+uint LLVMCallFrameAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
+uint LLVMPreferredAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
+uint LLVMPreferredAlignmentOfGlobal(LLVMTargetDataRef TD, LLVMValueRef GlobalVar);
+uint LLVMElementAtOffset(LLVMTargetDataRef TD, LLVMTypeRef StructTy, ulong Offset);
+ulong LLVMOffsetOfElement(LLVMTargetDataRef TD, LLVMTypeRef StructTy, uint Element);
+void LLVMDisposeTargetData(LLVMTargetDataRef TD);
+
+/+ Target machine +/
+
+LLVMTargetRef LLVMGetFirstTarget();
+LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMTargetRef LLVMGetTargetFromName(const(char)* Name);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMBool LLVMGetTargetFromTriple(const(char)* Triple, LLVMTargetRef* T, char** ErrorMessage);
+}
+const(char)* LLVMGetTargetName(LLVMTargetRef T);
+const(char)* LLVMGetTargetDescription(LLVMTargetRef T);
+LLVMBool LLVMTargetHasJIT(LLVMTargetRef T);
+LLVMBool LLVMTargetHasTargetMachine(LLVMTargetRef T);
+LLVMBool LLVMTargetHasAsmBackend(LLVMTargetRef T);
+LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T, const(char)* Triple,  const(char)* CPU, const(char)* Features, LLVMCodeGenOptLevel Level, LLVMRelocMode Reloc, LLVMCodeModel CodeModel);
+void LLVMDisposeTargetMachine(LLVMTargetMachineRef T);
+LLVMTargetRef LLVMGetTargetMachineTarget(LLVMTargetMachineRef T);
+char* LLVMGetTargetMachineTriple(LLVMTargetMachineRef T);
+char* LLVMGetTargetMachineCPU(LLVMTargetMachineRef T);
+char* LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T);
+static if(LLVM_Version < LLVMDVersion(3, 7, 0)) {
+    LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    LLVMTargetDataRef LLVMCreateTargetDataLayout(LLVMTargetMachineRef T);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T, LLVMBool VerboseAsm);
+}
+LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,  char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage);
+static if(LLVM_Version >= LLVMDVersion(3, 3, 0)) {
+    LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T, LLVMModuleRef M, LLVMCodeGenFileType codegen, char** ErrorMessage, LLVMMemoryBufferRef* OutMemBuf);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    char* LLVMGetDefaultTargetTriple();
+}
+static if(LLVM_Version >= LLVMDVersion(3, 5, 0)) {
+    void LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM);
+}
+
+/+ Support +/
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMBool LLVMLoadLibraryPermanently(const(char)* Filename);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 6, 0)) {
+    void LLVMParseCommandLineOptions(int argc, const(char*)* argv, const(char)* Overview);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void* LLVMSearchForAddressOfSymbol(const(char)* symbolName);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 7, 0)) {
+    void LLVMAddSymbol(const(char) *symbolName, void *symbolValue);
+}
+
+/+ IRReader +/
+static if(LLVM_Version >= LLVMDVersion(3, 4, 0)) {
+    LLVMBool LLVMParseIRInContext(LLVMContextRef ContextRef, LLVMMemoryBufferRef MemBuf, LLVMModuleRef* OutM, char** OutMessage);
+}
+
+/+ JIT compilation of LLVM IR +/
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 9, 0)) {
+    const(char)* LLVMOrcGetErrorMsg(LLVMOrcJITStackRef JITStack);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMOrcGetMangledSymbol(LLVMOrcJITStackRef JITStack, char** MangledSymbol, const(char)* Symbol);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMOrcDisposeMangledSymbol(char* MangledSymbol);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMOrcTargetAddress LLVMOrcCreateLazyCompileCallback(LLVMOrcJITStackRef JITStack, LLVMOrcLazyCompileCallbackFn Callback, void* CallbackCtx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMOrcCreateIndirectStub(LLVMOrcJITStackRef JITStack, const(char)* StubName, LLVMOrcTargetAddress InitAddr);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack, const(char)* StubName, LLVMOrcTargetAddress NewAddr);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMOrcModuleHandle LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMOrcModuleHandle LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMOrcModuleHandle LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack, LLVMObjectFileRef Obj, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMOrcRemoveModule(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle H);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    LLVMOrcTargetAddress LLVMOrcGetSymbolAddress(LLVMOrcJITStackRef JITStack, const(char)* SymbolName);
+}
+static if(LLVM_Version >= LLVMDVersion(3, 8, 0)) {
+    void LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
+}

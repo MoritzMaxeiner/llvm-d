@@ -8,8 +8,6 @@ import llvm.c;
 
 int main(string[] args)
 {
-	LLVM.load();
-	
 	char* error;
 
 	LLVMInitializeNativeTarget();

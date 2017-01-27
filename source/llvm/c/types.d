@@ -5,7 +5,7 @@ private
 {
 	import std.stdint : uintptr_t;
 
-	import llvm.c.versions;
+	import llvm.c.config;
 }
 
 /+ Analysis +/

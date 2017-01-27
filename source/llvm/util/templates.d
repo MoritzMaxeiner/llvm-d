@@ -5,7 +5,7 @@ private
 {
 	import std.conv : to;
 	import std.traits : isArray, isAssociativeArray, isCallable;
-	import llvm.c.versions;
+	import llvm.c.config;
 }
 
 public string MixinMap(List,Function)(List list, Function f)

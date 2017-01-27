@@ -6,7 +6,7 @@ private
 	import llvm.util.templates;
 
 	import llvm.c.types;
-	import llvm.c.versions;
+	import llvm.c.config;
 }
 
 /+ Analysis +/
