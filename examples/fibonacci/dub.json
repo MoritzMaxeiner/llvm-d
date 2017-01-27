@@ -7,9 +7,31 @@
 		"Moritz Maxeiner",
 		"Alex Parrill"
 	],
+
     "targetType": "executable",
     "sourceFiles": ["fibonacci.d"],
     "dependencies": {
         "llvm-d": { "path": "../.." }
-    }
+    },
+    "configurations": [
+        {
+            "name": "split-llvm",
+            "libs": [
+                "LLVMCore",
+                "LLVMAnalysis",
+                "LLVMExecutionEngine",
+                "LLVMScalarOpts",
+                "LLVMMCJIT",
+                "LLVMX86Info",
+                "LLVMX86CodeGen",
+                "LLVMX86Desc",
+                "LLVMX86Disassembler",
+                "LLVMX86AsmParser"
+            ]
+        },
+        {
+            "name": "combined-llvm",
+            "libs": ["LLVM"]
+        }
+    ]
 }
