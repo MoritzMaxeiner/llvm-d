@@ -2,38 +2,44 @@ module llvm.functions;
 
 import std.array : array;
 import std.algorithm.iteration : map, joiner;
+import std.range : chain;
 
 import llvm.config;
 import llvm.types;
 
+private nothrow auto orEmpty(T)(T v)
+{
+    return v? v : "";
+}
+
 nothrow void LLVMInitializeAllTargetInfos()
 {
-    mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "TargetInfo();").joiner.array);
+    mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "TargetInfo();").joiner.array.orEmpty);
 }
 
 nothrow void LLVMInitializeAllTargets()
 {
-    mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "Target();").joiner.array);
+    mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "Target();").joiner.array.orEmpty);
 }
 
 nothrow void LLVMInitializeAllTargetMCs()
 {
-    mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "TargetMC();").joiner.array);
+    mixin(LLVM_Targets.map!(t => "LLVMInitialize" ~ t ~ "TargetMC();").joiner.array.orEmpty);
 }
 
 nothrow void LLVMInitializeAllAsmPrinters()
 {
-    mixin(LLVM_AsmPrinters.map!(t => "LLVMInitialize" ~ t ~ "AsmPrinter();").joiner.array);
+    mixin(LLVM_AsmPrinters.map!(t => "LLVMInitialize" ~ t ~ "AsmPrinter();").joiner.array.orEmpty);
 }
 
 nothrow void LLVMInitializeAllAsmParsers()
 {
-    mixin(LLVM_AsmParsers.map!(t => "LLVMInitialize" ~ t ~ "AsmParser();").joiner.array);
+    mixin(LLVM_AsmParsers.map!(t => "LLVMInitialize" ~ t ~ "AsmParser();").joiner.array.orEmpty);
 }
 
 nothrow void LLVMInitializeAllDisassemblers()
 {
-    mixin(LLVM_Disassemblers.map!(t => "LLVMInitialize" ~ t ~ "Disassembler();").joiner.array);
+    mixin(LLVM_Disassemblers.map!(t => "LLVMInitialize" ~ t ~ "Disassembler();").joiner.array.orEmpty);
 }
 
 nothrow LLVMBool LLVMInitializeNativeTarget()
@@ -1608,12 +1614,12 @@ const(char)* LLVMGetRelocationValueString(LLVMRelocationIteratorRef RI);
 
 /+ Target information +/
 
-mixin(LLVM_Targets.map!(t => "void LLVMInitialize" ~ t ~ "TargetInfo();").joiner.array);
-mixin(LLVM_Targets.map!(t => "void LLVMInitialize" ~ t ~ "Target();").joiner.array);
-mixin(LLVM_Targets.map!(t => "void LLVMInitialize" ~ t ~ "TargetMC();").joiner.array);
-mixin(LLVM_AsmPrinters.map!(t => "void LLVMInitialize" ~ t ~ "AsmPrinter();").joiner.array);
-mixin(LLVM_AsmParsers.map!(t => "void LLVMInitialize" ~ t ~ "AsmParser();").joiner.array);
-mixin(LLVM_Disassemblers.map!(t => "void LLVMInitialize" ~ t ~ "Disassembler();").joiner.array);
+mixin(LLVM_Targets.map!(t => "nothrow void LLVMInitialize" ~ t ~ "TargetInfo();").joiner.array.orEmpty);
+mixin(LLVM_Targets.map!(t => "nothrow void LLVMInitialize" ~ t ~ "Target();").joiner.array.orEmpty);
+mixin(LLVM_Targets.map!(t => "nothrow void LLVMInitialize" ~ t ~ "TargetMC();").joiner.array.orEmpty);
+mixin(LLVM_AsmPrinters.map!(t => "nothrow void LLVMInitialize" ~ t ~ "AsmPrinter();").joiner.array.orEmpty);
+mixin(LLVM_AsmParsers.map!(t => "nothrow void LLVMInitialize" ~ t ~ "AsmParser();").joiner.array.orEmpty);
+mixin(LLVM_Disassemblers.map!(t => "nothrow void LLVMInitialize" ~ t ~ "Disassembler();").joiner.array.orEmpty);
 
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     LLVMTargetDataRef LLVMGetModuleDataLayout(LLVMModuleRef M);
