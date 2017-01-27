@@ -13,7 +13,7 @@ int main(string[] args)
 	LLVMInitializeNativeTarget();
 	LLVMInitializeNativeAsmPrinter();
 	LLVMInitializeNativeAsmParser();
-	
+
 	auto _module = LLVMModuleCreateWithName("fibonacci".toStringz());
 	auto f_args = [ LLVMInt32Type() ];
 	auto f = LLVMAddFunction(
@@ -21,16 +21,16 @@ int main(string[] args)
 		"fib",
 		LLVMFunctionType(LLVMInt32Type(), f_args.ptr, 1, cast(LLVMBool) false));
 	LLVMSetFunctionCallConv(f, LLVMCCallConv);
-	
+
 	auto n = LLVMGetParam(f, 0);
-	
+
 	auto entry = LLVMAppendBasicBlock(f, "entry".toStringz());
 	auto case_base0 = LLVMAppendBasicBlock(f, "case_base0".toStringz());
 	auto case_base1 = LLVMAppendBasicBlock(f, "case_base1".toStringz());
 	auto case_default = LLVMAppendBasicBlock(f, "case_default".toStringz());
 	auto end = LLVMAppendBasicBlock(f, "end".toStringz());
 	auto builder = LLVMCreateBuilder();
-	
+
 	/+ Entry basic block +/
 	LLVMPositionBuilderAtEnd(builder, entry);
 	auto Switch = LLVMBuildSwitch(
@@ -45,12 +45,12 @@ int main(string[] args)
 	LLVMPositionBuilderAtEnd(builder, case_base0);
 	auto res_base0 = LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false);
 	LLVMBuildBr(builder, end);
-	
+
 	/+ Basic block for n = 1: fib(n) = 1 +/
 	LLVMPositionBuilderAtEnd(builder, case_base1);
 	auto res_base1 = LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false);
 	LLVMBuildBr(builder, end);
-	
+
 	/+ Basic block for n > 1: fib(n) = fib(n - 1) + fib(n - 2) +/
 	LLVMPositionBuilderAtEnd(builder, case_default);
 
@@ -61,7 +61,7 @@ int main(string[] args)
 		"n - 1".toStringz());
 	auto call_f_1_args = [ n_minus_1 ];
 	auto call_f_1 = LLVMBuildCall(builder, f, call_f_1_args.ptr, 1, "fib(n - 1)".toStringz());
-	
+
 	auto n_minus_2 = LLVMBuildSub(
 		builder,
 		n,
@@ -69,10 +69,10 @@ int main(string[] args)
 		"n - 2".toStringz());
 	auto call_f_2_args = [ n_minus_2 ];
 	auto call_f_2 = LLVMBuildCall(builder, f, call_f_2_args.ptr, 1, "fib(n - 2)".toStringz());
-	
+
 	auto res_default = LLVMBuildAdd(builder, call_f_1, call_f_2, "fib(n - 1) + fib(n - 2)".toStringz());
 	LLVMBuildBr(builder, end);
-	
+
 	/+ Basic block for collecting the result +/
 	LLVMPositionBuilderAtEnd(builder, end);
 	auto res = LLVMBuildPhi(builder, LLVMInt32Type(), "result".toStringz());
@@ -80,13 +80,13 @@ int main(string[] args)
 	auto phi_blocks = [ case_base0, case_base1, case_default ];
 	LLVMAddIncoming(res, phi_vals.ptr, phi_blocks.ptr, 3);
 	LLVMBuildRet(builder, res);
-	
+
 	LLVMVerifyModule(_module, LLVMAbortProcessAction, &error);
 	LLVMDisposeMessage(error);
-	
+
 	LLVMExecutionEngineRef engine;
 	error = null;
-	
+
 	version(Windows)
 	{
 		/+ On Windows, we can only use the old JIT for now +/
@@ -94,7 +94,7 @@ int main(string[] args)
 	}
 	else
 	{
-		static if(LLVM_Version >= 3.3)
+		static if (LLVM_Version >= asVersion(3,3,0))
 		{
 			/+ On other systems we should be able to use the newer
 			 + MCJIT instead - if we have a high enough LLVM version +/
@@ -109,30 +109,32 @@ int main(string[] args)
 		}
 	}
 
-	if(error !is null)
+	if (error)
 	{
+		scope (exit) LLVMDisposeMessage(error);
 		writefln("%s", error.fromStringz());
-		LLVMDisposeMessage(error);
 		return 1;
 	}
-	
+
 	auto pass = LLVMCreatePassManager();
-	static if(LLVM_Version < 3.9)
+	static if (LLVM_Version < asVersion(3,9,0))
+	{
 		LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
+	}
 	LLVMAddConstantPropagationPass(pass);
 	LLVMAddInstructionCombiningPass(pass);
 	LLVMAddPromoteMemoryToRegisterPass(pass);
 	LLVMAddGVNPass(pass);
 	LLVMAddCFGSimplificationPass(pass);
 	LLVMRunPassManager(pass, _module);
-	
+
 	writefln("The following module has been generated for the fibonacci series:\n");
 	LLVMDumpModule(_module);
-	
+
 	writeln();
-	
+
 	int n_exec= 10;
-	if(args.length > 1)
+	if (args.length > 1)
 	{
 		n_exec = to!int(args[1]);
 	}
@@ -140,14 +142,14 @@ int main(string[] args)
 	{
 		writefln("; Argument for fib missing on command line, using default:  \"%d\"", n_exec);
 	}
-	
+
 	auto exec_args = [ LLVMCreateGenericValueOfInt(LLVMInt32Type(), n_exec, cast(LLVMBool) 0) ];
 	writefln("; Running (jit-compiled) fib(%d)...", n_exec);
 	auto exec_res = LLVMRunFunction(engine, f, 1, exec_args.ptr);
 	writefln("; fib(%d) = %d", n_exec, LLVMGenericValueToInt(exec_res, 0));
-	
+
 	LLVMDisposePassManager(pass);
 	LLVMDisposeBuilder(builder);
 	LLVMDisposeExecutionEngine(engine);
-	return 0;	
+	return 0;
 }

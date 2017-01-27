@@ -10,16 +10,6 @@
 	"homepage": "https://github.com/Calrama/llvm-d",
 
 	"targetType": "library",
-	"subPackages": [ {
-			"name": "fibonacci",
-			"targetName": "fibonacci",
-			"description": "Shows how to create a function calculating the Fibonacci series, jit-compile it, and execute it in-memory with llvm-d",
-			"targetType": "executable",
-			"sourceFiles": ["samples/fibonacci.d"],
-			"dependencies": {
-				"llvm-d": { "path": "." }
-			}
-		}
 	]
 }
 
