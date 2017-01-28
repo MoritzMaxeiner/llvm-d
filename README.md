@@ -19,7 +19,7 @@ import llvm;
 
 void main(string[] args)
 {
-	static if((LLVMDVersion(3, 3, 0) <= LLVM_Version) && (LLVM_Version < LLVMDVersion(3, 5, 0)))
+	static if((asVersion(3, 3, 0) <= LLVM_Version) && (LLVM_Version < asVersion(3, 5, 0)))
 	{
 		writefln("LLVM multithreading on? %s", cast(bool) LLVMIsMultithreaded());
 		writefln("Turning it on"); LLVMStartMultithreaded();
