@@ -1,12 +1,8 @@
+module llvm.types;
 
-module llvm.c.types;
+public import std.stdint : uintptr_t;
 
-private
-{
-	import std.stdint : uintptr_t;
-
-	import llvm.c.versions;
-}
+import llvm.config;
 
 /+ Analysis +/
 
@@ -20,12 +16,12 @@ struct LLVMOpaquePassManagerBuilder {}; alias LLVMOpaquePassManagerBuilder* LLVM
 
 /+ Core +/
 
-static if(LLVM_Version >= LLVMDVersion(3, 4, 0))
+static if (LLVM_Version >= asVersion(3, 4, 0))
 {
 	alias extern(C) void function(const char* Reason) LLVMFatalErrorHandler;
 }
 
-static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
+static if (LLVM_Version >= asVersion(3, 5, 0))
 {
 	//This is here because putting it where it semantically belongs creates a forward reference issues.
 	struct LLVMOpaqueDiagnosticInfo {}; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
@@ -49,7 +45,7 @@ struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef
 struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
 struct LLVMOpaqueUse {}; alias LLVMOpaqueUse* LLVMUseRef;
 
-static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+static if (LLVM_Version >= asVersion(3, 9, 0))
 {
 	struct LLVMOpaqueAttributeRef {}; alias LLVMOpaqueAttributeRef* LLVMAttributeRef;
 }
@@ -64,17 +60,17 @@ alias int LLVMCallConv;
 alias int LLVMIntPredicate;
 alias int LLVMRealPredicate;
 alias int LLVMLandingPadClauseTy;
-static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
+static if (LLVM_Version >= asVersion(3, 3, 0))
 {
 	alias int LLVMThreadLocalMode;
 	alias int LLVMAtomicOrdering;
 	alias int LLVMAtomicRMWBinOp;
 }
-static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
+static if (LLVM_Version >= asVersion(3, 5, 0))
 {
 	alias int LLVMDiagnosticSeverity;
 }
-static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+static if (LLVM_Version >= asVersion(3, 9, 0))
 {
 	alias int LLVMValueKind;
 	alias uint LLVMAttributeIndex;
@@ -100,7 +96,7 @@ struct LLVMOpInfo1
 	ulong VariantKind;
 }
 
-static if(LLVM_Version < LLVMDVersion(3, 3, 0))
+static if (LLVM_Version < asVersion(3, 3, 0))
 {
 	/+ Enhanced Disassembly +/
 
@@ -124,9 +120,9 @@ static if(LLVM_Version < LLVMDVersion(3, 3, 0))
 struct LLVMOpaqueGenericValue {}; alias LLVMOpaqueGenericValue* LLVMGenericValueRef;
 struct LLVMOpaqueExecutionEngine {}; alias LLVMOpaqueExecutionEngine* LLVMExecutionEngineRef;
 
-static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
+static if (LLVM_Version >= asVersion(3, 3, 0))
 {
-	static if(LLVM_Version >= 3.4)
+	static if (LLVM_Version >= asVersion(3, 4, 0))
 	{
 		struct LLVMOpaqueMCJITMemoryManager {}; alias LLVMOpaqueMCJITMemoryManager* LLVMMCJITMemoryManagerRef;
 
@@ -156,7 +152,7 @@ static if(LLVM_Version >= LLVMDVersion(3, 3, 0))
 	}
 }
 
-static if(LLVM_Version >= LLVMDVersion(3, 2, 0))
+static if (LLVM_Version >= asVersion(3, 2, 0))
 {
 	/+ Linker +/
 
@@ -173,7 +169,7 @@ alias int llvm_lto_status;
 
 /+ LTO +/
 
-static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
+static if (LLVM_Version >= asVersion(3, 5, 0))
 {
 	struct LLVMOpaqueLTOModule {}; alias LLVMOpaqueLTOModule* lto_module_t;
 }
@@ -181,7 +177,7 @@ else
 {
 	struct LTOModule {}; alias LTOModule* lto_module_t;
 }
-static if(LLVM_Version >= LLVMDVersion(3, 5, 0))
+static if (LLVM_Version >= asVersion(3, 5, 0))
 {
 	struct LLVMOpaqueLTOCodeGenerator {}; alias LLVMOpaqueLTOCodeGenerator* lto_code_gen_t;
 }
@@ -189,7 +185,7 @@ else
 {
 	struct LTOCodeGenerator {}; alias LTOCodeGenerator* lto_code_gen_t;
 }
-static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+static if (LLVM_Version >= asVersion(3, 9, 0))
 {
 	struct LLVMOpaqueThinLTOCodeGenerator {}; alias LLVMOpaqueThinLTOCodeGenerator* thinlto_code_gen_t;
 }
@@ -211,7 +207,7 @@ struct LLVMOpaqueRelocationIterator {}; alias LLVMOpaqueRelocationIterator* LLVM
 
 struct LLVMOpaqueTargetData {}; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
 struct LLVMOpaqueTargetLibraryInfotData {}; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
-static if(LLVM_Version < LLVMDVersion(3, 4, 0))
+static if (LLVM_Version < asVersion(3, 4, 0))
 {
 	struct LLVMStructLayout {}; alias LLVMStructLayout* LLVMStructLayoutRef;
 }
@@ -227,7 +223,7 @@ alias int LLVMRelocMode;
 alias int LLVMCodeModel;
 alias int LLVMCodeGenFileType;
 
-static if(LLVM_Version >= LLVMDVersion(3, 8, 0))
+static if (LLVM_Version >= asVersion(3, 8, 0))
 {
 	/+ JIT compilation of LLVM IR +/
 	
@@ -240,7 +236,7 @@ static if(LLVM_Version >= LLVMDVersion(3, 8, 0))
 	alias extern(C) ulong function(LLVMOrcJITStackRef JITStack, void* CallbackCtx) LLVMOrcLazyCompileCallbackFn;
 }
 
-static if(LLVM_Version >= LLVMDVersion(3, 9, 0))
+static if (LLVM_Version >= asVersion(3, 9, 0))
 {
 	alias int LLVMOrcErrorCode;
 
