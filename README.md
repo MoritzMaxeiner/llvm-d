@@ -9,7 +9,10 @@ It is designed to be linked dynamically against LLVM.
 Usage
 -----
 
-To use llvm-d you need only import it, after which all of LLVM's C API's functions should be available.
+1. `import llvm;` all of LLVM's C API's functions should be available
+2. Link against either the correct library (LLVM built as singleton), or the correct libraries (LLVM built as several libraries)
+   *Note:* That includes ensuring your linker can find them
+
 For example:
 
 ```d
