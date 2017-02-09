@@ -6,6 +6,37 @@ import std.string : toStringz, fromStringz;
 
 import llvm;
 
+immutable useMCJIT = {
+    // MCJIT does not work on Windows
+    version(Windows) { return false; }
+    else {
+        // Use MCJIT only if LLVMGetFunctionAddress is available,
+        // as LLVMRunFunction does not work reliably with it.
+        static if (LLVM_Version >= asVersion(3,6,0)) { return true; }
+        else { return false; }
+    }
+}();
+
+void initJIT(ref LLVMExecutionEngineRef engine, LLVMModuleRef genModule)
+{
+    char* error;
+
+    static if (useMCJIT) {
+        LLVMMCJITCompilerOptions options;
+		LLVMInitializeMCJITCompilerOptions(&options, options.sizeof);
+
+		LLVMCreateMCJITCompilerForModule(&engine, genModule, &options, options.sizeof, &error);
+    } else {
+        LLVMCreateJITCompilerForModule(&engine, genModule, 2, &error);
+    }
+
+	if (error)
+	{
+		scope (exit) LLVMDisposeMessage(error);
+        throw new Exception(error.fromStringz().idup);
+	}
+}
+
 int main(string[] args)
 {
 	char* error;
@@ -14,107 +45,79 @@ int main(string[] args)
 	LLVMInitializeNativeAsmPrinter();
 	LLVMInitializeNativeAsmParser();
 
-	auto _module = LLVMModuleCreateWithName("fibonacci".toStringz());
-	auto f_args = [ LLVMInt32Type() ];
-	auto f = LLVMAddFunction(
-		_module,
+	auto genModule = LLVMModuleCreateWithName("fibonacci".toStringz());
+	auto genFibParams = [ LLVMInt32Type() ];
+	auto genFib = LLVMAddFunction(
+		genModule,
 		"fib",
-		LLVMFunctionType(LLVMInt32Type(), f_args.ptr, 1, cast(LLVMBool) false));
-	LLVMSetFunctionCallConv(f, LLVMCCallConv);
+		LLVMFunctionType(LLVMInt32Type(), genFibParams.ptr, 1, cast(LLVMBool) false));
+	LLVMSetFunctionCallConv(genFib, LLVMCCallConv);
 
-	auto n = LLVMGetParam(f, 0);
+	auto genN = LLVMGetParam(genFib, 0);
 
-	auto entry = LLVMAppendBasicBlock(f, "entry".toStringz());
-	auto case_base0 = LLVMAppendBasicBlock(f, "case_base0".toStringz());
-	auto case_base1 = LLVMAppendBasicBlock(f, "case_base1".toStringz());
-	auto case_default = LLVMAppendBasicBlock(f, "case_default".toStringz());
-	auto end = LLVMAppendBasicBlock(f, "end".toStringz());
-	auto builder = LLVMCreateBuilder();
+	auto genEntryBlk = LLVMAppendBasicBlock(genFib, "entry".toStringz());
+	auto genAnchor0Blk = LLVMAppendBasicBlock(genFib, "case_base0".toStringz());
+	auto genAnchor1Blk = LLVMAppendBasicBlock(genFib, "case_base1".toStringz());
+	auto genRecursionBlk = LLVMAppendBasicBlock(genFib, "case_default".toStringz());
+	auto end = LLVMAppendBasicBlock(genFib, "end".toStringz());
 
-	/+ Entry basic block +/
-	LLVMPositionBuilderAtEnd(builder, entry);
-	auto Switch = LLVMBuildSwitch(
+    auto builder = LLVMCreateBuilder();
+
+	/+ Entry block +/
+	LLVMPositionBuilderAtEnd(builder, genEntryBlk);
+	auto fibSwitch = LLVMBuildSwitch(
 		builder,
-		n,
-		case_default,
+		genN,
+		genRecursionBlk,
 		2);
-	LLVMAddCase(Switch, LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false), case_base0);
-	LLVMAddCase(Switch, LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false), case_base1);
+	LLVMAddCase(fibSwitch, LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false), genAnchor0Blk);
+	LLVMAddCase(fibSwitch, LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false), genAnchor1Blk);
 
-	/+ Basic block for n = 0: fib(n) = 0 +/
-	LLVMPositionBuilderAtEnd(builder, case_base0);
-	auto res_base0 = LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false);
+	/+ Block for n = 0: fib(n) = 0 +/
+	LLVMPositionBuilderAtEnd(builder, genAnchor0Blk);
+	auto genAnchor0Result = LLVMConstInt(LLVMInt32Type(), 0, cast(LLVMBool) false);
 	LLVMBuildBr(builder, end);
 
-	/+ Basic block for n = 1: fib(n) = 1 +/
-	LLVMPositionBuilderAtEnd(builder, case_base1);
-	auto res_base1 = LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false);
+	/+ Block for n = 1: fib(n) = 1 +/
+	LLVMPositionBuilderAtEnd(builder, genAnchor1Blk);
+	auto genAnchor1Result = LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false);
 	LLVMBuildBr(builder, end);
 
-	/+ Basic block for n > 1: fib(n) = fib(n - 1) + fib(n - 2) +/
-	LLVMPositionBuilderAtEnd(builder, case_default);
+	/+ Block for n > 1: fib(n) = fib(n - 1) + fib(n - 2) +/
+	LLVMPositionBuilderAtEnd(builder, genRecursionBlk);
 
-	auto n_minus_1 = LLVMBuildSub(
+	auto genNMinus1 = LLVMBuildSub(
 		builder,
-		n,
+		genN,
 		LLVMConstInt(LLVMInt32Type(), 1, cast(LLVMBool) false),
 		"n - 1".toStringz());
-	auto call_f_1_args = [ n_minus_1 ];
-	auto call_f_1 = LLVMBuildCall(builder, f, call_f_1_args.ptr, 1, "fib(n - 1)".toStringz());
+	auto genCallFibNMinus1 = LLVMBuildCall(builder, genFib, [genNMinus1].ptr, 1, "fib(n - 1)".toStringz());
 
-	auto n_minus_2 = LLVMBuildSub(
+	auto genNMinus2 = LLVMBuildSub(
 		builder,
-		n,
+		genN,
 		LLVMConstInt(LLVMInt32Type(), 2, cast(LLVMBool) false),
 		"n - 2".toStringz());
-	auto call_f_2_args = [ n_minus_2 ];
-	auto call_f_2 = LLVMBuildCall(builder, f, call_f_2_args.ptr, 1, "fib(n - 2)".toStringz());
+	auto genCallFibNMinus2 = LLVMBuildCall(builder, genFib, [genNMinus2].ptr, 1, "fib(n - 2)".toStringz());
 
-	auto res_default = LLVMBuildAdd(builder, call_f_1, call_f_2, "fib(n - 1) + fib(n - 2)".toStringz());
+	auto genRecursionResult = LLVMBuildAdd(builder, genCallFibNMinus1, genCallFibNMinus2, "fib(n - 1) + fib(n - 2)".toStringz());
 	LLVMBuildBr(builder, end);
 
-	/+ Basic block for collecting the result +/
+	/+ Block for collecting the final result +/
 	LLVMPositionBuilderAtEnd(builder, end);
-	auto res = LLVMBuildPhi(builder, LLVMInt32Type(), "result".toStringz());
-	auto phi_vals = [ res_base0, res_base1, res_default ];
-	auto phi_blocks = [ case_base0, case_base1, case_default ];
-	LLVMAddIncoming(res, phi_vals.ptr, phi_blocks.ptr, 3);
-	LLVMBuildRet(builder, res);
+	auto genFinalResult = LLVMBuildPhi(builder, LLVMInt32Type(), "result".toStringz());
+	auto phiValues = [ genAnchor0Result, genAnchor1Result, genRecursionResult ];
+	auto phiBlocks = [ genAnchor0Blk, genAnchor1Blk, genRecursionBlk ];
+	LLVMAddIncoming(genFinalResult, phiValues.ptr, phiBlocks.ptr, 3);
+	LLVMBuildRet(builder, genFinalResult);
 
-	LLVMVerifyModule(_module, LLVMAbortProcessAction, &error);
+	LLVMVerifyModule(genModule, LLVMAbortProcessAction, &error);
 	LLVMDisposeMessage(error);
 
 	LLVMExecutionEngineRef engine;
 	error = null;
 
-	version(Windows)
-	{
-		/+ On Windows, we can only use the old JIT for now +/
-		LLVMCreateJITCompilerForModule(&engine, _module, 2, &error);
-	}
-	else
-	{
-		static if (LLVM_Version >= asVersion(3,3,0))
-		{
-			/+ On other systems we should be able to use the newer
-			 + MCJIT instead - if we have a high enough LLVM version +/
-			LLVMMCJITCompilerOptions options;
-			LLVMInitializeMCJITCompilerOptions(&options, options.sizeof);
-
-			LLVMCreateMCJITCompilerForModule(&engine, _module, &options, options.sizeof, &error);
-		}
-		else
-		{
-			LLVMCreateJITCompilerForModule(&engine, _module, 2, &error);
-		}
-	}
-
-	if (error)
-	{
-		scope (exit) LLVMDisposeMessage(error);
-		writefln("%s", error.fromStringz());
-		return 1;
-	}
+    initJIT(engine, genModule);
 
 	auto pass = LLVMCreatePassManager();
 	static if (LLVM_Version < asVersion(3,9,0))
@@ -126,27 +129,37 @@ int main(string[] args)
 	LLVMAddPromoteMemoryToRegisterPass(pass);
 	LLVMAddGVNPass(pass);
 	LLVMAddCFGSimplificationPass(pass);
-	LLVMRunPassManager(pass, _module);
+	LLVMRunPassManager(pass, genModule);
 
 	writefln("The following module has been generated for the fibonacci series:\n");
-	LLVMDumpModule(_module);
+	LLVMDumpModule(genModule);
 
 	writeln();
 
-	int n_exec= 10;
+    int n = 10;
 	if (args.length > 1)
 	{
-		n_exec = to!int(args[1]);
+		n = to!int(args[1]);
 	}
 	else
 	{
-		writefln("; Argument for fib missing on command line, using default:  \"%d\"", n_exec);
+		writefln("; Argument for fib missing on command line, using default:  \"%d\"", n);
 	}
 
-	auto exec_args = [ LLVMCreateGenericValueOfInt(LLVMInt32Type(), n_exec, cast(LLVMBool) 0) ];
-	writefln("; Running (jit-compiled) fib(%d)...", n_exec);
-	auto exec_res = LLVMRunFunction(engine, f, 1, exec_args.ptr);
-	writefln("; fib(%d) = %d", n_exec, LLVMGenericValueToInt(exec_res, 0));
+    int fib(int n)
+    {
+        static if (useMCJIT) {
+            alias Fib = extern (C) int function(int);
+            auto fib = cast(Fib) LLVMGetFunctionAddress(engine, "fib".toStringz());
+            return fib(n);
+        } else {
+            auto args = [ LLVMCreateGenericValueOfInt(LLVMInt32Type(), n, cast(LLVMBool) 0) ];
+            return LLVMGenericValueToInt(LLVMRunFunction(engine, f, 1, args.ptr), 0);
+        }
+    }
+
+	writefln("; Running (jit-compiled) fib(%d)...", n);
+	writefln("; fib(%d) = %d", n, fib(n));
 
 	LLVMDisposePassManager(pass);
 	LLVMDisposeBuilder(builder);
