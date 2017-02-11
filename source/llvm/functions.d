@@ -1486,9 +1486,6 @@ static if (LLVM_Version >= asVersion(3, 6, 0)) {
 }
 void lto_codegen_dispose(lto_code_gen_t);
 bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
-static if (LLVM_Version >= asVersion(3, 7, 0)) {
-    void lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
-}
 bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model);
 bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model);
 void lto_codegen_set_cpu(lto_code_gen_t cg, const(char)* cpu);
