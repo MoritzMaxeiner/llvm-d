@@ -144,7 +144,7 @@ int LLVMWriteBitcodeToFile(LLVMModuleRef M, const(char)* Path);
 int LLVMWriteBitcodeToFD(LLVMModuleRef M, int FD, int ShouldClose, int Unbuffered);
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int Handle);
 static if (LLVM_Version >= asVersion(3, 6, 0)) {
-    LLVMMemoryBufferRef LLLVMWriteBitcodeToMemoryBuffer(LLVMModuleRef M);
+    LLVMMemoryBufferRef LLVMWriteBitcodeToMemoryBuffer(LLVMModuleRef M);
 }
 
 /+ Transforms +/
@@ -330,7 +330,7 @@ static if (LLVM_Version >= asVersion(3, 5, 0)) {
 LLVMModuleRef LLVMModuleCreateWithName(const(char)* ModuleID);
 LLVMModuleRef LLVMModuleCreateWithNameInContext(const(char)* ModuleID, LLVMContextRef C);
 static if (LLVM_Version >= asVersion(3, 6, 0)) {
-    LLVMModuleRef LLLVMCloneModule(LLVMModuleRef M);
+    LLVMModuleRef LLVMCloneModule(LLVMModuleRef M);
 }
 void LLVMDisposeModule(LLVMModuleRef M);
 
