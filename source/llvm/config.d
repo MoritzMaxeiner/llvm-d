@@ -133,7 +133,7 @@ immutable LLVM_AsmParsers = {
 
 /// LLVM Targets with Disassembler capability (if enabled)
 immutable LLVM_Disassemblers = {
-	static if (LLVM_Version >= asVersion(3, 9, 0)) {
+	static if (LLVM_Version >= asVersion(4, 0, 0)) {
 		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else  static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
