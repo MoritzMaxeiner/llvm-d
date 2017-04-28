@@ -57,7 +57,7 @@ immutable LLVM_Targets = {
 	string[] targets;
 	mixin({
 			static if (LLVM_Version >= asVersion(4, 0, 0)) {
-				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","MSP430","NVPTX","PowerPC","RISCV","Sparc","SystemZ","WebAssembly","X86","XCore"];
+				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","RISCV","Sparc","SystemZ","WebAssembly","X86","XCore"];
 			} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 			} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
@@ -84,7 +84,7 @@ immutable LLVM_Targets = {
 /// LLVM Targets with AsmPrinter capability (if enabled)
 immutable LLVM_AsmPrinters = {
 	static if (LLVM_Version >= asVersion(4, 0, 0)) {
-		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","MSP430","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
