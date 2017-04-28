@@ -198,6 +198,9 @@ static if (LLVM_Version >= asVersion(3, 5, 0)) {
     void LLVMAddMergedLoadStoreMotionPass(LLVMPassManagerRef PM);
 }
 void LLVMAddGVNPass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	void LLVMAddNewGVNPass(LLVMPassManagerRef PM);
+}
 void LLVMAddIndVarSimplifyPass(LLVMPassManagerRef PM);
 void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
 void LLVMAddJumpThreadingPass(LLVMPassManagerRef PM);
@@ -230,6 +233,9 @@ void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
 void LLVMAddVerifierPass(LLVMPassManagerRef PM);
 void LLVMAddCorrelatedValuePropagationPass(LLVMPassManagerRef PM);
 void LLVMAddEarlyCSEPass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	void LLVMAddEarlyCSEMemSSAPass(LLVMPassManagerRef PM);
+}
 void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM);
 void LLVMAddTypeBasedAliasAnalysisPass(LLVMPassManagerRef PM);
 static if (LLVM_Version >= asVersion(3, 6, 0)) {
@@ -662,6 +668,9 @@ LLVMValueRef LLVMConstNSWMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant)
 LLVMValueRef LLVMConstNUWMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
 LLVMValueRef LLVMConstFMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
 LLVMValueRef LLVMConstUDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	LLVMValueRef LLVMConstExactUDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+}
 LLVMValueRef LLVMConstSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
 LLVMValueRef LLVMConstExactSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
 LLVMValueRef LLVMConstFDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
@@ -783,8 +792,9 @@ uint LLVMGetFunctionCallConv(LLVMValueRef Fn);
 void LLVMSetFunctionCallConv(LLVMValueRef Fn, uint CC);
 const(char)* LLVMGetGC(LLVMValueRef Fn);
 void LLVMSetGC(LLVMValueRef Fn, const(char)* Name);
-void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
-
+static if (LLVM_Version < asVersion(4, 0, 0)) {
+	void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
+}
 
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     void LLVMAddAttributeAtIndex(LLVMValueRef F, LLVMAttributeIndex Idx, LLVMAttributeRef A);
@@ -813,9 +823,11 @@ static if (LLVM_Version >= asVersion(3, 9, 0)) {
 static if (LLVM_Version >= asVersion(3, 3, 0)) {
     void LLVMAddTargetDependentFunctionAttr(LLVMValueRef Fn, const(char)* A, const(char)* V);
 }
-LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn);
-void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
 
+static if (LLVM_Version < asVersion(4, 0, 0)) {
+	LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn);
+	void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
+}
 /++++++ Function Parameters ++++++/
 
 uint LLVMCountParams(LLVMValueRef Fn);
@@ -826,9 +838,13 @@ LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn);
 LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
 LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg);
 LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg);
-void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA);
-void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA);
-LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg);
+
+static if (LLVM_Version < asVersion(4, 0, 0)) {
+	void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+	void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA);
+	LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg);
+}
+
 void LLVMSetParamAlignment(LLVMValueRef Arg, uint Align);
 
 /+++ Metadata +++/
@@ -913,8 +929,11 @@ static if (LLVM_Version >= asVersion(3, 9, 0)) {
 }
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, uint CC);
 uint LLVMGetInstructionCallConv(LLVMValueRef Instr);
-void LLVMAddInstrAttribute(LLVMValueRef Instr, uint index, LLVMAttribute);
-void LLVMRemoveInstrAttribute(LLVMValueRef Instr, uint index, LLVMAttribute);
+
+static if (LLVM_Version < asVersion(4, 0, 0)) {
+	void LLVMAddInstrAttribute(LLVMValueRef Instr, uint index, LLVMAttribute);
+	void LLVMRemoveInstrAttribute(LLVMValueRef Instr, uint index, LLVMAttribute);
+}
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, uint index, uint Align);
 
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
@@ -1052,6 +1071,9 @@ LLVMValueRef LLVMBuildNSWMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,
 LLVMValueRef LLVMBuildNUWMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
 LLVMValueRef LLVMBuildFMul(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
 LLVMValueRef LLVMBuildUDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	LLVMValueRef LLVMBuildExactUDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
+}
 LLVMValueRef LLVMBuildSDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
 LLVMValueRef LLVMBuildExactSDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
 LLVMValueRef LLVMBuildFDiv(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
@@ -1533,6 +1555,10 @@ static if (LLVM_Version >= asVersion(3, 9, 0)) {
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     LTOObjectBuffer thinlto_module_get_object(thinlto_code_gen_t cg, uint index);
 }
+static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	uint thinlto_module_get_num_object_files(thinlto_code_gen_t cg);
+	const(char)* thinlto_module_get_object_file(thinlto_code_gen_t cg, uint index);
+}
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     lto_bool_t thinlto_codegen_set_pic_model(thinlto_code_gen_t cg, lto_codegen_model);
 }
@@ -1550,6 +1576,9 @@ static if (LLVM_Version >= asVersion(3, 9, 0)) {
 }
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     void thinlto_codegen_set_savetemps_dir(thinlto_code_gen_t cg, const(char)* save_temps_dir);
+}
+static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	void thinlto_set_generated_objects_dir(thinlto_code_gen_t cg, const(char)* save_temps_dir);
 }
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     void thinlto_codegen_set_cpu(thinlto_code_gen_t cg, const(char)* cpu);

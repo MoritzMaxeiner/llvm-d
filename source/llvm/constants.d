@@ -16,34 +16,37 @@ enum : LLVMVerifierFailureAction
 
 /++ Types and Enumerations ++/
 
-enum : LLVMAttribute
+static if (LLVM_Version < asVersion(4, 0, 0))
 {
-	LLVMZExtAttribute = 1<<0,
-	LLVMSExtAttribute = 1<<1,
-	LLVMNoReturnAttribute = 1<<2,
-	LLVMInRegAttribute = 1<<3,
-	LLVMStructRetAttribute = 1<<4,
-	LLVMNoUnwindAttribute = 1<<5,
-	LLVMNoAliasAttribute = 1<<6,
-	LLVMByValAttribute = 1<<7,
-	LLVMNestAttribute = 1<<8,
-	LLVMReadNoneAttribute = 1<<9,
-	LLVMReadOnlyAttribute = 1<<10,
-	LLVMNoInlineAttribute = 1<<11,
-	LLVMAlwaysInlineAttribute = 1<<12,
-	LLVMOptimizeForSizeAttribute = 1<<13,
-	LLVMStackProtectAttribute = 1<<14,
-	LLVMStackProtectReqAttribute = 1<<15,
-	LLVMAlignment = 31<<16,
-	LLVMNoCaptureAttribute = 1<<21,
-	LLVMNoRedZoneAttribute = 1<<22,
-	LLVMNoImplicitFloatAttribute = 1<<23,
-	LLVMNakedAttribute = 1<<24,
-	LLVMInlineHintAttribute = 1<<25,
-	LLVMStackAlignment = 7<<26,
-	LLVMReturnsTwice = 1<<29,
-	LLVMUWTable = 1<<30,
-	LLVMNonLazyBind = 1<<31
+	enum : LLVMAttribute
+	{
+		LLVMZExtAttribute = 1<<0,
+		LLVMSExtAttribute = 1<<1,
+		LLVMNoReturnAttribute = 1<<2,
+		LLVMInRegAttribute = 1<<3,
+		LLVMStructRetAttribute = 1<<4,
+		LLVMNoUnwindAttribute = 1<<5,
+		LLVMNoAliasAttribute = 1<<6,
+		LLVMByValAttribute = 1<<7,
+		LLVMNestAttribute = 1<<8,
+		LLVMReadNoneAttribute = 1<<9,
+		LLVMReadOnlyAttribute = 1<<10,
+		LLVMNoInlineAttribute = 1<<11,
+		LLVMAlwaysInlineAttribute = 1<<12,
+		LLVMOptimizeForSizeAttribute = 1<<13,
+		LLVMStackProtectAttribute = 1<<14,
+		LLVMStackProtectReqAttribute = 1<<15,
+		LLVMAlignment = 31<<16,
+		LLVMNoCaptureAttribute = 1<<21,
+		LLVMNoRedZoneAttribute = 1<<22,
+		LLVMNoImplicitFloatAttribute = 1<<23,
+		LLVMNakedAttribute = 1<<24,
+		LLVMInlineHintAttribute = 1<<25,
+		LLVMStackAlignment = 7<<26,
+		LLVMReturnsTwice = 1<<29,
+		LLVMUWTable = 1<<30,
+		LLVMNonLazyBind = 1<<31
+	}
 }
 
 enum : LLVMOpcode
@@ -478,8 +481,15 @@ enum : llvm_lto_status
 }
 
 /+ LTO +/
-
-static if (LLVM_Version >= asVersion(3, 7, 0))
+static if (LLVM_Version >= asVersion(4, 0, 0))
+{
+	const uint LTO_API_VERSION = 21;
+}
+else static if (LLVM_Version >= asVersion(3, 9, 0))
+{
+	const uint LTO_API_VERSION = 20;
+}
+else static if (LLVM_Version >= asVersion(3, 7, 0))
 {
 	const uint LTO_API_VERSION = 17;
 }

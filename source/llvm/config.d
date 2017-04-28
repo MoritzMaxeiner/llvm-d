@@ -7,6 +7,7 @@ import std.algorithm.searching : canFind;
 
 /// LLVM Versions that llvm-d supports
 immutable LLVM_Versions = [
+	[4,0,0],
 	[3,9,1],
 	[3,9,0],
 	[3,8,1],
@@ -55,32 +56,36 @@ immutable LLVM_Version = asVersion(LLVM_VERSION_MAJOR, LLVM_VERSION_MINOR, LLVM_
 immutable LLVM_Targets = {
 	string[] targets;
 	mixin({
-		       static if (LLVM_Version >= asVersion(3, 9, 0)) {
-			return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
-			return ["AArch64","AMDGPU","ARM","AVR","BPF","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 7, 0)) {
-			return ["AArch64","AMDGPU","ARM","BPF","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 6, 0)) {
-			return ["AArch64","ARM","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 5, 0)) {
-			return ["AArch64","ARM","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 4, 0)) {
-			return ["AArch64","ARM","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 3, 0)) {
-			return ["AArch64","ARM","CppBackend","Hexagon","MBlaze","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
-		} else static if (LLVM_Version >= asVersion(3, 2, 0)) {
-			return ["ARM","CellSPU","CppBackend","Hexagon","MBlaze","MSP430","Mips","NVPTX","PTX","PowerPC","Sparc","X86","XCore"];
-		} else {
-			return ["ARM","CellSPU","CppBackend","Hexagon","MBlaze","MSP430","Mips","PTX","PowerPC","Sparc","X86","XCore"];
-		}
-	}().map!(t => "version (LLVM_Target_" ~ t ~ ") targets ~= \"" ~ t ~ "\";").joiner.array);
+			static if (LLVM_Version >= asVersion(4, 0, 0)) {
+				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","MSP430","NVPTX","PowerPC","RISCV","Sparc","SystemZ","WebAssembly","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
+				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
+				return ["AArch64","AMDGPU","ARM","AVR","BPF","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 7, 0)) {
+				return ["AArch64","AMDGPU","ARM","BPF","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 6, 0)) {
+				return ["AArch64","ARM","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 5, 0)) {
+				return ["AArch64","ARM","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 4, 0)) {
+				return ["AArch64","ARM","CppBackend","Hexagon","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 3, 0)) {
+				return ["AArch64","ARM","CppBackend","Hexagon","MBlaze","MSP430","Mips","NVPTX","PowerPC","R600","Sparc","SystemZ","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(3, 2, 0)) {
+				return ["ARM","CellSPU","CppBackend","Hexagon","MBlaze","MSP430","Mips","NVPTX","PTX","PowerPC","Sparc","X86","XCore"];
+			} else {
+				return ["ARM","CellSPU","CppBackend","Hexagon","MBlaze","MSP430","Mips","PTX","PowerPC","Sparc","X86","XCore"];
+			}
+		}().map!(t => "version (LLVM_Target_" ~ t ~ ") targets ~= \"" ~ t ~ "\";").joiner.array);
 	return targets;
 }();
 
 /// LLVM Targets with AsmPrinter capability (if enabled)
 immutable LLVM_AsmPrinters = {
-	       static if (LLVM_Version >= asVersion(3, 9, 0)) {
+	static if (LLVM_Version >= asVersion(4, 0, 0)) {
+		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","MSP430","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+	} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
 		return ["AArch64","AMDGPU","ARM","BPF","Hexagon","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
@@ -103,7 +108,9 @@ immutable LLVM_AsmPrinters = {
 
 /// LLVM Targets with AsmParser capability (if enabled)
 immutable LLVM_AsmParsers = {
-	       static if (LLVM_Version >= asVersion(3, 9, 0)) {
+	static if (LLVM_Version >= asVersion(4, 0, 0)) {
+		return ["AArch64","AMDGPU","ARM","AVR","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","X86"];
+	} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","X86"];
 	} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
 		return ["AArch64","AMDGPU","ARM","Hexagon","Mips","PowerPC","Sparc","SystemZ","X86"];
@@ -126,7 +133,9 @@ immutable LLVM_AsmParsers = {
 
 /// LLVM Targets with Disassembler capability (if enabled)
 immutable LLVM_Disassemblers = {
-	       static if (LLVM_Version >= asVersion(3, 9, 0)) {
+	static if (LLVM_Version >= asVersion(3, 9, 0)) {
+		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+	} else  static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
 		return ["AArch64","ARM","Hexagon","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
