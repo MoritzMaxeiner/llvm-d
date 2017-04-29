@@ -48,11 +48,25 @@ The LLVM version to be used is selected by setting a [conditional compilation ve
 For DMD, this is the `-version` argument; for dub, the `versions` field.
 
 The identifier to set the LLVM version is defined as
-`LLVM_{MAJOR_VERSION}_{MINOR_VERSION}_{PATCH_VERSION}`, so to get LLVM version 3.1.0
-use `LLVM_3_1_0`.
+`LLVM_{MAJOR_VERSION}_{MINOR_VERSION}_{PATCH_VERSION}`, so to get LLVM version 3.1.0 use `LLVM_3_1_0`.
 
 Current supported versions are 3.1.0 - 4.0.0 and if no version is given
 at compile time, 4.0.0 will be assumed.
+
+LLVM targets
+------------
+
+As with the LLVM version, LLVM targets are also selected by setting an appropriate [conditional compilation version identifier](https://dlang.org/spec/version.html).
+
+The identifier to enable an LLVM target XyZ is defined as
+`LLVM_Target_XyZ`, which will instruct llvm-d to assume any C API functions for those targets will be linked in, so to enable the X86 LLVM target, use `LLVM_Target_X86`.
+
+*Note*: The target name is case sensitive.
+
+*Note*: Multiple targets can be enabled in this manner.
+
+llvm-d supports all targets for the supported LLVM versions and if no target is given at compile time, none will be assumed to be available.
+The dub package's default configuration sets the appropriate identifier to enable the native target for some common platforms.
 
 Documentation
 -------------
