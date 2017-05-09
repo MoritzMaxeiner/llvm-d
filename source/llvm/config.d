@@ -52,6 +52,9 @@ ulong asVersion(ushort major, ushort minor, ushort patch)
 /// LLVM Version that llvm-d was compiled against
 immutable LLVM_Version = asVersion(LLVM_VERSION_MAJOR, LLVM_VERSION_MINOR, LLVM_VERSION_PATCH);
 
+/// LLVM Version that llvm-d was compiled against as a string
+immutable LLVM_VersionString = LLVM_VERSION_MAJOR.to!string ~ "." ~ LLVM_VERSION_MINOR.to!string ~ "." ~ LLVM_VERSION_PATCH.to!string;
+
 /// LLVM Targets that can be used (enable target Name via version LLVM_Target_Name)
 immutable LLVM_Targets = {
 	string[] targets;

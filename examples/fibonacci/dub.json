@@ -15,11 +15,11 @@
     },
     "configurations": [
         {
-            "name": "single-llvm",
+            "name": "link-single",
             "libs": ["LLVM"]
         },
         {
-            "name": "split-llvm",
+            "name": "link-split",
             "libs": [
                 "LLVMCore",
                 "LLVMAnalysis",
@@ -32,6 +32,10 @@
                 "LLVMX86Disassembler",
                 "LLVMX86AsmParser"
             ]
+        },
+        {
+            "name": "load",
+            "versions": ["LLVM_Load", "LLVM_Autoload"]
         }
     ]
 }
