@@ -26,6 +26,6 @@ before_install:
 
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then DFLAGS="-version=LLVM_3_6_0" dub run --root=examples/fibonacci --compiler=$DC --config=single-llvm; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then DFLAGS="-version=LLVM_3_6_0" dub run --root=examples/fibonacci --compiler=$DC --config=link-single; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then DFLAGS="-version=LLVM_3_8_0" dub run --root=examples/fibonacci --compiler=$DC --config=single-llvm; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then DFLAGS="-version=LLVM_3_8_0" dub run --root=examples/fibonacci --compiler=$DC --config=link-single; fi
