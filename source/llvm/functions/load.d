@@ -5,37 +5,9 @@ version (LLVM_Load):
 import std.traits;
 import std.meta;
 
-import functions = llvm.functions.link;
+import link = llvm.functions.link;
 
 private:
-
-template isCFunction(alias scope_, string member)
-{
-    static if (isFunction!(__traits(getMember, scope_, member)) &&
-               (functionLinkage!(__traits(getMember, scope_, member)) == "C" ||
-                functionLinkage!(__traits(getMember, scope_, member)) == "Windows")) {
-        enum isCFunction = true;
-    } else {
-        enum isCFunction = false;
-    }
-}
-
-template CFunctions(alias mod)
-{
-    alias isCFunction(string member) = .isCFunction!(mod, member);
-    alias CFunctions = Filter!(isCFunction, __traits(allMembers, mod));
-}
-
-string declareStubs()
-{
-    import std.array : appender;
-    auto code = appender!string;
-    foreach (fn; CFunctions!functions) {
-        code.put("typeof(functions."); code.put(fn);
-        code.put(")* "); code.put(fn); code.put(";\n");
-    }
-    return code.data;
-}
 
 version(Posix)
 {
@@ -141,9 +113,23 @@ final class SharedLibException : Exception
     }
 }
 
+private
+{
+    bool isSym(string m) { return m != "object" && m != "llvm" && m != "orEmpty"; }
+
+    string declareSymPtr(string m) { return "typeof(link." ~ m ~ ")* " ~ m ~ ";"; }
+    string getSymPtr(string m) { return m ~ " = library.getSymbol!(typeof(" ~ m ~ "))(\"" ~ m ~ "\");"; }
+}
+
 __gshared
 {
-    mixin (declareStubs);
+    mixin ({
+        string code;
+        foreach (m; __traits(allMembers, link)) if (m.isSym) {
+            code ~= m.declareSymPtr;
+        }
+        return code;
+    }());
 }
 
 /// Container for holding the LLVM library and the load/unload functions.
@@ -155,10 +141,12 @@ private:
 
     static void getSymbols()
     {
-        import std.stdio : stderr;
-        foreach (fn; CFunctions!functions) {
-            mixin(fn ~ " = library.getSymbol!(typeof(" ~ fn ~ "))(\"" ~ fn ~ "\");");
-            debug if (!mixin(fn)) stderr.writeln("Warning, your LLVM shared library does not provide " ~ fn);
+        foreach (m; __traits(allMembers, link)) static if (m.isSym) {
+            mixin (m.getSymPtr);
+            debug {
+                import std.stdio : stderr;
+                if (!mixin(m)) stderr.writeln("Missing LLVM symbol: " ~ m);
+            }
         }
     }
 public:
