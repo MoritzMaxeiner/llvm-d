@@ -115,6 +115,9 @@ static if (LLVM_Version >= asVersion(3, 6, 0)) {
     void LLVMAddAlignmentFromAssumptionsPass(LLVMPassManagerRef PM);
 }
 void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	void LLVMAddLateCFGSimplificationPass(LLVMPassManagerRef PM);
+}
 void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM);
 static if (LLVM_Version >= asVersion(3, 5, 0)) {
     void LLVMAddScalarizerPass(LLVMPassManagerRef PM);
@@ -376,6 +379,12 @@ LLVMBool LLVMIsOpaqueStruct(LLVMTypeRef StructTy);
 /+++ Sequential Types +++/
 
 LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty);
+static if (LLVM_Version >= asVersion(5,0,0)) {
+	void LLVMGetSubtypes(LLVMTypeRef Tp, LLVMTypeRef* Arr);
+}
+static if (LLVM_Version >= asVersion(5,0,0)) {
+	uint LLVMGetNumContainedTypes(LLVMTypeRef Tp);
+}
 LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, uint ElementCount);
 uint LLVMGetArrayLength(LLVMTypeRef ArrayTy);
 LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType, uint AddressSpace);
@@ -778,6 +787,10 @@ LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const(char)* Str, uint SLen
 LLVMValueRef LLVMMDString(const(char)* Str, uint SLen);
 LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef* Vals, uint Count);
 LLVMValueRef LLVMMDNode(LLVMValueRef* Vals, uint Count);
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMValueRef LLVMMetadataAsValue(LLVMContextRef C, LLVMMetadataRef MD);
+	LLVMMetadataRef LLVMValueAsMetadata(LLVMValueRef Val);
+}
 const(char)* LLVMGetMDString(LLVMValueRef V, uint* Len);
 static if (LLVM_Version >= asVersion(3, 2, 0)) {
     uint LLVMGetMDNodeNumOperands(LLVMValueRef V);
@@ -1671,6 +1684,12 @@ static if (LLVM_Version >= asVersion(3, 4, 0)) {
 }
 
 /+ JIT compilation of LLVM IR +/
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMSharedModuleRef LLVMOrcMakeSharedModule(LLVMModuleRef Mod);
+	void LLVMOrcDisposeSharedModuleRef(LLVMSharedModuleRef SharedMod);
+	LLVMSharedObjectBufferRef LLVMOrcMakeSharedObjectBuffer(LLVMMemoryBufferRef ObjBuffer);
+	void LLVMOrcDisposeSharedObjectBufferRef(LLVMSharedObjectBufferRef SharedObjBuffer);
+}
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM);
 }
@@ -1683,7 +1702,10 @@ static if (LLVM_Version >= asVersion(3, 8, 0)) {
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMOrcDisposeMangledSymbol(char* MangledSymbol);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcCreateLazyCompileCallback(LLVMOrcJITStackRef JITStack, LLVMOrcTargetAddress* RetAddr, LLVMOrcLazyCompileCallbackFn Callback, void* CallbackCtx);
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcTargetAddress LLVMOrcCreateLazyCompileCallback(LLVMOrcJITStackRef JITStack, LLVMOrcLazyCompileCallbackFn Callback, void* CallbackCtx);
 }
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
@@ -1692,21 +1714,36 @@ static if (LLVM_Version >= asVersion(3, 8, 0)) {
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack, const(char)* StubName, LLVMOrcTargetAddress NewAddr);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcModuleHandle LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcModuleHandle LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedObjectBufferRef Obj, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcModuleHandle LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack, LLVMObjectFileRef Obj, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcRemoveModule(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle H);
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMOrcRemoveModule(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle H);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcGetSymbolAddress(LLVMOrcJITStackRef JITStack, LLVMOrcTargetAddress *RetAddr, const(char)* SymbolName);
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcTargetAddress LLVMOrcGetSymbolAddress(LLVMOrcJITStackRef JITStack, const(char)* SymbolName);
 }
-static if (LLVM_Version >= asVersion(3, 8, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
+} else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
 }

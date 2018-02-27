@@ -37,7 +37,13 @@ struct LLVMOpaqueContext {}; alias LLVMOpaqueContext* LLVMContextRef;
 struct LLVMOpaqueModule {}; alias LLVMOpaqueModule* LLVMModuleRef;
 struct LLVMOpaqueType {}; alias LLVMOpaqueType* LLVMTypeRef;
 struct LLVMOpaqueValue {}; alias LLVMOpaqueValue* LLVMValueRef;
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	struct LLVMOpaqueMetadata; alias LLVMOpaqueMetadata* LLVMMetadataRef;
+}
 struct LLVMOpaqueBasicBlock {}; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	struct LLVMOpaqueDIBuilder; alias LLVMOpaqueDIBuilder* LLVMDIBuilderRef;
+}
 struct LLVMOpaqueBuilder {}; alias LLVMOpaqueBuilder* LLVMBuilderRef;
 struct LLVMOpaqueModuleProvider {}; alias LLVMOpaqueModuleProvider* LLVMModuleProviderRef;
 struct LLVMOpaqueMemoryBuffer {}; alias LLVMOpaqueMemoryBuffer* LLVMMemoryBufferRef;
@@ -45,8 +51,7 @@ struct LLVMOpaquePassManager {}; alias LLVMOpaquePassManager* LLVMPassManagerRef
 struct LLVMOpaquePassRegistry {}; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
 struct LLVMOpaqueUse {}; alias LLVMOpaqueUse* LLVMUseRef;
 
-static if (LLVM_Version >= asVersion(3, 9, 0))
-{
+static if (LLVM_Version >= asVersion(3, 9, 0)) {
 	struct LLVMOpaqueAttributeRef {}; alias LLVMOpaqueAttributeRef* LLVMAttributeRef;
 }
 
@@ -222,6 +227,13 @@ alias int LLVMCodeGenOptLevel;
 alias int LLVMRelocMode;
 alias int LLVMCodeModel;
 alias int LLVMCodeGenFileType;
+
+static if (LLVM_Version >= asVersion(5, 0, 0))
+{
+	struct LLVMOpaqueSharedModule; alias LLVMOpaqueSharedModule* LLVMSharedModuleRef;
+	struct LLVMOpaqueSharedObjectBuffer; alias LLVMOpaqueSharedObjectBuffer* LLVMSharedObjectBufferRef;
+
+}
 
 static if (LLVM_Version >= asVersion(3, 8, 0))
 {

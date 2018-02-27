@@ -7,6 +7,7 @@ import std.algorithm.searching : canFind;
 
 /// LLVM Versions that llvm-d supports
 immutable LLVM_Versions = [
+	[5,0,0],
 	[4,0,0],
 	[3,9,1],
 	[3,9,0],
@@ -59,7 +60,9 @@ immutable LLVM_VersionString = LLVM_VERSION_MAJOR.to!string ~ "." ~ LLVM_VERSION
 immutable LLVM_Targets = {
 	string[] targets;
 	mixin({
-			static if (LLVM_Version >= asVersion(4, 0, 0)) {
+			static if (LLVM_Version >= asVersion(5, 0, 0)) {
+				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","MSP430","Nios2","NVPTX","PowerPC","RISCV","Sparc","SystemZ","WebAssembly","X86","XCore"];
+			} else static if (LLVM_Version >= asVersion(4, 0, 0)) {
 				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","RISCV","Sparc","SystemZ","WebAssembly","X86","XCore"];
 			} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 				return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
@@ -86,7 +89,9 @@ immutable LLVM_Targets = {
 
 /// LLVM Targets with AsmPrinter capability (if enabled)
 immutable LLVM_AsmPrinters = {
-	static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	static if (LLVM_Version >= asVersion(5, 0, 0)) {
+		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","MSP430","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+	} else static if (LLVM_Version >= asVersion(4, 0, 0)) {
 		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","BPF","Hexagon","Lanai","MSP430","Mips","NVPTX","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
@@ -111,7 +116,9 @@ immutable LLVM_AsmPrinters = {
 
 /// LLVM Targets with AsmParser capability (if enabled)
 immutable LLVM_AsmParsers = {
-	static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	static if (LLVM_Version >= asVersion(5, 0, 0)) {
+		return ["AArch64","AMDGPU","ARM","AVR","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","X86"];
+	} else static if (LLVM_Version >= asVersion(4, 0, 0)) {
 		return ["AArch64","AMDGPU","ARM","AVR","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","X86"];
 	} else static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","X86"];
@@ -136,7 +143,9 @@ immutable LLVM_AsmParsers = {
 
 /// LLVM Targets with Disassembler capability (if enabled)
 immutable LLVM_Disassemblers = {
-	static if (LLVM_Version >= asVersion(4, 0, 0)) {
+	static if (LLVM_Version >= asVersion(5, 0, 0)) {
+		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
+	} else static if (LLVM_Version >= asVersion(4, 0, 0)) {
 		return ["AArch64","AMDGPU","ARM","AVR","BPF","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
 	} else  static if (LLVM_Version >= asVersion(3, 9, 0)) {
 		return ["AArch64","AMDGPU","ARM","Hexagon","Lanai","Mips","PowerPC","Sparc","SystemZ","WebAssembly","X86","XCore"];
