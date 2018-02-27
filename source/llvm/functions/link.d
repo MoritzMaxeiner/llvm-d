@@ -78,6 +78,9 @@ static if (LLVM_Version >= asVersion(3, 6, 0)) {
 
 void LLVMAddArgumentPromotionPass(LLVMPassManagerRef PM);
 void LLVMAddConstantMergePass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	void LLVMAddCalledValuePropagationPass(LLVMPassManagerRef PM);
+}
 void LLVMAddDeadArgEliminationPass(LLVMPassManagerRef PM);
 void LLVMAddFunctionAttrsPass(LLVMPassManagerRef PM);
 void LLVMAddFunctionInliningPass(LLVMPassManagerRef PM);
@@ -115,7 +118,7 @@ static if (LLVM_Version >= asVersion(3, 6, 0)) {
     void LLVMAddAlignmentFromAssumptionsPass(LLVMPassManagerRef PM);
 }
 void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
-static if (LLVM_Version >= asVersion(5, 0, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(6, 0, 0)) {
 	void LLVMAddLateCFGSimplificationPass(LLVMPassManagerRef PM);
 }
 void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM);
@@ -397,6 +400,12 @@ uint LLVMGetVectorSize(LLVMTypeRef VectorTy);
 LLVMTypeRef LLVMVoidTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C);
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMTypeRef LLVMTokenTypeInContext(LLVMContextRef C);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMTypeRef LLVMMetadataTypeInContext(LLVMContextRef C);
+}
 LLVMTypeRef LLVMVoidType();
 LLVMTypeRef LLVMLabelType();
 LLVMTypeRef LLVMX86MMXType();
@@ -1687,6 +1696,8 @@ static if (LLVM_Version >= asVersion(3, 4, 0)) {
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	LLVMSharedModuleRef LLVMOrcMakeSharedModule(LLVMModuleRef Mod);
 	void LLVMOrcDisposeSharedModuleRef(LLVMSharedModuleRef SharedMod);
+}
+static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(6, 0, 0)) {
 	LLVMSharedObjectBufferRef LLVMOrcMakeSharedObjectBuffer(LLVMMemoryBufferRef ObjBuffer);
 	void LLVMOrcDisposeSharedObjectBufferRef(LLVMSharedObjectBufferRef SharedObjBuffer);
 }
@@ -1726,7 +1737,9 @@ static if (LLVM_Version >= asVersion(5, 0, 0)) {
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcModuleHandle LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 }
-static if (LLVM_Version >= asVersion(5, 0, 0)) {
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMMemoryBufferRef Obj, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+} else static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	LLVMOrcErrorCode LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedObjectBufferRef Obj, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
@@ -1746,4 +1759,40 @@ static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	LLVMOrcErrorCode LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
+}
+
+/+ Debug info flags +/
+
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	uint LLVMDebugMetadataVersion();
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	uint LLVMGetModuleDebugMetadataVersion(LLVMModuleRef Module);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	uint LLVMGetModuleDebugMetadataVersion(LLVMModuleRef Module);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMBool LLVMStripModuleDebugInfo(LLVMModuleRef Module);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMDIBuilderRef LLVMCreateDIBuilderDisallowUnresolved(LLVMModuleRef M);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef M);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	void LLVMDisposeDIBuilder(LLVMDIBuilderRef Builder);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	void LLVMDIBuilderFinalize(LLVMDIBuilderRef Builder);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef Builder, LLVMDWARFSourceLanguage Lang, LLVMMetadataRef FileRef, const(char)* Producer, size_t ProducerLen, LLVMBool isOptimized, const(char)* Flags, size_t FlagsLen, uint RuntimeVer, const(char)* SplitName, size_t SplitNameLen, LLVMDWARFEmissionKind Kind, uint DWOId, LLVMBool SplitDebugInlining, LLVMBool DebugInfoForProfiling);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef Builder, const(char)* Filename, size_t FilenameLen, const(char)* Directory, size_t DirectoryLen);
+}
+static if (LLVM_Version >= asVersion(6, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateDebugLocation(LLVMContextRef Ctx, uint Line, uint Column, LLVMMetadataRef Scope, LLVMMetadataRef InlinedAt);
 }

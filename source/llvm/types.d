@@ -228,9 +228,10 @@ alias int LLVMRelocMode;
 alias int LLVMCodeModel;
 alias int LLVMCodeGenFileType;
 
-static if (LLVM_Version >= asVersion(5, 0, 0))
-{
+static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	struct LLVMOpaqueSharedModule; alias LLVMOpaqueSharedModule* LLVMSharedModuleRef;
+}
+static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(6, 0, 0)) {
 	struct LLVMOpaqueSharedObjectBuffer; alias LLVMOpaqueSharedObjectBuffer* LLVMSharedObjectBufferRef;
 
 }
@@ -257,4 +258,13 @@ static if (LLVM_Version >= asVersion(3, 9, 0))
 		const(char)* Buffer;
 		size_t Size;
 	}
+}
+
+/+ Debug info flags +/
+
+static if (LLVM_Version >= asVersion(6, 0, 0))
+{
+	alias int LLVMDIFlags;
+	alias int LLVMDWARFSourceLanguage;
+	alias int LLVMDWARFEmissionKind;
 }
