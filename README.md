@@ -50,8 +50,8 @@ For DMD, this is the `-version` argument; for dub, the `versions` field.
 The identifier to set the LLVM version is defined as
 `LLVM_{MAJOR_VERSION}_{MINOR_VERSION}_{PATCH_VERSION}`, so to get LLVM version 3.1.0 use `LLVM_3_1_0`.
 
-Current supported versions are 3.1.0 - 4.0.0 and if no version is given
-at compile time, 4.0.0 will be assumed.
+Current supported versions are 3.1.0 - 6.0.0 and if no version is given
+at compile time, 6.0.0 will be assumed.
 
 LLVM targets
 ------------
