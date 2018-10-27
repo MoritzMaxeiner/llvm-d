@@ -10,10 +10,9 @@ sudo: required
 osx_image: xcode8.2
 
 d:
-  - dmd-2.072.2
-  - dmd-2.071.0
-  - dmd-2.070.0
-  - dmd-2.069.2
+  - dmd-2.082.1
+  - dmd-2.081.2
+  - dmd-2.068.2
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
