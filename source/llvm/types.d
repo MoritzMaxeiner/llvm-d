@@ -3,6 +3,7 @@ module llvm.types;
 public import std.stdint : uintptr_t;
 
 import llvm.config;
+import core.stdc.stdint;
 
 /+ Analysis +/
 
@@ -89,7 +90,7 @@ alias extern(C) const char* function(void* DisInfo, ulong ReferenceValue, ulong*
 struct LLVMOpInfoSymbol1
 {
 	ulong Present;
-	const char* Name;
+	const(char)* Name;
 	ulong Value;
 }
 
@@ -228,12 +229,11 @@ alias int LLVMRelocMode;
 alias int LLVMCodeModel;
 alias int LLVMCodeGenFileType;
 
-static if (LLVM_Version >= asVersion(5, 0, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(7, 0, 0)) {
 	struct LLVMOpaqueSharedModule; alias LLVMOpaqueSharedModule* LLVMSharedModuleRef;
 }
 static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(6, 0, 0)) {
 	struct LLVMOpaqueSharedObjectBuffer; alias LLVMOpaqueSharedObjectBuffer* LLVMSharedObjectBufferRef;
-
 }
 
 static if (LLVM_Version >= asVersion(3, 8, 0))
@@ -241,8 +241,19 @@ static if (LLVM_Version >= asVersion(3, 8, 0))
 	/+ JIT compilation of LLVM IR +/
 	
 	struct LLVMOrcOpaqueJITStack {}; alias LLVMOrcOpaqueJITStack* LLVMOrcJITStackRef;
+}
 
-	alias uint LLVMOrcModuleHandle;
+static if (LLVM_Version >= asVersion(7, 0, 0))
+{
+	alias uint64_t LLVMOrcModuleHandle;
+}
+else static if (LLVM_Version >= asVersion(3, 8, 0))
+{
+	alias uint32_t LLVMOrcModuleHandle;
+}
+
+static if (LLVM_Version >= asVersion(3, 8, 0))
+{
 	alias ulong LLVMOrcTargetAddress;
 
 	alias extern(C) ulong function(const(char)* Name, void* LookupCtx) LLVMOrcSymbolResolverFn;
@@ -267,4 +278,28 @@ static if (LLVM_Version >= asVersion(6, 0, 0))
 	alias int LLVMDIFlags;
 	alias int LLVMDWARFSourceLanguage;
 	alias int LLVMDWARFEmissionKind;
+}
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0))
+{
+	alias int LLVMComdatSelectionKind;
+	alias int LLVMUnnamedAddr;
+	alias int LLVMInlineAsmDialect;
+	alias int LLVMModuleFlagBehavior;
+	alias int LLVMDWARFTypeEncoding;
+
+}
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	struct LLVMComdat; alias LLVMComdat* LLVMComdatRef;
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	struct LLVMOpaqueModuleFlagEntry; alias LLVMOpaqueModuleFlagEntry* LLVMModuleFlagEntry;
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	struct LLVMOpaqueJITEventListener; alias LLVMOpaqueJITEventListener* LLVMJITEventListenerRef;
 }
