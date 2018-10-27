@@ -1,7 +1,7 @@
 llvm-d
 ========
 
-[![Build Status](https://travis-ci.org/Calrama/llvm-d.svg?branch=master)](https://travis-ci.org/Calrama/llvm-d) <a href="https://code.dlang.org/packages/llvm-d" title="Go to llvm-d"><img src="https://img.shields.io/dub/v/llvm-d.svg" alt="Dub version"></a><a href="https://code.dlang.org/packages/llvm-d" title="Go to llvm-d"> <img src="https://img.shields.io/dub/dt/llvm-d.svg" alt="Dub downloads"></a>
+[![Build Status](https://travis-ci.org/MoritzMaxeiner/llvm-d.svg?branch=master)](https://travis-ci.org/MoritzMaxeiner/llvm-d) <a href="https://code.dlang.org/packages/llvm-d" title="Go to llvm-d"><img src="https://img.shields.io/dub/v/llvm-d.svg" alt="Dub version"></a><a href="https://code.dlang.org/packages/llvm-d" title="Go to llvm-d"> <img src="https://img.shields.io/dub/dt/llvm-d.svg" alt="Dub downloads"></a>
 
 llvm-d provides bindings to LLVM's C API for the D programming language.
 It is designed to be linked dynamically against LLVM.
