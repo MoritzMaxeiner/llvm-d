@@ -6,6 +6,7 @@ import std.range : chain;
 
 import llvm.config;
 import llvm.types;
+import core.stdc.stdint;
 
 private nothrow auto orEmpty(T)(T v)
 {
@@ -176,7 +177,9 @@ void LLVMAddBasicAliasAnalysisPass(LLVMPassManagerRef PM);
 
 /++ Vectorization transformations ++/
 
-void LLVMAddBBVectorizePass(LLVMPassManagerRef PM);
+static if (LLVM_Version < asVersion(7, 0, 0)) {
+	void LLVMAddBBVectorizePass(LLVMPassManagerRef PM);
+}
 static if (LLVM_Version >= asVersion(3, 2, 0)) {
     void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM);
 }
@@ -294,7 +297,17 @@ static if (LLVM_Version >= asVersion(3, 2, 0)) {
 static if (LLVM_Version >= asVersion(3, 4, 0)) {
     char* LLVMPrintModuleToString(LLVMModuleRef M);
 }
-void LLVMSetModuleInlineAsm(LLVMModuleRef M, const(char)* Asm);
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetModuleInlineAsm2(LLVMModuleRef M, const(char)* Asm, size_t Len);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	deprecated("Use LLVMSetModuleInlineAsm2 instead.") void LLVMSetModuleInlineAsm(LLVMModuleRef M, const(char)* Asm);
+} else {
+	void LLVMSetModuleInlineAsm(LLVMModuleRef M, const(char)* Asm);
+}
+
 LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
 LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const(char)* Name);
 uint LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const(char)* name);
@@ -418,8 +431,27 @@ LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     LLVMValueKind LLVMGetValueKind(LLVMValueRef Val);
 }
-const(char)* LLVMGetValueName(LLVMValueRef Val);
-void LLVMSetValueName(LLVMValueRef Val, const(char )*Name);
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	const(char)* LLVMGetValueName2(LLVMValueRef Val, size_t* Length);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	deprecated("Use LLVMGetValueName2 instead.") const(char)* LLVMGetValueName(LLVMValueRef Val);
+} else {
+	const(char)* LLVMGetValueName(LLVMValueRef Val);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetValueName2(LLVMValueRef Val, const(char*) Name, size_t NameLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	deprecated("Use LLVMSetValueName2 instead.")void LLVMSetValueName(LLVMValueRef Val, const(char)* Name);
+} else {
+	void LLVMSetValueName(LLVMValueRef Val, const(char)* Name);
+}
+
 void LLVMDumpValue(LLVMValueRef Val);
 static if (LLVM_Version >= asVersion(3, 4, 0)) {
     char* LLVMPrintValueToString(LLVMValueRef Val);
@@ -657,7 +689,17 @@ LLVMValueRef LLVMConstInsertElement(LLVMValueRef VectorConstant, LLVMValueRef El
 LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant, LLVMValueRef VectorBConstant, LLVMValueRef MaskConstant);
 LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, uint* IdxList, uint NumIdx);
 LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant, LLVMValueRef ElementValueConstant, uint* IdxList, uint NumIdx);
-LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const(char)* AsmString, const(char)* Constraints, LLVMBool HasSideEffects, LLVMBool IsAlignStack);
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetInlineAsm(LLVMTypeRef Ty,  char *AsmString, size_t AsmStringSize, char* Constraints, size_t ConstraintsSize, LLVMBool HasSideEffects, LLVMBool IsAlignStack, LLVMInlineAsmDialect Dialect);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	deprecated("Use LLVMGetInlineAsm instead.") LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const(char)* AsmString, const(char)* Constraints, LLVMBool HasSideEffects, LLVMBool IsAlignStack);
+} else {
+	LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const(char)* AsmString, const(char)* Constraints, LLVMBool HasSideEffects, LLVMBool IsAlignStack);
+}
+
 LLVMValueRef LLVMBlockAddress(LLVMValueRef F, LLVMBasicBlockRef BB);
 
 /++++ Global Values ++++/
@@ -676,10 +718,24 @@ static if (LLVM_Version >= asVersion(3, 5, 0)) {
 static if (LLVM_Version >= asVersion(3, 5, 0)) {
     void LLVMSetDLLStorageClass(LLVMValueRef Global, LLVMDLLStorageClass Class);
 }
-static if (LLVM_Version >= asVersion(3, 5, 0)) {
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMUnnamedAddr LLVMGetUnnamedAddress(LLVMValueRef Global);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	deprecated("Use LLVMGetUnnamedAddress instead.") LLVMBool LLVMHasUnnamedAddr(LLVMValueRef Global);
+} else static if (LLVM_Version >= asVersion(3, 5, 0)) {
     LLVMBool LLVMHasUnnamedAddr(LLVMValueRef Global);
 }
-static if (LLVM_Version >= asVersion(3, 5, 0)) {
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetUnnamedAddress(LLVMValueRef Global, LLVMUnnamedAddr UnnamedAddr);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	deprecated("Use LLVMSetUnnamedAddress instead.") void LLVMSetUnnamedAddr(LLVMValueRef Global, LLVMBool HasUnnamedAddr);
+} else static if (LLVM_Version >= asVersion(3, 5, 0)) {
     void LLVMSetUnnamedAddr(LLVMValueRef Global, LLVMBool HasUnnamedAddr);
 }
 uint LLVMGetAlignment(LLVMValueRef Global);
@@ -1548,6 +1604,15 @@ static if (LLVM_Version >= asVersion(3, 9, 0)) {
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
     void thinlto_codegen_add_cross_referenced_symbol(thinlto_code_gen_t cg, const(char)* name, int length);
 }
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void thinlto_codegen_set_cache_size_bytes(thinlto_code_gen_t cg, uint max_size_bytes);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void thinlto_codegen_set_cache_size_files(thinlto_code_gen_t cg, uint max_size_files);
+}
+
+
 /+ Object file reading and writing +/
 
 LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf);
@@ -1693,7 +1758,7 @@ static if (LLVM_Version >= asVersion(3, 4, 0)) {
 }
 
 /+ JIT compilation of LLVM IR +/
-static if (LLVM_Version >= asVersion(5, 0, 0)) {
+static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(7, 0, 0)) {
 	LLVMSharedModuleRef LLVMOrcMakeSharedModule(LLVMModuleRef Mod);
 	void LLVMOrcDisposeSharedModuleRef(LLVMSharedModuleRef SharedMod);
 }
@@ -1725,15 +1790,20 @@ static if (LLVM_Version >= asVersion(3, 8, 0)) {
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack, const(char)* StubName, LLVMOrcTargetAddress NewAddr);
 }
-static if (LLVM_Version >= asVersion(5, 0, 0)) {
-	LLVMOrcErrorCode LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+} else static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcModuleHandle LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 }
-static if (LLVM_Version >= asVersion(5, 0, 0)) {
-	LLVMOrcErrorCode LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
+} else static if (LLVM_Version >= asVersion(5, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle* RetHandle, LLVMSharedModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcModuleHandle LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod, LLVMOrcSymbolResolverFn SymbolResolver, void* SymbolResolverCtx);
 }
@@ -1755,6 +1825,15 @@ static if (LLVM_Version >= asVersion(5, 0, 0)) {
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMOrcTargetAddress LLVMOrcGetSymbolAddress(LLVMOrcJITStackRef JITStack, const(char)* SymbolName);
 }
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcGetSymbolAddressIn(LLVMOrcJITStackRef JITStack, LLVMOrcTargetAddress* RetAddr, LLVMOrcModuleHandle H, const(char)* SymbolName);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMOrcErrorCode LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
+}
+
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	LLVMOrcErrorCode LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
@@ -1795,4 +1874,438 @@ static if (LLVM_Version >= asVersion(6, 0, 0)) {
 }
 static if (LLVM_Version >= asVersion(6, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateDebugLocation(LLVMContextRef Ctx, uint Line, uint Column, LLVMMetadataRef Scope, LLVMMetadataRef InlinedAt);
+}
+
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMComdatRef LLVMGetOrInsertComdat(LLVMModuleRef M, const(char)* Name);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMComdatRef LLVMGetComdat(LLVMValueRef V);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetComdat(LLVMValueRef V, LLVMComdatRef C);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMComdatSelectionKind LLVMGetComdatSelectionKind(LLVMComdatRef C);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetComdatSelectionKind(LLVMComdatRef C, LLVMComdatSelectionKind Kind);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	const(char)* LLVMGetSourceFileName(LLVMModuleRef M, size_t* Len);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetSourceFileName(LLVMModuleRef M, const(char)* Name, size_t Len);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMModuleFlagEntry* LLVMCopyModuleFlagsMetadata(LLVMModuleRef M, size_t* Len);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMDisposeModuleFlagsMetadata(LLVMModuleFlagEntry* Entries);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMModuleFlagBehavior LLVMModuleFlagEntriesGetFlagBehavior(LLVMModuleFlagEntry* Entries, uint Index);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	const(char)* LLVMModuleFlagEntriesGetKey(LLVMModuleFlagEntry* Entries, uint Index, size_t* Len);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMModuleFlagEntriesGetMetadata(LLVMModuleFlagEntry* Entries, uint Index);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMGetModuleFlag(LLVMModuleRef M, const(char)* Key, size_t KeyLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMAddModuleFlag(LLVMModuleRef M, LLVMModuleFlagBehavior Behavior, const(char)* Key, size_t KeyLen, LLVMMetadataRef Val);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	const(char)* LLVMGetModuleInlineAsm(LLVMModuleRef M, size_t* Len);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMAppendModuleInlineAsm(LLVMModuleRef M, const(char)* Asm, size_t Len);
+}
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetNamedGlobalAlias(LLVMModuleRef M, const(char)* Name, size_t NameLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetFirstGlobalAlias(LLVMModuleRef M);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetLastGlobalAlias(LLVMModuleRef M);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetNextGlobalAlias(LLVMValueRef GA);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetPreviousGlobalAlias(LLVMValueRef GA);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMAliasGetAliasee(LLVMValueRef Alias);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMAliasSetAliasee(LLVMValueRef Alias, LLVMValueRef Aliasee);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMBuildCleanupRet(LLVMBuilderRef B, LLVMValueRef CatchPad, LLVMBasicBlockRef BB);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMBuildCatchRet(LLVMBuilderRef B, LLVMValueRef CatchPad, LLVMBasicBlockRef BB);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMBuildCatchPad(LLVMBuilderRef B, LLVMValueRef ParentPad, LLVMValueRef* Args, uint NumArgs, const (char)* Name);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMBuildCleanupPad(LLVMBuilderRef B, LLVMValueRef ParentPad, LLVMValueRef* Args, uint NumArgs, const (char)* Name);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMBuildCatchSwitch(LLVMBuilderRef B, LLVMValueRef ParentPad, LLVMBasicBlockRef UnwindBB, uint NumHandlers, const (char)* Name);
+}
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMAddHandler(LLVMValueRef CatchSwitch, LLVMBasicBlockRef Dest);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint LLVMGetNumHandlers(LLVMValueRef CatchSwitch);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMGetHandlers(LLVMValueRef CatchSwitch, LLVMBasicBlockRef* Handlers);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetArgOperand(LLVMValueRef Funclet, uint i, LLVMValueRef value);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMGetParentCatchSwitch(LLVMValueRef CatchPad);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetParentCatchSwitch(LLVMValueRef CatchPad, LLVMValueRef CatchSwitch);
+}
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope, const(char)* Name, size_t NameLen, const(char)* ConfigMacros, size_t ConfigMacrosLen, const(char)* IncludePath, size_t IncludePathLen, const(char)* ISysRoot, size_t ISysRootLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateNameSpace(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope, const(char)* Name, size_t NameLen, LLVMBool ExportSymbols);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, const(char)* LinkageName, size_t LinkageNameLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Ty, LLVMBool IsLocalToUnit, LLVMBool IsDefinition, uint ScopeLine, LLVMDIFlags Flags, LLVMBool IsOptimized);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock( LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, LLVMMetadataRef File, uint Line, uint Column);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, LLVMMetadataRef File, uint Discriminator);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateImportedModuleFromNamespace(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, LLVMMetadataRef NS, LLVMMetadataRef File, uint Line);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateImportedModuleFromAlias(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, LLVMMetadataRef ImportedEntity, LLVMMetadataRef File, uint Line);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateImportedModuleFromModule(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, LLVMMetadataRef M, LLVMMetadataRef File, uint Line);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateImportedDeclaration(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, LLVMMetadataRef Decl, LLVMMetadataRef File, uint Line, const(char)* Name, size_t NameLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint LLVMDILocationGetLine(LLVMMetadataRef Location);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint LLVMDILocationGetColumn(LLVMMetadataRef Location);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDILocationGetScope(LLVMMetadataRef Location);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Builder, LLVMMetadataRef* Data, size_t NumElements);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Builder, LLVMMetadataRef File, LLVMMetadataRef* ParameterTypes, uint NumParameterTypes, LLVMDIFlags Flags);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNumber, uint64_t SizeInBits, uint32_t AlignInBits, LLVMMetadataRef* Elements, uint NumElements, LLVMMetadataRef ClassTy);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateUnionType(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNumber, uint64_t SizeInBits, uint32_t AlignInBits, LLVMDIFlags Flags, LLVMMetadataRef *Elements, uint NumElements, uint RunTimeLang, const(char)* UniqueId, size_t UniqueIdLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef Builder, uint64_t Size, uint32_t AlignInBits, LLVMMetadataRef Ty, LLVMMetadataRef* Subscripts, uint NumSubscripts);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateVectorType(LLVMDIBuilderRef Builder, uint64_t Size, uint32_t AlignInBits, LLVMMetadataRef Ty, LLVMMetadataRef *Subscripts, uint NumSubscripts);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateUnspecifiedType(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen, uint64_t SizeInBits, LLVMDWARFTypeEncoding Encoding);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen, uint64_t SizeInBits, LLVMDWARFTypeEncoding Encoding);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Builder, LLVMMetadataRef PointeeTy, uint64_t SizeInBits, uint32_t AlignInBits, uint AddressSpace, const(char)* Name, size_t NameLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateStructType( LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNumber, uint64_t SizeInBits, uint32_t AlignInBits, LLVMDIFlags Flags, LLVMMetadataRef DerivedFrom, LLVMMetadataRef* Elements, uint NumElements, uint RunTimeLang, LLVMMetadataRef VTableHolder, const(char)* UniqueId, size_t UniqueIdLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateMemberType( LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, uint64_t SizeInBits, uint32_t AlignInBits, uint64_t OffsetInBits, LLVMDIFlags Flags, LLVMMetadataRef Ty);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateStaticMemberType(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNumber, LLVMMetadataRef Type, LLVMDIFlags Flags, LLVMValueRef ConstantVal, uint32_t AlignInBits);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateMemberPointerType(LLVMDIBuilderRef Builder, LLVMMetadataRef PointeeType, LLVMMetadataRef ClassType, uint64_t SizeInBits, uint32_t AlignInBits, LLVMDIFlags Flags);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateObjCIVar(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, uint64_t SizeInBits, uint32_t AlignInBits, uint64_t OffsetInBits, LLVMDIFlags Flags, LLVMMetadataRef Ty, LLVMMetadataRef PropertyNode);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateObjCProperty(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, const(char)* GetterName, size_t GetterNameLen, const(char)* SetterName, size_t SetterNameLen, uint PropertyAttributes, LLVMMetadataRef Ty);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateObjectPointerType(LLVMDIBuilderRef Builder, LLVMMetadataRef Type);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateQualifiedType(LLVMDIBuilderRef Builder, uint Tag, LLVMMetadataRef Type);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateReferenceType(LLVMDIBuilderRef Builder, uint Tag, LLVMMetadataRef Type);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateNullPtrType(LLVMDIBuilderRef Builder);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Builder, LLVMMetadataRef Type, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Scope);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateInheritance(LLVMDIBuilderRef Builder, LLVMMetadataRef Ty, LLVMMetadataRef BaseTy, uint64_t BaseOffset, uint32_t VBPtrOffset, LLVMDIFlags Flags);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateForwardDecl(LLVMDIBuilderRef Builder, uint Tag, const(char)* Name, size_t NameLen, LLVMMetadataRef Scope, LLVMMetadataRef File, uint Line, uint RuntimeLang, uint64_t SizeInBits, uint32_t AlignInBits, const(char)* UniqueIdentifier, size_t UniqueIdentifierLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateReplaceableCompositeType(LLVMDIBuilderRef Builder, uint Tag, const(char)* Name, size_t NameLen, LLVMMetadataRef Scope, LLVMMetadataRef File, uint Line, uint RuntimeLang, uint64_t SizeInBits, uint32_t AlignInBits, LLVMDIFlags Flags, const(char)* UniqueIdentifier, size_t UniqueIdentifierLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateBitFieldMemberType(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNumber, uint64_t SizeInBits, uint64_t OffsetInBits, uint64_t StorageOffsetInBits, LLVMDIFlags Flags, LLVMMetadataRef Type);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateClassType(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNumber, uint64_t SizeInBits, uint32_t AlignInBits, uint64_t OffsetInBits, LLVMDIFlags Flags, LLVMMetadataRef DerivedFrom, LLVMMetadataRef* Elements, uint NumElements, LLVMMetadataRef VTableHolder, LLVMMetadataRef TemplateParamsNode, const(char)* UniqueIdentifier, size_t UniqueIdentifierLen);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef Builder,LLVMMetadataRef Type);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	const(char)* LLVMDITypeGetName(LLVMMetadataRef DType, size_t* Length);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint64_t LLVMDITypeGetSizeInBits(LLVMMetadataRef DType);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint64_t LLVMDITypeGetOffsetInBits(LLVMMetadataRef DType);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint32_t LLVMDITypeGetAlignInBits(LLVMMetadataRef DType);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	uint LLVMDITypeGetLine(LLVMMetadataRef DType);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMDIFlags LLVMDITypeGetFlags(LLVMMetadataRef DType);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderGetOrCreateSubrange(LLVMDIBuilderRef Builder, int64_t LowerBound, int64_t Count);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef Builder, LLVMMetadataRef* Data, size_t NumElements);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef Builder, int64_t* Addr, size_t Length);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateConstantValueExpression(LLVMDIBuilderRef Builder, int64_t Value);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateGlobalVariableExpression(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, const(char)* Linkage, size_t LinkLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Ty, LLVMBool LocalToUnit, LLVMMetadataRef Expr, LLVMMetadataRef Decl, uint32_t AlignInBits);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef Ctx, LLVMMetadataRef* Data, size_t NumElements);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMDisposeTemporaryMDNode(LLVMMetadataRef TempNode);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef TempTargetMetadata, LLVMMetadataRef Replacement);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateTempGlobalVariableFwdDecl(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, const(char)* Linkage, size_t LnkLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Ty, LLVMBool LocalToUnit, LLVMMetadataRef Decl, uint32_t AlignInBits);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMDIBuilderInsertDeclareBefore(LLVMDIBuilderRef Builder, LLVMValueRef Storage, LLVMMetadataRef VarInfo, LLVMMetadataRef Expr, LLVMMetadataRef DebugLoc, LLVMValueRef Instr);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Builder, LLVMValueRef Storage, LLVMMetadataRef VarInfo, LLVMMetadataRef Expr, LLVMMetadataRef DebugLoc, LLVMBasicBlockRef Block);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMDIBuilderInsertDbgValueBefore(LLVMDIBuilderRef Builder, LLVMValueRef Val, LLVMMetadataRef VarInfo, LLVMMetadataRef Expr, LLVMMetadataRef DebugLoc, LLVMValueRef Instr);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMValueRef LLVMDIBuilderInsertDbgValueAtEnd(LLVMDIBuilderRef Builder, LLVMValueRef Val, LLVMMetadataRef VarInfo, LLVMMetadataRef Expr, LLVMMetadataRef DebugLoc, LLVMBasicBlockRef Block);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateAutoVariable(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Ty, LLVMBool AlwaysPreserve, LLVMDIFlags Flags, uint32_t AlignInBits);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, uint ArgNo, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Ty, LLVMBool AlwaysPreserve, LLVMDIFlags Flags);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMMetadataRef LLVMGetSubprogram(LLVMValueRef Func);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMSetSubprogram(LLVMValueRef Func, LLVMMetadataRef SP);
+}
+
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMJITEventListenerRef LLVMCreateGDBRegistrationListener();
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMJITEventListenerRef LLVMCreateIntelJITEventListener();
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMJITEventListenerRef LLVMCreateOprofileJITEventListener();
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	LLVMJITEventListenerRef LLVMCreatePerfJITEventListener();
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMInitializeAggressiveInstCombiner(LLVMPassRegistryRef R);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMOrcRegisterJITEventListener(LLVMOrcJITStackRef JITStack, LLVMJITEventListenerRef L);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMOrcUnregisterJITEventListener(LLVMOrcJITStackRef JITStack, LLVMJITEventListenerRef L);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	char* LLVMNormalizeTargetTriple(const(char)* triple);
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	char* LLVMGetHostCPUName();
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	char* LLVMGetHostCPUFeatures();
+}
+
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+	void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
 }
