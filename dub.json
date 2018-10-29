@@ -7,7 +7,7 @@
 		"Moritz Maxeiner",
 		"Alex Parrill"
 	],
-	"homepage": "https://github.com/Calrama/llvm-d",
+	"homepage": "https://github.com/MoritzMaxeiner/llvm-d",
 
 	"targetType": "library",
 	"configurations": [
