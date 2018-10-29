@@ -115,7 +115,7 @@ final class SharedLibException : Exception
 
 private
 {
-    bool isSym(string m) { return m != "object" && m != "llvm" && m != "orEmpty"; }
+    bool isSym(string m) { return m != "object" && m != "llvm" && m != "core" && m != "orEmpty"; }
 
     string declareSymPtr(string m) { return "typeof(link." ~ m ~ ")* " ~ m ~ ";"; }
     string getSymPtr(string m) { return m ~ " = library.getSymbol!(typeof(" ~ m ~ "))(\"" ~ m ~ "\");"; }
