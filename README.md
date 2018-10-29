@@ -91,7 +91,7 @@ llvm-d is released under the [MIT license](http://opensource.org/licenses/MIT), 
 llvm-d uses source code from LLVM that has been ported to D for accessing LLVM's C API. The above paragraph does not apply
 to that source code - it is a redistribution of LLVM source code.
 
-LLVM is Copyright (c) 2003-2017 University of Illinois at Urbana-Champaign.
+LLVM is Copyright (c) 2003-2018 University of Illinois at Urbana-Champaign.
 All rights reserved.
 
 LLVM is distributed under the University of Illinois Open Source

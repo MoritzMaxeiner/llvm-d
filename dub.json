@@ -1,7 +1,7 @@
 {
 	"name": "llvm-d",
 	"description": "D bindings for LLVM",
-	"copyright": "Copyright © 2013-2017 Moritz Maxeiner, Copyright © 2016-2017 Alex Parrill",
+	"copyright": "Copyright © 2013-2018 Moritz Maxeiner, Copyright © 2016-2017 Alex Parrill",
 	"license": "MIT",
 	"authors": [
 		"Moritz Maxeiner",
