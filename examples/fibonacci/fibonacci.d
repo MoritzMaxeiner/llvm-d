@@ -154,7 +154,7 @@ int main(string[] args)
             return fib(n);
         } else {
             auto args = [ LLVMCreateGenericValueOfInt(LLVMInt32Type(), n, cast(LLVMBool) 0) ];
-            return LLVMGenericValueToInt(LLVMRunFunction(engine, f, 1, args.ptr), 0);
+            return cast(int) LLVMGenericValueToInt(LLVMRunFunction(engine, genFib, 1, args.ptr), 0);
         }
     }
 
