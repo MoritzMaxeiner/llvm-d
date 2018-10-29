@@ -2305,7 +2305,3 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	char* LLVMGetHostCPUFeatures();
 }
-
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
-}
