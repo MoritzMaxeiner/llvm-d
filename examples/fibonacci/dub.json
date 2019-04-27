@@ -16,7 +16,7 @@
     "configurations": [
         {
             "name": "link-single",
-            "libs": ["LLVM"]
+            "libs": ["LLVM", "LTO"]
         },
         {
             "name": "link-split",
@@ -30,7 +30,8 @@
                 "LLVMX86CodeGen",
                 "LLVMX86Desc",
                 "LLVMX86Disassembler",
-                "LLVMX86AsmParser"
+                "LLVMX86AsmParser",
+                "LTO"
             ]
         },
         {
