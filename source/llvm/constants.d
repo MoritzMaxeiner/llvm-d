@@ -501,7 +501,7 @@ static if (LLVM_Version >= asVersion(3, 2, 0))
 	{
 		LLVMLinkerDestroySource  = 0
 	}
-	
+
 	static if (LLVM_Version < asVersion(3, 7, 0))
 	{
 		enum : LLVMLinkerMode
@@ -707,7 +707,7 @@ static if (LLVM_Version >= asVersion(7, 0, 0))
 		LLVMDIFlagAccessibility = LLVMDIFlagPrivate | LLVMDIFlagProtected | LLVMDIFlagPublic,
 		LLVMDIFlagPtrToMemberRep = LLVMDIFlagSingleInheritance | LLVMDIFlagMultipleInheritance | LLVMDIFlagVirtualInheritance
 	}
-} 
+}
 else static if (LLVM_Version >= asVersion(6, 0, 0))
 {
 	enum : LLVMDIFlags {
@@ -743,9 +743,9 @@ else static if (LLVM_Version >= asVersion(6, 0, 0))
 		                           LLVMDIFlagMultipleInheritance |
 		                           LLVMDIFlagVirtualInheritance
 	}
-} 
+}
 
-static if (LLVM_Version >= asVersion(6, 0, 0)) 
+static if (LLVM_Version >= asVersion(6, 0, 0))
 {
 	enum : LLVMDWARFSourceLanguage {
 		LLVMDWARFSourceLanguageC89,
@@ -795,7 +795,7 @@ static if (LLVM_Version >= asVersion(6, 0, 0))
 	}
 }
 
-static if (LLVM_Version >= asVersion(6, 0, 0)) 
+static if (LLVM_Version >= asVersion(6, 0, 0))
 {
 	enum : LLVMDWARFEmissionKind {
 		LLVMDWARFEmissionNone = 0,
