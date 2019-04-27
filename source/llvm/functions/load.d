@@ -163,12 +163,6 @@ public:
     /// true iff the LLVM library is loaded
     static bool loaded() @property { return libraries.length > 0; }
 
-    /// Loads the LLVM library using the default filename.
-    static void load()
-    {
-        load(null);
-    }
-
     /// Loads the LLVM libraries using the specified filenames
     static void load(string[] filenames...)
     {
