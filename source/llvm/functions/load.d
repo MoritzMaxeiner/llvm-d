@@ -167,7 +167,7 @@ public:
     static void load(string[] filenames...)
     {
         if (filenames.length == 0) {
-            filenames ~= libPrefix ~ "LLVM-" ~ LLVM_VersionString ~ "." ~ libSuffix;
+            filenames ~= libPrefix ~ "LLVM" ~ "." ~ libSuffix;
             filenames ~= libPrefix ~ "LTO" ~ "." ~ libSuffix;
         }
 
