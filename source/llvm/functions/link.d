@@ -1449,13 +1449,6 @@ static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMBool LLVMLinkModules2(LLVMModuleRef Dest, LLVMModuleRef Src);
 }
 
-/+ Link Time Optimization +/
-
-llvm_lto_t llvm_create_optimizer();
-void llvm_destroy_optimizer(llvm_lto_t lto);
-llvm_lto_status_t llvm_read_object_file(llvm_lto_t lto, const(char)* input_filename);
-llvm_lto_status_t llvm_optimize_modules(llvm_lto_t lto, const(char)* output_filename);
-
 /+ LTO +/
 
 const(char)* lto_get_version();
