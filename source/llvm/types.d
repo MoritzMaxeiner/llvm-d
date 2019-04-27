@@ -41,6 +41,11 @@ struct LLVMOpaqueValue {}; alias LLVMOpaqueValue* LLVMValueRef;
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	struct LLVMOpaqueMetadata; alias LLVMOpaqueMetadata* LLVMMetadataRef;
 }
+static if (LLVM_Version >= asVersion(8, 0, 0)) {
+	struct LLVMOpaqueNamedMDNode; alias LLVMOpaqueNamedMDNode* LLVMNamedMDNodeRef;
+
+	struct LLVMOpaqueValueMetadataEntry; alias LLVMOpaqueValueMetadataEntry* LLVMValueMetadataEntry;
+}
 struct LLVMOpaqueBasicBlock {}; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	struct LLVMOpaqueDIBuilder; alias LLVMOpaqueDIBuilder* LLVMDIBuilderRef;
@@ -292,6 +297,10 @@ static if (LLVM_Version >= asVersion(7, 0, 0))
 }
 
 
+static if (LLVM_Version >= asVersion(8, 0, 0)) {
+	alias uint LLVMMetadataKind;
+}
+
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	struct LLVMComdat; alias LLVMComdat* LLVMComdatRef;
 }
@@ -302,4 +311,65 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	struct LLVMOpaqueJITEventListener; alias LLVMOpaqueJITEventListener* LLVMJITEventListenerRef;
+}
+
+/+ Error +/
+
+static if (LLVM_Version >= asVersion(8, 0, 0)) {
+	struct LLVMOpaqueError; alias LLVMOpaqueError* LLVMErrorRef;
+
+	alias const void* LLVMErrorTypeId;
+}
+
+/+ OptRemarks +/
+
+static if (LLVM_Version >= asVersion(8, 0, 0)) {
+	struct LLVMOptRemarkStringRef
+	{
+		const(char)* Str;
+		uint32_t Len;
+	}
+
+	struct LLVMOptRemarkDebugLoc
+	{
+		// File:
+		LLVMOptRemarkStringRef SourceFile;
+		// Line:
+		uint32_t SourceLineNumber;
+		// Column:
+		uint32_t SourceColumnNumber;
+	}
+
+	struct LLVMOptRemarkArg
+	{
+		// e.g. "Callee"
+		LLVMOptRemarkStringRef Key;
+		// e.g. "malloc"
+		LLVMOptRemarkStringRef Value;
+
+		// "DebugLoc": Optional
+		LLVMOptRemarkDebugLoc DebugLoc;
+	}
+
+	struct LLVMOptRemarkEntry
+	{
+		// e.g. !Missed, !Passed
+		LLVMOptRemarkStringRef RemarkType;
+		// "Pass": Required
+		LLVMOptRemarkStringRef PassName;
+		// "Name": Required
+		LLVMOptRemarkStringRef RemarkName;
+		// "Function": Required
+		LLVMOptRemarkStringRef FunctionName;
+
+		// "DebugLoc": Optional
+		LLVMOptRemarkDebugLoc DebugLoc;
+		// "Hotness": Optional
+		uint32_t Hotness;
+		// "Args": Optional. It is an array of `num_args` elements.
+		uint32_t NumArgs;
+		LLVMOptRemarkArg* Args;
+	}
+
+	struct LLVMOptRemarkOpaqueParser; alias LLVMOptRemarkOpaqueParser* LLVMOptRemarkParserRef;
 }
