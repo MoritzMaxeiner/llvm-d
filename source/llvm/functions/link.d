@@ -2090,9 +2090,6 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen, uint64_t SizeInBits, LLVMDWARFTypeEncoding Encoding);
 }
 
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	LLVMMetadataRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Builder, const(char)* Name, size_t NameLen, uint64_t SizeInBits, LLVMDWARFTypeEncoding Encoding);
-}
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Builder, LLVMMetadataRef PointeeTy, uint64_t SizeInBits, uint32_t AlignInBits, uint AddressSpace, const(char)* Name, size_t NameLen);
