@@ -112,6 +112,9 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
 /++ Scalar transformations ++/
 
 void LLVMAddAggressiveDCEPass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(7, 0, 0)) {
+    void LLVMAddAggressiveInstCombinerPass(LLVMPassManagerRef PM);
+}
 static if (LLVM_Version >= asVersion(3, 7, 0)) {
     void LLVMAddBitTrackingDCEPass(LLVMPassManagerRef PM);
 }
