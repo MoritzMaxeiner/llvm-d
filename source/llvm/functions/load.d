@@ -47,9 +47,9 @@ struct SharedLib
 private:
     SharedLibHandle handle;
 public:
-    bool loaded() @property { return handle !is null; }
+    @disable this(this);
 
-    void load(string filename)
+    this(string filename)
     {
         version(Posix)
         {
@@ -81,7 +81,7 @@ public:
         else static assert(0, "Unsupported operating system");
     }
 
-    void unload()
+    ~this()
     {
              version (Posix)   alias close = dlclose;
         else version (Windows) alias close = FreeLibrary;
@@ -118,7 +118,15 @@ private
     bool isSym(string m) { return m != "object" && m != "llvm" && m != "core" && m != "orEmpty"; }
 
     string declareSymPtr(string m) { return "typeof(link." ~ m ~ ")* " ~ m ~ ";"; }
-    string getSymPtr(string m) { return m ~ " = library.getSymbol!(typeof(" ~ m ~ "))(\"" ~ m ~ "\");"; }
+    string getSymPtr(string m)
+    {
+        string code;
+        code ~= "foreach (library; libraries) { ";
+        code ~= m ~ " = library.getSymbol!(typeof(" ~ m ~ "))(\"" ~ m ~ "\");";
+        code ~= "if (" ~ m ~ " !is null) break;";
+        code ~= " }";
+        return code;
+    }
 }
 
 __gshared
@@ -137,7 +145,9 @@ public struct LLVM
 {
     import llvm.config : LLVM_VersionString;
 private:
-    __gshared static SharedLib library;
+    import std.typecons : RefCounted;
+
+    __gshared static RefCounted!SharedLib[] libraries;
 
     static void getSymbols()
     {
@@ -151,7 +161,7 @@ private:
     }
 public:
     /// true iff the LLVM library is loaded
-    static bool loaded() @property { return library.loaded; }
+    static bool loaded() @property { return libraries.length > 0; }
 
     /// Loads the LLVM library using the default filename.
     static void load()
@@ -159,23 +169,26 @@ public:
         load(null);
     }
 
-    /// Loads the LLVM library using the specified filename
-    static void load(string filename)
+    /// Loads the LLVM libraries using the specified filenames
+    static void load(string[] filenames...)
     {
-        if (filename is null) {
-            filename = libPrefix ~ "LLVM-" ~ LLVM_VersionString ~ "." ~ libSuffix;
+        if (filenames.length == 0) {
+            filenames ~= libPrefix ~ "LLVM-" ~ LLVM_VersionString ~ "." ~ libSuffix;
+            filenames ~= libPrefix ~ "LTO" ~ "." ~ libSuffix;
         }
 
-        if (library.loaded) library.unload();
+        if (loaded) unload();
 
-        library.load(filename);
+        foreach (filename; filenames) {
+            libraries ~= RefCounted!SharedLib(filename);
+        }
         getSymbols();
     }
 
     /// Unloads the LLVM library
     static void unload()
     {
-        library.unload();
+        libraries.length = 0;
     }
 }
 

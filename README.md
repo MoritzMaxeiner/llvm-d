@@ -72,8 +72,8 @@ Dynamic loading
 ---------------
 
 By default, llvm-d requires you to link against the LLVM library (or libraries in case of a split build).
-If you instead wish to load from a single shared library at runtime, set the D version `LLVM_Load`. You can then use `LLVM.load` and `LLVM.unload` for dynamic loading.
-If you additionally set the D version `LLVM_Autoload`, llvm-d will load an appropriate default library at program startup.
+If you instead wish to load from shared libraries at runtime, set the D version `LLVM_Load`. You can then use `LLVM.load` and `LLVM.unload` for dynamic loading.
+If you additionally set the D version `LLVM_Autoload`, llvm-d will attempt to load default libraries at program startup.
 
 *Note*: Enabling dynamic loading will likely result in noticeable compile time increase, as it uses compile time reflection.
 
