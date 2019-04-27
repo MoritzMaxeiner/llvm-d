@@ -2268,10 +2268,6 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 }
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	LLVMJITEventListenerRef LLVMCreateOprofileJITEventListener();
-}
-
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMJITEventListenerRef LLVMCreatePerfJITEventListener();
 }
 
