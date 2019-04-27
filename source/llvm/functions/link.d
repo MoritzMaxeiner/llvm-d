@@ -1823,10 +1823,6 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMOrcErrorCode LLVMOrcGetSymbolAddressIn(LLVMOrcJITStackRef JITStack, LLVMOrcTargetAddress* RetAddr, LLVMOrcModuleHandle H, const(char)* SymbolName);
 }
 
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	LLVMOrcErrorCode LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
-}
-
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
 	LLVMOrcErrorCode LLVMOrcDisposeInstance(LLVMOrcJITStackRef JITStack);
 } else static if (LLVM_Version >= asVersion(3, 8, 0)) {
