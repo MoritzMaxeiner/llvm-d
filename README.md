@@ -77,6 +77,8 @@ If you additionally set the D version `LLVM_Autoload`, llvm-d will attempt to lo
 
 *Note*: Enabling dynamic loading will likely result in noticeable compile time increase, as it uses compile time reflection.
 
+*Note*: If compilation freezes in release mode with dub, the `--build-mode=allAtOnce` flag may help.
+
 Documentation
 -------------
 
