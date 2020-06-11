@@ -964,10 +964,6 @@ static if (LLVM_Version >= asVersion(7, 0, 0))
 
 static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	enum LLVMErrorSuccess = 0;
-
-	struct LLVMOpaqueError; alias LLVMOpaqueError* LLVMErrorRef;
-
-	alias const void* LLVMErrorTypeId;
 }
 
 /+ OptRemarks +/
