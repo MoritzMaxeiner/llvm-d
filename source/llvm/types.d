@@ -11,6 +11,13 @@ alias int LLVMVerifierFailureAction;
 
 /+ Transforms +/
 
+/++ Interprocedural transformations ++/
+
+static if (LLVM_Version >= asVersion(10, 0, 0))
+{
+	alias extern(C) LLVMBool function(LLVMValueRef, void*) MustPreserveCallback;
+}
+
 /++ Pass manager builder ++/
 
 struct LLVMOpaquePassManagerBuilder; alias LLVMOpaquePassManagerBuilder* LLVMPassManagerBuilderRef;
@@ -310,6 +317,11 @@ static if (LLVM_Version >= asVersion(7, 0, 0))
 	alias int LLVMModuleFlagBehavior;
 	alias int LLVMDWARFTypeEncoding;
 
+}
+
+static if (LLVM_Version >= asVersion(10, 0, 0))
+{
+	alias int LLVMDWARFMacinfoRecordType;
 }
 
 

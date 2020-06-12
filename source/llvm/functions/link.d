@@ -79,6 +79,9 @@ static if (LLVM_Version >= asVersion(3, 6, 0)) {
 
 void LLVMAddArgumentPromotionPass(LLVMPassManagerRef PM);
 void LLVMAddConstantMergePass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+	void LLVMAddMergeFunctionsPass(LLVMPassManagerRef PM);
+}
 static if (LLVM_Version >= asVersion(6, 0, 0)) {
 	void LLVMAddCalledValuePropagationPass(LLVMPassManagerRef PM);
 }
@@ -92,6 +95,9 @@ void LLVMAddIPConstantPropagationPass(LLVMPassManagerRef PM);
 void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
 void LLVMAddIPSCCPPass(LLVMPassManagerRef PM);
 void LLVMAddInternalizePass(LLVMPassManagerRef, uint AllButMain);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+	void LLVMAddInternalizePassWithMustPreservePredicate( LLVMPassManagerRef PM, void* Context, MustPreserveCallback MustPreserve);
+}
 void LLVMAddStripDeadPrototypesPass(LLVMPassManagerRef PM);
 void LLVMAddStripSymbolsPass(LLVMPassManagerRef PM);
 
@@ -112,6 +118,9 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
 /++ Scalar transformations ++/
 
 void LLVMAddAggressiveDCEPass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    void LLVMAddDCEPass(LLVMPassManagerRef PM);
+}
 static if (LLVM_Version >= asVersion(7, 0, 0) && LLVM_Version < asVersion(8, 0, 0)) {
     void LLVMAddAggressiveInstCombinerPass(LLVMPassManagerRef PM);
 }
@@ -178,6 +187,9 @@ static if (LLVM_Version >= asVersion(4, 0, 0)) {
 	void LLVMAddEarlyCSEMemSSAPass(LLVMPassManagerRef PM);
 }
 void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    void LLVMAddLowerConstantIntrinsicsPass(LLVMPassManagerRef PM);
+}
 void LLVMAddTypeBasedAliasAnalysisPass(LLVMPassManagerRef PM);
 static if (LLVM_Version >= asVersion(3, 6, 0)) {
     void LLVMAddScopedNoAliasAAPass(LLVMPassManagerRef PM);
@@ -511,6 +523,9 @@ LLVMBool LLVMIsUndef(LLVMValueRef Val);
 LLVMValueRef LLVMIsAAllocaInst(LLVMValueRef Val);
 LLVMValueRef LLVMIsAArgument(LLVMValueRef Val);
 LLVMValueRef LLVMIsABasicBlock(LLVMValueRef Val);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMValueRef LLVMIsAUnaryOperator(LLVMValueRef Val);
+}
 LLVMValueRef LLVMIsABinaryOperator(LLVMValueRef Val);
 LLVMValueRef LLVMIsABitCastInst(LLVMValueRef Val);
 LLVMValueRef LLVMIsABlockAddress(LLVMValueRef Val);
@@ -593,6 +608,10 @@ static if (LLVM_Version >= asVersion(3, 8, 0)) {
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMValueRef LLVMIsACatchReturnInst(LLVMValueRef Val);
 }
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMValueRef LLVMIsACatchSwitchInst(LLVMValueRef Val);
+    LLVMValueRef LLVMIsACallBrInst(LLVMValueRef Val);
+}
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMValueRef LLVMIsAFuncletPadInst(LLVMValueRef Val);
 }
@@ -617,6 +636,12 @@ LLVMValueRef LLVMIsAUndefValue(LLVMValueRef Val);
 LLVMValueRef LLVMIsAUnreachableInst(LLVMValueRef Val);
 LLVMValueRef LLVMIsAUser(LLVMValueRef Val);
 LLVMValueRef LLVMIsAVAArgInst(LLVMValueRef Val);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMValueRef LLVMIsAFreezeInst(LLVMValueRef Val);
+    LLVMValueRef LLVMIsAAtomicCmpXchgInst(LLVMValueRef Val);
+    LLVMValueRef LLVMIsAAtomicRMWInst(LLVMValueRef Val);
+    LLVMValueRef LLVMIsAFenceInst(LLVMValueRef Val);
+}
 LLVMValueRef LLVMIsAZExtInst(LLVMValueRef Val);
 
 /+++ Usage +++/
@@ -1307,11 +1332,19 @@ LLVMValueRef LLVMBuildGlobalString(LLVMBuilderRef B, const(char)* Str, const(cha
 LLVMValueRef LLVMBuildGlobalStringPtr(LLVMBuilderRef B, const(char)* Str, const(char)* Name);
 LLVMBool LLVMGetVolatile(LLVMValueRef MemoryAccessInst);
 void LLVMSetVolatile(LLVMValueRef MemoryAccessInst, LLVMBool IsVolatile);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMBool LLVMGetWeak(LLVMValueRef CmpXchgInst);
+    void LLVMSetWeak(LLVMValueRef CmpXchgInst, LLVMBool IsWeak);
+}
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     LLVMAtomicOrdering LLVMGetOrdering(LLVMValueRef MemoryAccessInst);
 }
 static if (LLVM_Version >= asVersion(3, 8, 0)) {
     void LLVMSetOrdering(LLVMValueRef MemoryAccessInst, LLVMAtomicOrdering Ordering);
+}
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMAtomicRMWBinOp LLVMGetAtomicRMWBinOp(LLVMValueRef AtomicRMWInst);
+    void LLVMSetAtomicRMWBinOp(LLVMValueRef AtomicRMWInst, LLVMAtomicRMWBinOp BinOp);
 }
 LLVMValueRef LLVMBuildTrunc(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
 LLVMValueRef LLVMBuildZExt(LLVMBuilderRef, LLVMValueRef Val, LLVMTypeRef DestTy, const(char)* Name);
@@ -1358,6 +1391,9 @@ LLVMValueRef LLVMBuildInsertElement(LLVMBuilderRef, LLVMValueRef VecVal, LLVMVal
 LLVMValueRef LLVMBuildShuffleVector(LLVMBuilderRef, LLVMValueRef V1, LLVMValueRef V2, LLVMValueRef Mask, const(char)* Name);
 LLVMValueRef LLVMBuildExtractValue(LLVMBuilderRef, LLVMValueRef AggVal, uint Index, const(char)* Name);
 LLVMValueRef LLVMBuildInsertValue(LLVMBuilderRef, LLVMValueRef AggVal, LLVMValueRef EltVal, uint Index, const(char)* Name);
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMValueRef LLVMBuildFreeze(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name);
+}
 LLVMValueRef LLVMBuildIsNull(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name);
 LLVMValueRef LLVMBuildIsNotNull(LLVMBuilderRef, LLVMValueRef Val, const(char)* Name);
 LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS, const(char)* Name);
@@ -1733,6 +1769,9 @@ static if (LLVM_Version >= asVersion(3, 7, 0)) {
     uint lto_api_version();
 }
 void lto_codegen_debug_options(lto_code_gen_t cg, const(char)* );
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    void lto_codegen_debug_options_array(lto_code_gen_t cg, const(char*)*, int number);
+}
 static if (LLVM_Version >= asVersion(3, 3, 0)) {
     void lto_initialize_disassembler();
 }
@@ -1741,6 +1780,10 @@ static if (LLVM_Version >= asVersion(3, 7, 0)) {
 }
 static if (LLVM_Version >= asVersion(3, 7, 0)) {
     void lto_codegen_set_should_embed_uselists(lto_code_gen_t cg, bool ShouldEmbedUselists);
+}
+
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    const(char*)* lto_runtime_lib_symbols_list(size_t* size);
 }
 
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
@@ -2277,7 +2320,9 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 }
 
 
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope, const(char)* Name, size_t NameLen, const(char)* ConfigMacros, size_t ConfigMacrosLen, const(char)* IncludePath, size_t IncludePathLen, const(char)* SysRoot, size_t SysRootLen);
+} else static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope, const(char)* Name, size_t NameLen, const(char)* ConfigMacros, size_t ConfigMacrosLen, const(char)* IncludePath, size_t IncludePathLen, const(char)* ISysRoot, size_t ISysRootLen);
 }
 
@@ -2416,7 +2461,10 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateNullPtrType(LLVMDIBuilderRef Builder);
 }
 
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
+
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+	LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Builder, LLVMMetadataRef Type, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Scope, uint32_t AlignInBits);
+} else static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Builder, LLVMMetadataRef Type, const(char)* Name, size_t NameLen, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Scope);
 }
 
@@ -2534,6 +2582,11 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const(char)* Name, size_t NameLen, uint ArgNo, LLVMMetadataRef File, uint LineNo, LLVMMetadataRef Ty, LLVMBool AlwaysPreserve, LLVMDIFlags Flags);
+}
+
+static if (LLVM_Version >= asVersion(10, 0, 0)) {
+    LLVMMetadataRef LLVMDIBuilderCreateMacro(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentMacroFile, uint Line, LLVMDWARFMacinfoRecordType RecordType, const(char)* Name, size_t NameLen, const(char)* Value, size_t ValueLen);
+    LLVMMetadataRef LLVMDIBuilderCreateTempMacroFile(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentMacroFile, uint Line, LLVMMetadataRef File);
 }
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
@@ -2668,6 +2721,10 @@ static if (LLVM_Version >= asVersion(9, 0, 0)) {
 
 
     LLVMRemarkParserRef LLVMRemarkParserCreateYAML(const(void)* Buf, uint64_t Size);
+
+    static if (LLVM_Version >= asVersion(10, 0, 0)) {
+        LLVMRemarkParserRef LLVMRemarkParserCreateBitstream(const(void)* Buf, uint64_t Size);
+    }
 
     LLVMRemarkEntryRef LLVMRemarkParserGetNext(LLVMRemarkParserRef Parser);
 

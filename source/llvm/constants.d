@@ -142,6 +142,13 @@ static if (LLVM_Version >= asVersion(9, 0, 0))
 		LLVMCallBr  = 67
 	}
 }
+static if (LLVM_Version >= asVersion(10, 0, 0))
+{
+	enum : LLVMOpcode
+	{
+		LLVMFreeze  = 68
+	}
+}
 
 static if (LLVM_Version >= asVersion(3, 9, 0))
 {
@@ -415,19 +422,41 @@ static if (LLVM_Version >= asVersion(3, 3, 0))
 		LLVMAtomicOrderingSequentiallyConsistent = 7
 	}
 
-	enum : LLVMAtomicRMWBinOp
+	static if (LLVM_Version >= asVersion(10, 0, 0))
 	{
-		LLVMAtomicRMWBinOpXchg,
-		LLVMAtomicRMWBinOpAdd,
-		LLVMAtomicRMWBinOpSub,
-		LLVMAtomicRMWBinOpAnd,
-		LLVMAtomicRMWBinOpNand,
-		LLVMAtomicRMWBinOpOr,
-		LLVMAtomicRMWBinOpXor,
-		LLVMAtomicRMWBinOpMax,
-		LLVMAtomicRMWBinOpMin,
-		LLVMAtomicRMWBinOpUMax,
-		LLVMAtomicRMWBinOpUMin
+		enum : LLVMAtomicRMWBinOp
+		{
+			LLVMAtomicRMWBinOpXchg,
+			LLVMAtomicRMWBinOpAdd,
+			LLVMAtomicRMWBinOpSub,
+			LLVMAtomicRMWBinOpAnd,
+			LLVMAtomicRMWBinOpNand,
+			LLVMAtomicRMWBinOpOr,
+			LLVMAtomicRMWBinOpXor,
+			LLVMAtomicRMWBinOpMax,
+			LLVMAtomicRMWBinOpMin,
+			LLVMAtomicRMWBinOpUMax,
+			LLVMAtomicRMWBinOpUMin,
+			LLVMAtomicRMWBinOpFAdd,
+			LLVMAtomicRMWBinOpFSub
+		}
+	}
+	else
+	{
+		enum : LLVMAtomicRMWBinOp
+		{
+			LLVMAtomicRMWBinOpXchg,
+			LLVMAtomicRMWBinOpAdd,
+			LLVMAtomicRMWBinOpSub,
+			LLVMAtomicRMWBinOpAnd,
+			LLVMAtomicRMWBinOpNand,
+			LLVMAtomicRMWBinOpOr,
+			LLVMAtomicRMWBinOpXor,
+			LLVMAtomicRMWBinOpMax,
+			LLVMAtomicRMWBinOpMin,
+			LLVMAtomicRMWBinOpUMax,
+			LLVMAtomicRMWBinOpUMin
+		}
 	}
 }
 static if (LLVM_Version >= asVersion(3, 5, 0))
@@ -542,7 +571,11 @@ enum : llvm_lto_status
 }
 
 /+ LTO +/
-static if (LLVM_Version >= asVersion(9, 0, 0))
+static if (LLVM_Version >= asVersion(10, 0, 0))
+{
+	const uint LTO_API_VERSION = 26;
+}
+else static if (LLVM_Version >= asVersion(9, 0, 0))
 {
 	const uint LTO_API_VERSION = 24;
 }
@@ -742,7 +775,47 @@ static if (LLVM_Version >= asVersion(3, 9, 0) && LLVM_Version < asVersion(8, 0, 
 
 /+ Debug info flags +/
 
-static if (LLVM_Version >= asVersion(9, 0, 0))
+static if (LLVM_Version >= asVersion(10, 0, 0))
+{
+	enum : LLVMDIFlags {
+		LLVMDIFlagZero = 0,
+		LLVMDIFlagPrivate = 1,
+		LLVMDIFlagProtected = 2,
+		LLVMDIFlagPublic = 3,
+		LLVMDIFlagFwdDecl = 1 << 2,
+		LLVMDIFlagAppleBlock = 1 << 3,
+		LLVMDIFlagReservedBit4 = 1 << 4,
+		LLVMDIFlagVirtual = 1 << 5,
+		LLVMDIFlagArtificial = 1 << 6,
+		LLVMDIFlagExplicit = 1 << 7,
+		LLVMDIFlagPrototyped = 1 << 8,
+		LLVMDIFlagObjcClassComplete = 1 << 9,
+		LLVMDIFlagObjectPointer = 1 << 10,
+		LLVMDIFlagVector = 1 << 11,
+		LLVMDIFlagStaticMember = 1 << 12,
+		LLVMDIFlagLValueReference = 1 << 13,
+		LLVMDIFlagRValueReference = 1 << 14,
+		LLVMDIFlagReserved = 1 << 15,
+		LLVMDIFlagSingleInheritance = 1 << 16,
+		LLVMDIFlagMultipleInheritance = 2 << 16,
+		LLVMDIFlagVirtualInheritance = 3 << 16,
+		LLVMDIFlagIntroducedVirtual = 1 << 18,
+		LLVMDIFlagBitField = 1 << 19,
+		LLVMDIFlagNoReturn = 1 << 20,
+		LLVMDIFlagTypePassByValue = 1 << 22,
+		LLVMDIFlagTypePassByReference = 1 << 23,
+		LLVMDIFlagEnumClass = 1 << 24,
+		LLVMDIFlagFixedEnum = LLVMDIFlagEnumClass,
+		LLVMDIFlagThunk = 1 << 25,
+		LLVMDIFlagNonTrivial = 1 << 26,
+		LLVMDIFlagBigEndian = 1 << 27,
+		LLVMDIFlagLittleEndian = 1 << 28,
+		LLVMDIFlagIndirectVirtualBase = (1 << 2) | (1 << 5),
+		LLVMDIFlagAccessibility = LLVMDIFlagPrivate | LLVMDIFlagProtected | LLVMDIFlagPublic,
+		LLVMDIFlagPtrToMemberRep = LLVMDIFlagSingleInheritance | LLVMDIFlagMultipleInheritance | LLVMDIFlagVirtualInheritance
+	}
+}
+else static if (LLVM_Version >= asVersion(9, 0, 0))
 {
 	enum : LLVMDIFlags {
 		LLVMDIFlagZero = 0,
@@ -1072,6 +1145,18 @@ static if (LLVM_Version >= asVersion(7, 0, 0))
 	}
 }
 
+static if (LLVM_Version >= asVersion(10, 0, 0))
+{
+	enum : LLVMDWARFMacinfoRecordType {
+		LLVMDWARFMacinfoRecordTypeDefine    = 0x01,
+		LLVMDWARFMacinfoRecordTypeMacro     = 0x02,
+		LLVMDWARFMacinfoRecordTypeStartFile = 0x03,
+		LLVMDWARFMacinfoRecordTypeEndFile   = 0x04,
+		LLVMDWARFMacinfoRecordTypeVendorExt = 0xff
+	}
+}
+
+
 /+ Error +/
 
 static if (LLVM_Version >= asVersion(8, 0, 0)) {
@@ -1081,7 +1166,13 @@ static if (LLVM_Version >= asVersion(8, 0, 0)) {
 /+ Remarks / OptRemarks +/
 
 static if (LLVM_Version >= asVersion(9, 0, 0)) {
-	enum REMARKS_API_VERSION = 0;
+
+	static if (LLVM_Version >= asVersion(10, 0, 0)) {
+		enum REMARKS_API_VERSION = 1;
+	}
+	else {
+		enum REMARKS_API_VERSION = 0;
+	}
 
 	enum : LLVMRemarkType {
 		LLVMRemarkTypeUnknown,
