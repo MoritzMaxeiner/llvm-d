@@ -180,6 +180,10 @@ alias int llvm_lto_status;
 
 /+ LTO +/
 
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	struct LLVMOpaqueLTOInput; alias LLVMOpaqueLTOInput* lto_input_t;
+}
 static if (LLVM_Version >= asVersion(3, 5, 0))
 {
 	struct LLVMOpaqueLTOModule {}; alias LLVMOpaqueLTOModule* lto_module_t;
@@ -209,7 +213,19 @@ alias extern(C) void function(lto_codegen_diagnostic_severity_t severity, const(
 
 /+ Object file reading and writing +/
 
-struct LLVMOpaqueObjectFile {}; alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	alias int LLVMBinaryType;
+
+	struct LLVMOpaqueBinary; alias LLVMOpaqueBinary* LLVMBinaryRef;
+
+	deprecated("Use LLVMBinaryRef instead.") struct LLVMOpaqueObjectFile;
+	deprecated("Use LLVMBinaryRef instead.") alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
+}
+else
+{
+	struct LLVMOpaqueObjectFile {}; alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
+}
 struct LLVMOpaqueSectionIterator {}; alias LLVMOpaqueSectionIterator* LLVMSectionIteratorRef;
 struct LLVMOpaqueSymbolIterator {}; alias LLVMOpaqueSymbolIterator* LLVMSymbolIteratorRef;
 struct LLVMOpaqueRelocationIterator {}; alias LLVMOpaqueRelocationIterator* LLVMRelocationIteratorRef;
@@ -321,9 +337,17 @@ static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	alias const void* LLVMErrorTypeId;
 }
 
-/+ OptRemarks +/
+/+ Remarks / OptRemarks +/
 
-static if (LLVM_Version >= asVersion(8, 0, 0)) {
+static if (LLVM_Version >= asVersion(9, 0, 0)) {
+	struct LLVMRemarkOpaqueString; alias LLVMRemarkOpaqueString* LLVMRemarkStringRef;
+	struct LLVMRemarkOpaqueEntry; alias LLVMRemarkOpaqueEntry* LLVMRemarkEntryRef;
+	struct LLVMRemarkOpaqueParser; alias LLVMRemarkOpaqueParser* LLVMRemarkParserRef;
+	struct LLVMRemarkOpaqueArg; alias LLVMRemarkOpaqueArg* LLVMRemarkArgRef;
+	struct LLVMRemarkOpaqueDebugLoc; alias LLVMRemarkOpaqueDebugLoc* LLVMRemarkDebugLocRef;
+
+	alias int LLVMRemarkType;
+} else static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	struct LLVMOptRemarkStringRef
 	{
 		const(char)* Str;

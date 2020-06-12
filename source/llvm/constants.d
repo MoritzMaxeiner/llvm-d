@@ -135,6 +135,13 @@ static if (LLVM_Version >= asVersion(8, 0, 0))
 		LLVMFNeg  = 66
 	}
 }
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	enum : LLVMOpcode
+	{
+		LLVMCallBr  = 67
+	}
+}
 
 static if (LLVM_Version >= asVersion(3, 9, 0))
 {
@@ -535,7 +542,11 @@ enum : llvm_lto_status
 }
 
 /+ LTO +/
-static if (LLVM_Version >= asVersion(8, 0, 0))
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	const uint LTO_API_VERSION = 24;
+}
+else static if (LLVM_Version >= asVersion(8, 0, 0))
 {
 	const uint LTO_API_VERSION = 23;
 }
@@ -626,6 +637,30 @@ static if (LLVM_Version >= asVersion(3, 5, 0))
 	}
 }
 
+/+ Object file reading and writing +/
+
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	enum : LLVMBinaryType
+	{
+		LLVMBinaryTypeArchive,
+		LLVMBinaryTypeMachOUniversalBinary,
+		LLVMBinaryTypeCOFFImportFile,
+		LLVMBinaryTypeIR,
+		LLVMBinaryTypeWinRes,
+		LLVMBinaryTypeCOFF,
+		LLVMBinaryTypeELF32L,
+		LLVMBinaryTypeELF32B,
+		LLVMBinaryTypeELF64L,
+		LLVMBinaryTypeELF64B,
+		LLVMBinaryTypeMachO32L,
+		LLVMBinaryTypeMachO32B,
+		LLVMBinaryTypeMachO64L,
+		LLVMBinaryTypeMachO64B,
+		LLVMBinaryTypeWasm
+	}
+}
+
 /+ Target information +/
 
 enum : LLVMByteOrdering
@@ -707,7 +742,47 @@ static if (LLVM_Version >= asVersion(3, 9, 0) && LLVM_Version < asVersion(8, 0, 
 
 /+ Debug info flags +/
 
-static if (LLVM_Version >= asVersion(8, 0, 0))
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	enum : LLVMDIFlags {
+		LLVMDIFlagZero = 0,
+		LLVMDIFlagPrivate = 1,
+		LLVMDIFlagProtected = 2,
+		LLVMDIFlagPublic = 3,
+		LLVMDIFlagFwdDecl = 1 << 2,
+		LLVMDIFlagAppleBlock = 1 << 3,
+		LLVMDIFlagBlockByrefStruct = 1 << 4,
+		LLVMDIFlagVirtual = 1 << 5,
+		LLVMDIFlagArtificial = 1 << 6,
+		LLVMDIFlagExplicit = 1 << 7,
+		LLVMDIFlagPrototyped = 1 << 8,
+		LLVMDIFlagObjcClassComplete = 1 << 9,
+		LLVMDIFlagObjectPointer = 1 << 10,
+		LLVMDIFlagVector = 1 << 11,
+		LLVMDIFlagStaticMember = 1 << 12,
+		LLVMDIFlagLValueReference = 1 << 13,
+		LLVMDIFlagRValueReference = 1 << 14,
+		LLVMDIFlagReserved = 1 << 15,
+		LLVMDIFlagSingleInheritance = 1 << 16,
+		LLVMDIFlagMultipleInheritance = 2 << 16,
+		LLVMDIFlagVirtualInheritance = 3 << 16,
+		LLVMDIFlagIntroducedVirtual = 1 << 18,
+		LLVMDIFlagBitField = 1 << 19,
+		LLVMDIFlagNoReturn = 1 << 20,
+		LLVMDIFlagTypePassByValue = 1 << 22,
+		LLVMDIFlagTypePassByReference = 1 << 23,
+		LLVMDIFlagEnumClass = 1 << 24,
+		LLVMDIFlagFixedEnum = LLVMDIFlagEnumClass,
+		LLVMDIFlagThunk = 1 << 25,
+		LLVMDIFlagNonTrivial = 1 << 26,
+		LLVMDIFlagBigEndian = 1 << 27,
+		LLVMDIFlagLittleEndian = 1 << 28,
+		LLVMDIFlagIndirectVirtualBase = (1 << 2) | (1 << 5),
+		LLVMDIFlagAccessibility = LLVMDIFlagPrivate | LLVMDIFlagProtected | LLVMDIFlagPublic,
+		LLVMDIFlagPtrToMemberRep = LLVMDIFlagSingleInheritance | LLVMDIFlagMultipleInheritance | LLVMDIFlagVirtualInheritance
+	}
+}
+else static if (LLVM_Version >= asVersion(8, 0, 0))
 {
 	enum : LLVMDIFlags {
 		LLVMDIFlagZero = 0,
@@ -883,7 +958,44 @@ static if (LLVM_Version >= asVersion(6, 0, 0))
 
 }
 
-static if (LLVM_Version >= asVersion(8, 0, 0)) {
+static if (LLVM_Version >= asVersion(9, 0, 0))
+{
+	enum : LLVMMetadataKind {
+		LLVMMDStringMetadataKind,
+		LLVMConstantAsMetadataMetadataKind,
+		LLVMLocalAsMetadataMetadataKind,
+		LLVMDistinctMDOperandPlaceholderMetadataKind,
+		LLVMMDTupleMetadataKind,
+		LLVMDILocationMetadataKind,
+		LLVMDIExpressionMetadataKind,
+		LLVMDIGlobalVariableExpressionMetadataKind,
+		LLVMGenericDINodeMetadataKind,
+		LLVMDISubrangeMetadataKind,
+		LLVMDIEnumeratorMetadataKind,
+		LLVMDIBasicTypeMetadataKind,
+		LLVMDIDerivedTypeMetadataKind,
+		LLVMDICompositeTypeMetadataKind,
+		LLVMDISubroutineTypeMetadataKind,
+		LLVMDIFileMetadataKind,
+		LLVMDICompileUnitMetadataKind,
+		LLVMDISubprogramMetadataKind,
+		LLVMDILexicalBlockMetadataKind,
+		LLVMDILexicalBlockFileMetadataKind,
+		LLVMDINamespaceMetadataKind,
+		LLVMDIModuleMetadataKind,
+		LLVMDITemplateTypeParameterMetadataKind,
+		LLVMDITemplateValueParameterMetadataKind,
+		LLVMDIGlobalVariableMetadataKind,
+		LLVMDILocalVariableMetadataKind,
+		LLVMDILabelMetadataKind,
+		LLVMDIObjCPropertyMetadataKind,
+		LLVMDIImportedEntityMetadataKind,
+		LLVMDIMacroMetadataKind,
+		LLVMDIMacroFileMetadataKind,
+		LLVMDICommonBlockMetadataKind
+	}
+}
+else static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	enum : LLVMMetadataKind {
 		LLVMMDStringMetadataKind,
 		LLVMConstantAsMetadataMetadataKind,
@@ -966,8 +1078,20 @@ static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	enum LLVMErrorSuccess = 0;
 }
 
-/+ OptRemarks +/
+/+ Remarks / OptRemarks +/
 
-static if (LLVM_Version >= asVersion(8, 0, 0)) {
+static if (LLVM_Version >= asVersion(9, 0, 0)) {
+	enum REMARKS_API_VERSION = 0;
+
+	enum : LLVMRemarkType {
+		LLVMRemarkTypeUnknown,
+		LLVMRemarkTypePassed,
+		LLVMRemarkTypeMissed,
+		LLVMRemarkTypeAnalysis,
+		LLVMRemarkTypeAnalysisFPCommute,
+		LLVMRemarkTypeAnalysisAliasing,
+		LLVMRemarkTypeFailure
+	}
+} else static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	enum OPT_REMARKS_API_VERSION = 0;
 }
