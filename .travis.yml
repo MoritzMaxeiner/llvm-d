@@ -22,9 +22,8 @@ before_install:
 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@10; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew link --force --overwrite llvm@10; fi
 
 script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then DFLAGS="-version=LLVM_3_6_0" dub run --root=examples/fibonacci --compiler=$DC --config=link-single; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then DFLAGS="-version=LLVM_10_0_0" dub run --root=examples/fibonacci --compiler=$DC --config=link-single; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then DFLAGS="-version=LLVM_10_0_0" LD_LIBRARY_PATH="/usr/local/opt/llvm/lib" dub run --root=examples/fibonacci --config=load; fi
