@@ -50,8 +50,8 @@ For DMD, this is the `-version` argument; for dub, the `versions` field.
 The identifier to set the LLVM version is defined as
 `LLVM_{MAJOR_VERSION}_{MINOR_VERSION}_{PATCH_VERSION}`, so to get LLVM version 3.1.0 use `LLVM_3_1_0`.
 
-Current supported versions are 3.1.0 - 7.0.0 and if no version is given
-at compile time, 7.0.0 will be assumed.
+Current supported versions are 3.1.0 - 10.0.0 and if no version is given
+at compile time, 10.0.0 will be assumed.
 
 LLVM targets
 ------------
@@ -93,7 +93,7 @@ llvm-d is released under the [MIT license](http://opensource.org/licenses/MIT), 
 llvm-d uses source code from LLVM that has been ported to D for accessing LLVM's C API. The above paragraph does not apply
 to that source code - it is a redistribution of LLVM source code.
 
-LLVM is Copyright (c) 2003-2018 University of Illinois at Urbana-Champaign.
+LLVM is Copyright (c) 2003-2020 University of Illinois at Urbana-Champaign.
 All rights reserved.
 
 LLVM is distributed under the University of Illinois Open Source
