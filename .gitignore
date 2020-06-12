@@ -1,6 +1,5 @@
 .dub
-dub.selections.json
-__test__library__
 fibonacci
 libllvm-d.a
-llvm-d-test-native-target
+*.s
+*.json
