@@ -11,8 +11,6 @@ osx_image: xcode11.5
 
 d:
   - dmd-2.092.1
-  - dmd-2.082.1
-  - dmd-2.068.2
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
