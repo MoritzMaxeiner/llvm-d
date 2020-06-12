@@ -7,7 +7,7 @@ import core.stdc.stdint;
 
 /+ Analysis +/
 
-alias int LLVMVerifierFailureAction;
+alias LLVMVerifierFailureAction = int;
 
 /+ Transforms +/
 
@@ -15,89 +15,89 @@ alias int LLVMVerifierFailureAction;
 
 static if (LLVM_Version >= asVersion(10, 0, 0))
 {
-	alias extern(C) LLVMBool function(LLVMValueRef, void*) MustPreserveCallback;
+	alias MustPreserveCallback = extern(C) LLVMBool function(LLVMValueRef, void*);
 }
 
 /++ Pass manager builder ++/
 
-struct LLVMOpaquePassManagerBuilder; alias LLVMOpaquePassManagerBuilder* LLVMPassManagerBuilderRef;
+struct LLVMOpaquePassManagerBuilder; alias LLVMPassManagerBuilderRef = LLVMOpaquePassManagerBuilder*;
 
 /+ Core +/
 
 static if (LLVM_Version >= asVersion(3, 4, 0))
 {
-	alias extern(C) void function(const char* Reason) LLVMFatalErrorHandler;
+	alias LLVMFatalErrorHandler = extern(C) void function(const char* Reason);
 }
 
 static if (LLVM_Version >= asVersion(3, 5, 0))
 {
 	//This is here because putting it where it semantically belongs creates a forward reference issues.
-	struct LLVMOpaqueDiagnosticInfo; alias LLVMOpaqueDiagnosticInfo* LLVMDiagnosticInfoRef;
+	struct LLVMOpaqueDiagnosticInfo; alias LLVMDiagnosticInfoRef = LLVMOpaqueDiagnosticInfo*;
 
-	alias extern(C) void function(LLVMDiagnosticInfoRef, void*) LLVMDiagnosticHandler;
-	alias extern(C) void function(LLVMContextRef, void *) LLVMYieldCallback;
+	alias LLVMDiagnosticHandler = extern(C) void function(LLVMDiagnosticInfoRef, void*);
+	alias LLVMYieldCallback = extern(C) void function(LLVMContextRef, void *);
 }
 
 /++ Types and Enumerations ++/
 
-alias int LLVMBool;
-struct LLVMOpaqueContext; alias LLVMOpaqueContext* LLVMContextRef;
-struct LLVMOpaqueModule; alias LLVMOpaqueModule* LLVMModuleRef;
-struct LLVMOpaqueType; alias LLVMOpaqueType* LLVMTypeRef;
-struct LLVMOpaqueValue; alias LLVMOpaqueValue* LLVMValueRef;
+alias LLVMBool = int;
+struct LLVMOpaqueContext; alias LLVMContextRef = LLVMOpaqueContext*;
+struct LLVMOpaqueModule; alias LLVMModuleRef = LLVMOpaqueModule*;
+struct LLVMOpaqueType; alias LLVMTypeRef = LLVMOpaqueType*;
+struct LLVMOpaqueValue; alias LLVMValueRef = LLVMOpaqueValue*;
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
-	struct LLVMOpaqueMetadata; alias LLVMOpaqueMetadata* LLVMMetadataRef;
+	struct LLVMOpaqueMetadata; alias LLVMMetadataRef = LLVMOpaqueMetadata*;
 }
 static if (LLVM_Version >= asVersion(8, 0, 0)) {
-	struct LLVMOpaqueNamedMDNode; alias LLVMOpaqueNamedMDNode* LLVMNamedMDNodeRef;
+	struct LLVMOpaqueNamedMDNode; alias LLVMNamedMDNodeRef = LLVMOpaqueNamedMDNode*;
 
-	struct LLVMOpaqueValueMetadataEntry; alias LLVMOpaqueValueMetadataEntry* LLVMValueMetadataEntry;
+	struct LLVMOpaqueValueMetadataEntry; alias LLVMValueMetadataEntry = LLVMOpaqueValueMetadataEntry*;
 }
-struct LLVMOpaqueBasicBlock; alias LLVMOpaqueBasicBlock* LLVMBasicBlockRef;
+struct LLVMOpaqueBasicBlock; alias LLVMBasicBlockRef = LLVMOpaqueBasicBlock*;
 static if (LLVM_Version >= asVersion(5, 0, 0)) {
-	struct LLVMOpaqueDIBuilder; alias LLVMOpaqueDIBuilder* LLVMDIBuilderRef;
+	struct LLVMOpaqueDIBuilder; alias LLVMDIBuilderRef = LLVMOpaqueDIBuilder*;
 }
-struct LLVMOpaqueBuilder; alias LLVMOpaqueBuilder* LLVMBuilderRef;
-struct LLVMOpaqueModuleProvider; alias LLVMOpaqueModuleProvider* LLVMModuleProviderRef;
-struct LLVMOpaqueMemoryBuffer; alias LLVMOpaqueMemoryBuffer* LLVMMemoryBufferRef;
-struct LLVMOpaquePassManager; alias LLVMOpaquePassManager* LLVMPassManagerRef;
-struct LLVMOpaquePassRegistry; alias LLVMOpaquePassRegistry* LLVMPassRegistryRef;
-struct LLVMOpaqueUse; alias LLVMOpaqueUse* LLVMUseRef;
+struct LLVMOpaqueBuilder; alias LLVMBuilderRef = LLVMOpaqueBuilder*;
+struct LLVMOpaqueModuleProvider; alias LLVMModuleProviderRef = LLVMOpaqueModuleProvider*;
+struct LLVMOpaqueMemoryBuffer; alias LLVMMemoryBufferRef = LLVMOpaqueMemoryBuffer*;
+struct LLVMOpaquePassManager; alias LLVMPassManagerRef = LLVMOpaquePassManager*;
+struct LLVMOpaquePassRegistry; alias LLVMPassRegistryRef = LLVMOpaquePassRegistry*;
+struct LLVMOpaqueUse; alias LLVMUseRef = LLVMOpaqueUse*;
 
 static if (LLVM_Version >= asVersion(3, 9, 0)) {
-	struct LLVMOpaqueAttributeRef; alias LLVMOpaqueAttributeRef* LLVMAttributeRef;
+	struct LLVMOpaqueAttributeRef; alias LLVMAttributeRef = LLVMOpaqueAttributeRef*;
 }
 
-alias long LLVMAttribute;
-alias int LLVMOpcode;
-alias int LLVMTypeKind;
-alias int LLVMLinkage;
-alias int LLVMVisibility;
-alias int LLVMDLLStorageClass;
-alias int LLVMCallConv;
-alias int LLVMIntPredicate;
-alias int LLVMRealPredicate;
-alias int LLVMLandingPadClauseTy;
+alias LLVMAttribute = long;
+alias LLVMOpcode = int;
+alias LLVMTypeKind = int;
+alias LLVMLinkage = int;
+alias LLVMVisibility = int;
+alias LLVMDLLStorageClass = int;
+alias LLVMCallConv = int;
+alias LLVMIntPredicate = int;
+alias LLVMRealPredicate = int;
+alias LLVMLandingPadClauseTy = int;
 static if (LLVM_Version >= asVersion(3, 3, 0))
 {
-	alias int LLVMThreadLocalMode;
-	alias int LLVMAtomicOrdering;
-	alias int LLVMAtomicRMWBinOp;
+	alias LLVMThreadLocalMode = int;
+	alias LLVMAtomicOrdering = int;
+	alias LLVMAtomicRMWBinOp = int;
 }
 static if (LLVM_Version >= asVersion(3, 5, 0))
 {
-	alias int LLVMDiagnosticSeverity;
+	alias LLVMDiagnosticSeverity = int;
 }
 static if (LLVM_Version >= asVersion(3, 9, 0))
 {
-	alias int LLVMValueKind;
-	alias uint LLVMAttributeIndex;
+	alias LLVMValueKind = int;
+	alias LLVMAttributeIndex = uint;
 }
 /+ Disassembler +/
 
-alias void* LLVMDisasmContextRef;
-alias extern(C) int function(void* DisInfo, ulong PC, ulong Offset, ulong Size, int TagType, void* TagBuf) LLVMOpInfoCallback;
-alias extern(C) const char* function(void* DisInfo, ulong ReferenceValue, ulong* ReferenceType, ulong ReferencePC, const char** ReferenceName) LLVMSymbolLookupCallback;
+alias LLVMDisasmContextRef = void*;
+alias LLVMOpInfoCallback = extern(C) int function(void* DisInfo, ulong PC, ulong Offset, ulong Size, int TagType, void* TagBuf);
+alias LLVMSymbolLookupCallback = extern(C) const char* function(void* DisInfo, ulong ReferenceValue, ulong* ReferenceType, ulong ReferencePC, const char** ReferenceName);
 
 struct LLVMOpInfoSymbol1
 {
@@ -118,31 +118,31 @@ static if (LLVM_Version < asVersion(3, 3, 0))
 {
 	/+ Enhanced Disassembly +/
 
-	alias void* EDDisassemblerRef;
-	alias void* EDInstRef;
-	alias void* EDTokenRef;
-	alias void* EDOperandRef;
+	alias EDDisassemblerRef = void*;
+	alias EDInstRef = void*;
+	alias EDTokenRef = void*;
+	alias EDOperandRef = void*;
 
-	alias int EDAssemblySyntax_t;
+	alias EDAssemblySyntax_t = int;
 
-	alias extern(C) int function(ubyte* Byte, ulong address, void* arg) EDByteReaderCallback;
-	alias extern(C) int function(ulong* value, uint regID, void* arg) EDRegisterReaderCallback;
+	alias EDByteReaderCallback = extern(C) int function(ubyte* Byte, ulong address, void* arg);
+	alias EDRegisterReaderCallback = extern(C) int function(ulong* value, uint regID, void* arg);
 
-	alias extern(C) int function(ubyte* Byte, ulong address) EDByteBlock_t;
-	alias extern(C) int function(ulong* value, uint regID) EDRegisterBlock_t;
-	alias extern(C) int function(EDTokenRef token) EDTokenVisitor_t;
+	alias EDByteBlock_t = extern(C) int function(ubyte* Byte, ulong address);
+	alias EDRegisterBlock_t = extern(C) int function(ulong* value, uint regID);
+	alias EDTokenVisitor_t = extern(C) int function(EDTokenRef token);
 }
 
 /+ Execution Engine +/
 
-struct LLVMOpaqueGenericValue; alias LLVMOpaqueGenericValue* LLVMGenericValueRef;
-struct LLVMOpaqueExecutionEngine; alias LLVMOpaqueExecutionEngine* LLVMExecutionEngineRef;
+struct LLVMOpaqueGenericValue; alias LLVMGenericValueRef = LLVMOpaqueGenericValue*;
+struct LLVMOpaqueExecutionEngine; alias LLVMExecutionEngineRef = LLVMOpaqueExecutionEngine*;
 
 static if (LLVM_Version >= asVersion(3, 3, 0))
 {
 	static if (LLVM_Version >= asVersion(3, 4, 0))
 	{
-		struct LLVMOpaqueMCJITMemoryManager; alias LLVMOpaqueMCJITMemoryManager* LLVMMCJITMemoryManagerRef;
+		struct LLVMOpaqueMCJITMemoryManager; alias LLVMMCJITMemoryManagerRef = LLVMOpaqueMCJITMemoryManager*;
 
 		struct LLVMMCJITCompilerOptions
 		{
@@ -153,10 +153,10 @@ static if (LLVM_Version >= asVersion(3, 3, 0))
 			LLVMMCJITMemoryManagerRef MCJMM;
 		}
 
-		alias extern(C) ubyte function(void* Opaque, uintptr_t Size, uint Alignment, uint SectionID, const char* SectionName) LLVMMemoryManagerAllocateCodeSectionCallback;
-		alias extern(C) ubyte function(void* Opaque, uintptr_t Size, uint Alignment, uint SectionID, const char* SectionName, LLVMBool IsReadOnly) LLVMMemoryManagerAllocateDataSectionCallback;
-		alias extern(C) LLVMBool function(void* Opaque, char** ErrMsg) LLVMMemoryManagerFinalizeMemoryCallback;
-		alias extern(C) void function(void* Opaque) LLVMMemoryManagerDestroyCallback;
+		alias LLVMMemoryManagerAllocateCodeSectionCallback = extern(C) ubyte function(void* Opaque, uintptr_t Size, uint Alignment, uint SectionID, const char* SectionName);
+		alias LLVMMemoryManagerAllocateDataSectionCallback = extern(C) ubyte function(void* Opaque, uintptr_t Size, uint Alignment, uint SectionID, const char* SectionName, LLVMBool IsReadOnly);
+		alias LLVMMemoryManagerFinalizeMemoryCallback = extern(C) LLVMBool function(void* Opaque, char** ErrMsg);
+		alias LLVMMemoryManagerDestroyCallback = extern(C) void function(void* Opaque);
 	}
 	else
 	{
@@ -174,123 +174,123 @@ static if (LLVM_Version >= asVersion(3, 2, 0))
 {
 	/+ Linker +/
 
-	alias int LLVMLinkerMode;
+	alias LLVMLinkerMode = int;
 }
 
 /+ Link Time Optimization +/
-alias bool lto_bool_t;
-alias void* llvm_lto_t;
-alias llvm_lto_status llvm_lto_status_t;
+alias lto_bool_t = bool;
+alias llvm_lto_t = void*;
+alias llvm_lto_status_t = llvm_lto_status;
 
 
-alias int llvm_lto_status;
+alias llvm_lto_status = int;
 
 /+ LTO +/
 
 static if (LLVM_Version >= asVersion(9, 0, 0))
 {
-	struct LLVMOpaqueLTOInput; alias LLVMOpaqueLTOInput* lto_input_t;
+	struct LLVMOpaqueLTOInput; alias lto_input_t = LLVMOpaqueLTOInput*;
 }
 static if (LLVM_Version >= asVersion(3, 5, 0))
 {
-	struct LLVMOpaqueLTOModule; alias LLVMOpaqueLTOModule* lto_module_t;
+	struct LLVMOpaqueLTOModule; alias lto_module_t = LLVMOpaqueLTOModule*;
 }
 else
 {
-	struct LTOModule; alias LTOModule* lto_module_t;
+	struct LTOModule; alias lto_module_t = LTOModule*;
 }
 static if (LLVM_Version >= asVersion(3, 5, 0))
 {
-	struct LLVMOpaqueLTOCodeGenerator; alias LLVMOpaqueLTOCodeGenerator* lto_code_gen_t;
+	struct LLVMOpaqueLTOCodeGenerator; alias lto_code_gen_t = LLVMOpaqueLTOCodeGenerator*;
 }
 else
 {
-	struct LTOCodeGenerator; alias LTOCodeGenerator* lto_code_gen_t;
+	struct LTOCodeGenerator; alias lto_code_gen_t = LTOCodeGenerator*;
 }
 static if (LLVM_Version >= asVersion(3, 9, 0))
 {
-	struct LLVMOpaqueThinLTOCodeGenerator; alias LLVMOpaqueThinLTOCodeGenerator* thinlto_code_gen_t;
+	struct LLVMOpaqueThinLTOCodeGenerator; alias thinlto_code_gen_t = LLVMOpaqueThinLTOCodeGenerator*;
 }
 
-alias int lto_symbol_attributes;
-alias int lto_debug_model;
-alias int lto_codegen_model;
-alias int lto_codegen_diagnostic_severity_t;
-alias extern(C) void function(lto_codegen_diagnostic_severity_t severity, const(char)* diag, void* ctxt) lto_diagnostic_handler_t;
+alias lto_symbol_attributes = int;
+alias lto_debug_model = int;
+alias lto_codegen_model = int;
+alias lto_codegen_diagnostic_severity_t = int;
+alias lto_diagnostic_handler_t = extern(C) void function(lto_codegen_diagnostic_severity_t severity, const(char)* diag, void* ctxt);
 
 /+ Object file reading and writing +/
 
 static if (LLVM_Version >= asVersion(9, 0, 0))
 {
-	alias int LLVMBinaryType;
+	alias LLVMBinaryType = int;
 
-	struct LLVMOpaqueBinary; alias LLVMOpaqueBinary* LLVMBinaryRef;
+	struct LLVMOpaqueBinary; alias LLVMBinaryRef = LLVMOpaqueBinary*;
 
 	deprecated("Use LLVMBinaryRef instead.") struct LLVMOpaqueObjectFile;
-	deprecated("Use LLVMBinaryRef instead.") alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
+	deprecated("Use LLVMBinaryRef instead.") alias LLVMObjectFileRef = LLVMOpaqueObjectFile*;
 }
 else
 {
-	struct LLVMOpaqueObjectFile; alias LLVMOpaqueObjectFile* LLVMObjectFileRef;
+	struct LLVMOpaqueObjectFile; alias LLVMObjectFileRef = LLVMOpaqueObjectFile*;
 }
-struct LLVMOpaqueSectionIterator; alias LLVMOpaqueSectionIterator* LLVMSectionIteratorRef;
-struct LLVMOpaqueSymbolIterator; alias LLVMOpaqueSymbolIterator* LLVMSymbolIteratorRef;
-struct LLVMOpaqueRelocationIterator; alias LLVMOpaqueRelocationIterator* LLVMRelocationIteratorRef;
+struct LLVMOpaqueSectionIterator; alias LLVMSectionIteratorRef = LLVMOpaqueSectionIterator*;
+struct LLVMOpaqueSymbolIterator; alias LLVMSymbolIteratorRef = LLVMOpaqueSymbolIterator*;
+struct LLVMOpaqueRelocationIterator; alias LLVMRelocationIteratorRef = LLVMOpaqueRelocationIterator*;
 
 /+ Target information +/
 
-struct LLVMOpaqueTargetData; alias LLVMOpaqueTargetData* LLVMTargetDataRef;
-struct LLVMOpaqueTargetLibraryInfotData; alias LLVMOpaqueTargetLibraryInfotData* LLVMTargetLibraryInfoRef;
+struct LLVMOpaqueTargetData; alias LLVMTargetDataRef = LLVMOpaqueTargetData*;
+struct LLVMOpaqueTargetLibraryInfotData; alias LLVMTargetLibraryInfoRef = LLVMOpaqueTargetLibraryInfotData*;
 static if (LLVM_Version < asVersion(3, 4, 0))
 {
-	struct LLVMStructLayout; alias LLVMStructLayout* LLVMStructLayoutRef;
+	struct LLVMStructLayout; alias LLVMStructLayoutRef = LLVMStructLayout*;
 }
-alias int LLVMByteOrdering;
+alias LLVMByteOrdering = int;
 
 /+ Target machine +/
 
-struct LLVMOpaqueTargetMachine; alias LLVMOpaqueTargetMachine* LLVMTargetMachineRef;
-struct LLVMTarget; alias LLVMTarget* LLVMTargetRef;
+struct LLVMOpaqueTargetMachine; alias LLVMTargetMachineRef = LLVMOpaqueTargetMachine*;
+struct LLVMTarget; alias LLVMTargetRef = LLVMTarget*;
 
-alias int LLVMCodeGenOptLevel;
-alias int LLVMRelocMode;
-alias int LLVMCodeModel;
-alias int LLVMCodeGenFileType;
+alias LLVMCodeGenOptLevel = int;
+alias LLVMRelocMode = int;
+alias LLVMCodeModel = int;
+alias LLVMCodeGenFileType = int;
 
 static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(7, 0, 0)) {
-	struct LLVMOpaqueSharedModule; alias LLVMOpaqueSharedModule* LLVMSharedModuleRef;
+	struct LLVMOpaqueSharedModule; alias LLVMSharedModuleRef = LLVMOpaqueSharedModule*;
 }
 static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(6, 0, 0)) {
-	struct LLVMOpaqueSharedObjectBuffer; alias LLVMOpaqueSharedObjectBuffer* LLVMSharedObjectBufferRef;
+	struct LLVMOpaqueSharedObjectBuffer; alias LLVMSharedObjectBufferRef = LLVMOpaqueSharedObjectBuffer*;
 }
 
 static if (LLVM_Version >= asVersion(3, 8, 0))
 {
 	/+ JIT compilation of LLVM IR +/
 
-	struct LLVMOrcOpaqueJITStack; alias LLVMOrcOpaqueJITStack* LLVMOrcJITStackRef;
+	struct LLVMOrcOpaqueJITStack; alias LLVMOrcJITStackRef = LLVMOrcOpaqueJITStack*;
 }
 
 static if (LLVM_Version >= asVersion(7, 0, 0))
 {
-	alias uint64_t LLVMOrcModuleHandle;
+	alias LLVMOrcModuleHandle = uint64_t;
 }
 else static if (LLVM_Version >= asVersion(3, 8, 0))
 {
-	alias uint32_t LLVMOrcModuleHandle;
+	alias LLVMOrcModuleHandle = uint32_t;
 }
 
 static if (LLVM_Version >= asVersion(3, 8, 0))
 {
-	alias ulong LLVMOrcTargetAddress;
+	alias LLVMOrcTargetAddress = ulong;
 
-	alias extern(C) ulong function(const(char)* Name, void* LookupCtx) LLVMOrcSymbolResolverFn;
-	alias extern(C) ulong function(LLVMOrcJITStackRef JITStack, void* CallbackCtx) LLVMOrcLazyCompileCallbackFn;
+	alias LLVMOrcSymbolResolverFn = extern(C) ulong function(const(char)* Name, void* LookupCtx);
+	alias LLVMOrcLazyCompileCallbackFn = extern(C) ulong function(LLVMOrcJITStackRef JITStack, void* CallbackCtx);
 }
 
 static if (LLVM_Version >= asVersion(3, 9, 0))
 {
-	alias int LLVMOrcErrorCode;
+	alias LLVMOrcErrorCode = int;
 
 	struct LTOObjectBuffer
 	{
@@ -303,62 +303,62 @@ static if (LLVM_Version >= asVersion(3, 9, 0))
 
 static if (LLVM_Version >= asVersion(6, 0, 0))
 {
-	alias int LLVMDIFlags;
-	alias int LLVMDWARFSourceLanguage;
-	alias int LLVMDWARFEmissionKind;
+	alias LLVMDIFlags = int;
+	alias LLVMDWARFSourceLanguage = int;
+	alias LLVMDWARFEmissionKind = int;
 }
 
 
 static if (LLVM_Version >= asVersion(7, 0, 0))
 {
-	alias int LLVMComdatSelectionKind;
-	alias int LLVMUnnamedAddr;
-	alias int LLVMInlineAsmDialect;
-	alias int LLVMModuleFlagBehavior;
-	alias int LLVMDWARFTypeEncoding;
+	alias LLVMComdatSelectionKind = int;
+	alias LLVMUnnamedAddr = int;
+	alias LLVMInlineAsmDialect = int;
+	alias LLVMModuleFlagBehavior = int;
+	alias LLVMDWARFTypeEncoding = int;
 
 }
 
 static if (LLVM_Version >= asVersion(10, 0, 0))
 {
-	alias int LLVMDWARFMacinfoRecordType;
+	alias LLVMDWARFMacinfoRecordType = int;
 }
 
 
 static if (LLVM_Version >= asVersion(8, 0, 0)) {
-	alias uint LLVMMetadataKind;
+	alias LLVMMetadataKind = uint;
 }
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	struct LLVMComdat; alias LLVMComdat* LLVMComdatRef;
+	struct LLVMComdat; alias LLVMComdatRef = LLVMComdat*;
 }
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	struct LLVMOpaqueModuleFlagEntry; alias LLVMOpaqueModuleFlagEntry* LLVMModuleFlagEntry;
+	struct LLVMOpaqueModuleFlagEntry; alias LLVMModuleFlagEntry = LLVMOpaqueModuleFlagEntry*;
 }
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
-	struct LLVMOpaqueJITEventListener; alias LLVMOpaqueJITEventListener* LLVMJITEventListenerRef;
+	struct LLVMOpaqueJITEventListener; alias LLVMJITEventListenerRef = LLVMOpaqueJITEventListener*;
 }
 
 /+ Error +/
 
 static if (LLVM_Version >= asVersion(8, 0, 0)) {
-	struct LLVMOpaqueError; alias LLVMOpaqueError* LLVMErrorRef;
+	struct LLVMOpaqueError; alias LLVMErrorRef = LLVMOpaqueError*;
 
-	alias const void* LLVMErrorTypeId;
+	alias LLVMErrorTypeId = const void*;
 }
 
 /+ Remarks / OptRemarks +/
 
 static if (LLVM_Version >= asVersion(9, 0, 0)) {
-	struct LLVMRemarkOpaqueString; alias LLVMRemarkOpaqueString* LLVMRemarkStringRef;
-	struct LLVMRemarkOpaqueEntry; alias LLVMRemarkOpaqueEntry* LLVMRemarkEntryRef;
-	struct LLVMRemarkOpaqueParser; alias LLVMRemarkOpaqueParser* LLVMRemarkParserRef;
-	struct LLVMRemarkOpaqueArg; alias LLVMRemarkOpaqueArg* LLVMRemarkArgRef;
-	struct LLVMRemarkOpaqueDebugLoc; alias LLVMRemarkOpaqueDebugLoc* LLVMRemarkDebugLocRef;
+	struct LLVMRemarkOpaqueString; alias LLVMRemarkStringRef = LLVMRemarkOpaqueString*;
+	struct LLVMRemarkOpaqueEntry; alias LLVMRemarkEntryRef = LLVMRemarkOpaqueEntry*;
+	struct LLVMRemarkOpaqueParser; alias LLVMRemarkParserRef = LLVMRemarkOpaqueParser*;
+	struct LLVMRemarkOpaqueArg; alias LLVMRemarkArgRef = LLVMRemarkOpaqueArg*;
+	struct LLVMRemarkOpaqueDebugLoc; alias LLVMRemarkDebugLocRef = LLVMRemarkOpaqueDebugLoc*;
 
-	alias int LLVMRemarkType;
+	alias LLVMRemarkType = int;
 } else static if (LLVM_Version >= asVersion(8, 0, 0)) {
 	struct LLVMOptRemarkStringRef
 	{
@@ -407,5 +407,5 @@ static if (LLVM_Version >= asVersion(9, 0, 0)) {
 		LLVMOptRemarkArg* Args;
 	}
 
-	struct LLVMOptRemarkOpaqueParser; alias LLVMOptRemarkOpaqueParser* LLVMOptRemarkParserRef;
+	struct LLVMOptRemarkOpaqueParser; alias LLVMOptRemarkParserRef = LLVMOptRemarkOpaqueParser*;
 }
