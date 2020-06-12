@@ -267,7 +267,7 @@ static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(6, 0, 
 static if (LLVM_Version >= asVersion(3, 8, 0))
 {
 	/+ JIT compilation of LLVM IR +/
-	
+
 	struct LLVMOrcOpaqueJITStack; alias LLVMOrcOpaqueJITStack* LLVMOrcJITStackRef;
 }
 
